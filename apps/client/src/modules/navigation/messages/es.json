@@ -1,0 +1,61 @@
+{
+  "brand": {
+    "name": "MarkDown",
+    "descriptor": "Preview",
+    "home": "Inicio de Markdown Preview"
+  },
+  "aria": {
+    "primaryNavigation": "Navegación principal",
+    "mobileMenu": "Abrir menú de navegación",
+    "closeMobileMenu": "Cerrar menú de navegación",
+    "closeDialog": "Cerrar diálogo"
+  },
+  "mobile": {
+    "menuTitle": "Menú",
+    "navigationSection": "Navegación",
+    "preferencesSection": "Preferencias"
+  },
+  "links": {
+    "product": "Producto",
+    "dashboard": "Panel",
+    "about": "Acerca de"
+  },
+  "actions": {
+    "signIn": "Iniciar sesión",
+    "signUp": "Registrarse",
+    "signOut": "Cerrar sesión"
+  },
+  "language": {
+    "select": "Seleccionar idioma",
+    "label": "Idioma",
+    "dialogTitle": "Elegir idioma",
+    "description": "Selecciona el idioma de la aplicación.",
+    "options": {
+      "english": "English",
+      "spanish": "Español",
+      "italian": "Italiano"
+    }
+  },
+  "theme": {
+    "select": "Cambiar tema",
+    "label": "Tema",
+    "dialogTitle": "Elegir tema",
+    "description": "Selecciona el estilo visual de la aplicación.",
+    "options": {
+      "light": "Claro",
+      "dark": "Oscuro",
+      "atom": "Atom",
+      "sky": "Cielo",
+      "ocean": "Océano",
+      "system": "Sistema"
+    },
+    "descriptions": {
+      "light": "Un espacio limpio y luminoso",
+      "dark": "Un espacio oscuro y tranquilo",
+      "atom": "Un espacio azul y violeta enfocado",
+      "sky": "Un espacio azul suave y ligero",
+      "ocean": "Un espacio cian y calmado",
+      "system": "Usa la preferencia de tu dispositivo"
+    }
+  }
+}

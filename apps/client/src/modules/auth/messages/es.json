@@ -1,0 +1,30 @@
+{
+  "signUp": {
+    "title": "Crear cuenta",
+    "name": "Nombre",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "submit": "Registrarse",
+    "loading": "Creando cuenta...",
+    "success": "Cuenta creada correctamente.",
+    "redirecting": "Abriendo tu panel...",
+    "error": "No se pudo crear la cuenta.",
+    "existingAccount": "¿Ya tienes una cuenta?",
+    "existingAccountLink": "Inicia sesión"
+  },
+  "signIn": {
+    "title": "Iniciar sesión",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "submit": "Iniciar sesión",
+    "loading": "Iniciando sesión...",
+    "success": "Sesión iniciada correctamente.",
+    "redirecting": "Abriendo tu panel...",
+    "error": "No se pudo iniciar sesión.",
+    "newAccount": "¿No tienes una cuenta?",
+    "newAccountLink": "Regístrate"
+  },
+  "navigation": {
+    "backHome": "Volver a MarkDown Preview"
+  }
+}

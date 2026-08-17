@@ -1,0 +1,66 @@
+.sky {
+  --background: oklch(0.96 0.015 235);
+  --foreground: oklch(0.25 0.06 250);
+  --nav-bg: oklch(1 0 0 / 0.5);
+  --nav-border: oklch(0.85 0.03 235);
+  --card: oklch(1 0 0 / 0.9);
+  --card-foreground: oklch(0.25 0.06 250);
+  --popover: oklch(1 0 0 / 0.9);
+  --popover-foreground: oklch(0.25 0.06 250);
+  --primary: oklch(0.45 0.14 255);
+  --primary-foreground: oklch(0.98 0.01 235);
+  --secondary: oklch(0.96 0.01 235);
+  --secondary-foreground: oklch(0.25 0.06 250);
+  --muted: oklch(0.92 0.02 235);
+  --muted-foreground: oklch(0.5 0.04 250);
+  --accent: oklch(0.94 0.02 235);
+  --accent-foreground: oklch(0.25 0.06 250);
+  --destructive: oklch(0.6 0.18 25);
+  --border: oklch(0.9 0.02 235);
+  --input: oklch(0.9 0.02 235);
+  --ring: oklch(0.45 0.14 255);
+
+  --chart-1: oklch(0.45 0.14 255);
+  --chart-2: oklch(0.55 0.12 220);
+  --chart-3: oklch(0.65 0.1 190);
+  --chart-4: oklch(0.5 0.15 270);
+  --chart-5: oklch(0.7 0.08 240);
+
+  --sidebar: oklch(0.96 0.015 235);
+  --sidebar-foreground: oklch(0.25 0.06 250);
+  --sidebar-primary: oklch(0.45 0.14 255);
+  --sidebar-primary-foreground: oklch(0.98 0.01 235);
+  --sidebar-accent: oklch(0.94 0.02 235);
+  --sidebar-accent-foreground: oklch(0.25 0.06 250);
+  --sidebar-border: oklch(0.9 0.02 235);
+  --source-bg: linear-gradient(to top, oklch(0.93 0.03 235), oklch(0.99 0.005 235));
+  --sidebar-ring: oklch(0.45 0.14 255);
+  --logo-filter: none;
+
+  --notebook-bg: oklch(0.96 0.02 200);
+  --notebook-nav-bg: oklch(0.98 0.01 200);
+
+  --insight-grad-start: oklch(0.94 0.02 235);
+  --insight-grad-mid: oklch(0.92 0.02 235);
+  --insight-grad-end: oklch(0.96 0.015 235);
+  --insight-border: oklch(0.85 0.03 235);
+  --insight-icon-bg: oklch(0.45 0.14 255 / 0.1);
+  --insight-icon-text: oklch(0.45 0.14 255);
+  --insight-text: oklch(0.45 0.14 255);
+  --insight-text-sub: oklch(0.25 0.06 250);
+
+  --card-accent-from: oklch(1 0 0 / 0.9);
+  --card-accent-to: oklch(0.9 0.05 230 / 0.5);
+  --card-accent-ring: oklch(0.45 0.14 255 / 0.2);
+  --card-accent-fg: oklch(0.45 0.14 255);
+  --card-highlight: oklch(0.45 0.14 255 / 0.1);
+  --card-item-bg: oklch(0.96 0.01 235);
+
+  --source-pdf: oklch(0.6 0.18 25);
+  --source-doc: oklch(0.45 0.14 255);
+  --source-sheet: oklch(0.55 0.15 145);
+  --source-slide: oklch(0.65 0.15 45);
+  --source-media: oklch(0.5 0.15 280);
+  --source-web: oklch(0.55 0.12 230);
+  --source-text: oklch(0.4 0.05 250);
+}

@@ -1,0 +1,61 @@
+{
+  "brand": {
+    "name": "MarkDown",
+    "descriptor": "Preview",
+    "home": "Home di Markdown Preview"
+  },
+  "aria": {
+    "primaryNavigation": "Navigazione principale",
+    "mobileMenu": "Apri il menu di navigazione",
+    "closeMobileMenu": "Chiudi il menu di navigazione",
+    "closeDialog": "Chiudi finestra"
+  },
+  "mobile": {
+    "menuTitle": "Menu",
+    "navigationSection": "Navigazione",
+    "preferencesSection": "Preferenze"
+  },
+  "links": {
+    "product": "Prodotto",
+    "dashboard": "Dashboard",
+    "about": "Informazioni"
+  },
+  "actions": {
+    "signIn": "Accedi",
+    "signUp": "Registrati",
+    "signOut": "Esci"
+  },
+  "language": {
+    "select": "Seleziona lingua",
+    "label": "Lingua",
+    "dialogTitle": "Scegli la lingua",
+    "description": "Seleziona la lingua dell'applicazione.",
+    "options": {
+      "english": "English",
+      "spanish": "Español",
+      "italian": "Italiano"
+    }
+  },
+  "theme": {
+    "select": "Cambia tema",
+    "label": "Tema",
+    "dialogTitle": "Scegli il tema",
+    "description": "Seleziona lo stile visivo dell'applicazione.",
+    "options": {
+      "light": "Chiaro",
+      "dark": "Scuro",
+      "atom": "Atom",
+      "sky": "Cielo",
+      "ocean": "Oceano",
+      "system": "Sistema"
+    },
+    "descriptions": {
+      "light": "Uno spazio pulito e luminoso",
+      "dark": "Uno spazio scuro e tranquillo",
+      "atom": "Uno spazio blu-viola concentrato",
+      "sky": "Uno spazio blu morbido e arioso",
+      "ocean": "Uno spazio ciano e rilassante",
+      "system": "Segui la preferenza del dispositivo"
+    }
+  }
+}

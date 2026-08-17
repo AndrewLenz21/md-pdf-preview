@@ -1,0 +1,11 @@
+{
+  "name": "server",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "set \"GOCACHE=%CD%\\.cache\" && air",
+    "build": "(if not exist build mkdir build) && (set \"GOCACHE=%CD%\\.cache\" && go build -o build\\server.exe .)",
+    "lint": "set \"GOCACHE=%CD%\\.cache\" && go vet ./...",
+    "check-types": "set \"GOCACHE=%CD%\\.cache\" && go test ./..."
+  }
+}

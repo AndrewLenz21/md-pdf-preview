@@ -1,0 +1,297 @@
+/*
+ * Canonical read-only document content styles.
+ *
+ * Geometry-affecting changes here can change pagination.
+ */
+
+@layer base {
+  .document-markdown-block,
+  .document-callout-content {
+    color: color-mix(in oklab, var(--document-text) 88%, transparent);
+    font-size: var(--document-font-size);
+    line-height: var(--document-line-height);
+    overflow-wrap: anywhere;
+  }
+
+  .document-blank-space-root:not(:last-child) {
+    margin-bottom: calc(-1 * var(--document-block-gap));
+  }
+
+  .document-blank-space-root[data-document-blank-boundary="trailing"][data-document-blank-start="0"] {
+    margin-top: calc(-1 * var(--document-block-gap));
+  }
+
+  .document-blank-space {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    height: calc(
+      var(--document-blank-line-count, 0) * var(--document-font-size) *
+        var(--document-line-height)
+    );
+    height: calc(var(--document-blank-line-count, 0) * 1lh);
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: var(--document-font-size);
+    line-height: var(--document-line-height);
+    cursor: text;
+  }
+
+  [data-preview-editable-fragment="true"] {
+    border-radius: 0.3rem;
+    cursor: text;
+    transition: background-color 180ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  [data-preview-editable-fragment="true"]:hover,
+  [data-preview-editable-fragment="true"][contenteditable="true"] {
+    background: color-mix(in oklab, var(--accent) 7%, transparent);
+  }
+
+  .document-editor-content > .document-blank-space:hover,
+  .document-editor-content > .document-blank-space:focus-within {
+    background: color-mix(in oklab, var(--accent) 7%, transparent);
+  }
+
+  .document-markdown-block > :first-child,
+  .document-callout-content > :first-child {
+    margin-top: 0;
+  }
+
+  .document-markdown-block > :last-child,
+  .document-callout-content > :last-child {
+    margin-bottom: 0;
+  }
+
+  .document-markdown-block h1,
+  .document-markdown-block h2,
+  .document-markdown-block h3,
+  .document-markdown-block h4,
+  .document-callout h1,
+  .document-callout h2,
+  .document-callout h3,
+  .document-callout h4 {
+    color: var(--document-text);
+    font-weight: 650;
+    letter-spacing: -0.028em;
+  }
+
+  .document-markdown-block h1 {
+    margin: 0.15rem 0 0.85rem;
+    font-size: 2rem;
+    line-height: 1.15;
+  }
+
+  .document-markdown-block h2 {
+    margin: 1.65rem 0 0.65rem;
+    font-size: 1.45rem;
+    line-height: 1.25;
+  }
+
+  .document-markdown-block h3 {
+    margin: 1.3rem 0 0.45rem;
+    font-size: 1.15rem;
+    line-height: 1.35;
+  }
+
+  .document-markdown-block h4 {
+    margin: 1.15rem 0 0.35rem;
+    font-size: 1rem;
+    line-height: 1.4;
+  }
+
+  .document-markdown-block p,
+  .document-callout p {
+    margin: 0.7rem 0;
+  }
+
+  .document-markdown-block ul,
+  .document-markdown-block ol,
+  .document-callout ul,
+  .document-callout ol {
+    margin: 0.65rem 0;
+    padding-left: 1.45rem;
+  }
+
+  .document-markdown-block ul,
+  .document-callout ul {
+    list-style: disc;
+  }
+
+  .document-markdown-block ol,
+  .document-callout ol {
+    list-style: decimal;
+  }
+
+  .document-markdown-block li + li,
+  .document-callout li + li {
+    margin-top: 0.3rem;
+  }
+
+  .document-markdown-block li > ul,
+  .document-markdown-block li > ol,
+  .document-callout li > ul,
+  .document-callout li > ol {
+    margin: 0.3rem 0;
+  }
+
+  .document-markdown-block a,
+  .document-callout a {
+    color: color-mix(in oklab, var(--primary) 84%, var(--document-text));
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.18em;
+  }
+
+  .document-markdown-block img,
+  .document-callout img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 0.9rem 0;
+  }
+
+  .document-markdown-block blockquote {
+    margin: 0.95rem 0;
+    border-left: 3px solid color-mix(in oklab, var(--primary) 62%, transparent);
+    padding-left: 0.9rem;
+    color: var(--document-muted);
+  }
+
+  .document-markdown-block blockquote > :first-child {
+    margin-top: 0;
+  }
+
+  .document-markdown-block blockquote > :last-child {
+    margin-bottom: 0;
+  }
+
+  .document-markdown-block hr {
+    margin: 1.35rem 0;
+    border: 0;
+    border-top: 1px solid var(--document-border);
+  }
+
+  .document-markdown-block code,
+  .document-callout code {
+    border-radius: 0.25rem;
+    background: color-mix(in oklab, var(--muted) 88%, transparent);
+    padding: 0.1rem 0.3rem;
+    font-family: var(--font-geist-mono);
+    font-size: 0.88em;
+  }
+
+  .document-markdown-block pre {
+    margin: 0.95rem 0;
+    max-width: 100%;
+    overflow-x: auto;
+    border: 1px solid color-mix(in oklab, var(--document-border) 82%, transparent);
+    border-radius: 0.5rem;
+    background: color-mix(in oklab, var(--muted) 76%, transparent);
+    padding: 0.8rem 0.9rem;
+    scrollbar-width: thin;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  .document-markdown-block pre code {
+    background: transparent;
+    padding: 0;
+    white-space: inherit;
+  }
+
+  .document-markdown-block table {
+    width: 100%;
+    margin: 0.95rem 0;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-size: 0.92em;
+  }
+
+  .document-markdown-block th,
+  .document-markdown-block td {
+    border: 1px solid color-mix(in oklab, var(--document-border) 88%, transparent);
+    padding: 0.45rem 0.55rem;
+    vertical-align: top;
+    overflow-wrap: anywhere;
+    text-align: left;
+  }
+
+  .document-markdown-block th {
+    background: color-mix(in oklab, var(--muted) 82%, transparent);
+    color: var(--document-text);
+    font-weight: 650;
+  }
+
+  .document-markdown-block input[type="checkbox"] {
+    margin-right: 0.45rem;
+    accent-color: var(--primary);
+  }
+
+  .document-callout {
+    margin: 0.9rem 0;
+    border: 1px solid color-mix(in oklab, var(--document-border) 62%, transparent);
+    border-radius: 0.6rem;
+    padding: 0.75rem 0.9rem;
+  }
+
+  .document-callout-has-icon {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: 0.65rem;
+    align-items: start;
+  }
+
+  .document-callout-icon {
+    grid-column: 1;
+    grid-row: 1;
+    padding-top: 0.05em;
+    font-size: 1.3em;
+    line-height: 1.25;
+  }
+
+  .document-callout-has-icon > .document-callout-content {
+    grid-column: 2;
+    min-width: 0;
+  }
+
+  .document-callout-has-icon .document-callout-content > :first-child {
+    margin-top: 0;
+  }
+
+  .document-callout-info {
+    background: var(--document-callout-info);
+  }
+
+  .document-callout-success {
+    background: var(--document-callout-success);
+  }
+
+  .document-callout-warning {
+    background: var(--document-callout-warning);
+  }
+
+  .document-callout-danger {
+    background: var(--document-callout-danger);
+  }
+
+  .document-callout-content > p:first-child::first-letter {
+    font-size: 1.05em;
+  }
+
+  .document-unsupported-block {
+    margin: 0.85rem 0;
+    overflow-x: auto;
+    border: 1px dashed color-mix(in oklab, var(--document-border) 90%, transparent);
+    border-radius: 0.45rem;
+    background: color-mix(in oklab, var(--muted) 58%, transparent);
+    padding: 0.75rem;
+    color: var(--document-muted);
+    font-family: var(--font-geist-mono);
+    font-size: 0.78rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+}

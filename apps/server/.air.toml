@@ -1,0 +1,27 @@
+root = "."
+tmp_dir = "tmp"
+
+[build]
+  cmd = "go build -o ./tmp/server.exe ."
+  entrypoint = ["./tmp/server.exe"]
+  delay = 1000
+  exclude_dir = [".cache", "build", "tmp"]
+  include_ext = ["go"]
+  exclude_regex = ["_test.go"]
+  exclude_unchanged = true
+  stop_on_error = true
+
+[log]
+  time = true
+
+[color]
+  main = "magenta"
+  watcher = "cyan"
+  build = "yellow"
+  runner = "green"
+
+[misc]
+  clean_on_exit = true
+
+[screen]
+  clear_on_rebuild = true

@@ -1,0 +1,12 @@
+# Keep source files consistent across Windows, macOS, and Linux.
+* text=auto eol=lf
+
+# Never perform line-ending conversion on binary assets.
+*.ico binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.svg binary
+*.woff binary
+*.woff2 binary

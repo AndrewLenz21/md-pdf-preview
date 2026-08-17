@@ -1,0 +1,30 @@
+{
+  "signUp": {
+    "title": "Crea un account",
+    "name": "Nome",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Registrati",
+    "loading": "Creazione dell'account...",
+    "success": "Account creato correttamente.",
+    "redirecting": "Apertura della dashboard...",
+    "error": "Impossibile creare l'account.",
+    "existingAccount": "Hai già un account?",
+    "existingAccountLink": "Accedi"
+  },
+  "signIn": {
+    "title": "Accedi",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Accedi",
+    "loading": "Accesso in corso...",
+    "success": "Accesso effettuato correttamente.",
+    "redirecting": "Apertura della dashboard...",
+    "error": "Impossibile accedere.",
+    "newAccount": "Non hai un account?",
+    "newAccountLink": "Registrati"
+  },
+  "navigation": {
+    "backHome": "Torna a MarkDown Preview"
+  }
+}

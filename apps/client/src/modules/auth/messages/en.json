@@ -1,0 +1,30 @@
+{
+  "signUp": {
+    "title": "Create account",
+    "name": "Name",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign up",
+    "loading": "Creating account...",
+    "success": "Account created successfully.",
+    "redirecting": "Opening your dashboard...",
+    "error": "Unable to create your account.",
+    "existingAccount": "Already have an account?",
+    "existingAccountLink": "Sign in"
+  },
+  "signIn": {
+    "title": "Sign in",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign in",
+    "loading": "Signing in...",
+    "success": "Signed in successfully.",
+    "redirecting": "Opening your dashboard...",
+    "error": "Unable to sign in.",
+    "newAccount": "Don't have an account?",
+    "newAccountLink": "Sign up"
+  },
+  "navigation": {
+    "backHome": "Back to MarkDown Preview"
+  }
+}
