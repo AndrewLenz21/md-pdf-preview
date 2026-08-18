@@ -24,17 +24,23 @@ import { paginateDocument } from "./pagination/paginateDocument";
 import type { DocumentPagePlan } from "./pagination/paginateDocument";
 import { getPaperContentCssVariables } from "./paper-sizes";
 import { PaperPage } from "./PaperPage";
+import {
+  getPaperPageSourceRange,
+  replacePaperPageSource,
+} from "./pageSource";
 
 export function PaperPreview({
   documentTitle,
   markdown,
   paperDimensions,
   previewEditing,
+  onContentChange,
 }: {
   documentTitle: string;
   markdown: string;
   paperDimensions: PaperPreviewDimensions;
   previewEditing?: PreviewEditingController;
+  onContentChange?: (markdown: string) => void;
 }) {
   const measureRoot = useRef<HTMLDivElement>(null);
   const [lastReadyPages, setLastReadyPages] = useState<{
@@ -158,10 +164,12 @@ export function PaperPreview({
       }
     : lastReadyPages;
   const hasVisiblePages = visiblePageState !== null;
+  const isRendering = !hasBaseMeasurements;
 
   return (
     <div
       className={`document-pagination-root ${hasVisiblePages ? "document-pagination-ready" : "document-pagination-pending"}`}
+      aria-busy={isRendering}
       data-document-invalid-measurements={
         process.env.NODE_ENV !== "production" && invalidUnitIds.length > 0
           ? invalidUnitIds.join(",")
@@ -169,6 +177,20 @@ export function PaperPreview({
       }
       style={getPaperContentCssVariables(paperDimensions) as React.CSSProperties}
     >
+      {isRendering ? (
+        <div
+          className="document-preview-rendering-overlay"
+          role="status"
+          aria-live="polite"
+        >
+          <div className="document-preview-rendering-card">
+            <span className="document-preview-rendering-spinner" aria-hidden="true" />
+            <span>
+              {hasVisiblePages ? "Updating preview..." : "Rendering preview..."}
+            </span>
+          </div>
+        </div>
+      ) : null}
       <div
         ref={measureRoot}
         className="document-measure-surface"
@@ -254,21 +276,40 @@ export function PaperPreview({
       <div
         className={`document-pages ${hasVisiblePages ? "document-pages-ready" : "document-pages-pending"}`}
       >
-        {visiblePageState?.pages.map((pagePlan, pageIndex) => (
-          <PaperPage
-            key={pagePlan.id}
-            blocks={visiblePageState.blocks}
-            definitions={visiblePageState.definitions}
-            documentTitle={documentTitle}
-            pageIndex={pageIndex}
-            pagePlan={pagePlan}
-            paperDimensions={paperDimensions}
-            animateEntry={pageIndex > 0}
-            previewEditing={
-              hasBaseMeasurements ? previewEditing : undefined
-            }
-          />
-        ))}
+        {visiblePageState?.pages.map((pagePlan, pageIndex) => {
+          const pageSourceRange = getPaperPageSourceRange(
+            pagePlan,
+            visiblePageState.blocks,
+            markdown,
+          );
+
+          return (
+            <PaperPage
+              key={pagePlan.id}
+              blocks={visiblePageState.blocks}
+              definitions={visiblePageState.definitions}
+              documentTitle={documentTitle}
+              pageIndex={pageIndex}
+              pagePlan={pagePlan}
+              paperDimensions={paperDimensions}
+              animateEntry={pageIndex > 0}
+              pageSourceRange={pageSourceRange}
+                onPageMarkdownChange={
+                  pageSourceRange && onContentChange
+                    ? (pageMarkdown) =>
+                        onContentChange(
+                        replacePaperPageSource(
+                          markdown,
+                          pageSourceRange,
+                          pageMarkdown,
+                        ),
+                      )
+                  : undefined
+              }
+              previewEditing={hasVisiblePages ? previewEditing : undefined}
+            />
+          );
+        })}
       </div>
 
       <div className="document-print-fallback" aria-hidden="true">

@@ -1,13 +1,14 @@
 export {
   PAPER_SIZE_OPTIONS,
   PAPER_SIZES,
+  getDocumentPageHeight,
   getPaperContentCssVariables,
   getPaperPreviewDimensions,
   isPaperSize,
-} from "@/modules/dashboard/document/utils";
+} from "./documentDimensions";
 export type {
   PaperDimensionUnit,
   PaperPageMargins,
   PaperPreviewDimensions,
   PaperSizeDefinition,
-} from "@/modules/dashboard/document/utils";
+} from "./documentDimensions";

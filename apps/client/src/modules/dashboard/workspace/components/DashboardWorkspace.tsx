@@ -2,25 +2,36 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
-import {
-  MOCK_DOCUMENTS,
-  SELECTED_DOCUMENT_ID,
-} from "@/modules/dashboard/constants/mock-documents";
 import { DocsSidebar } from "@/modules/dashboard/docs-sidebar";
 import {
   DashboardBottomNav,
   type MobileDashboardSection,
 } from "@/modules/dashboard/mobile-navigation";
+import { useDocumentStore } from "@/modules/dashboard/stores";
 import {
   DocumentPreview,
+  PreviewToolbar,
   PreviewZoomControl,
 } from "@/modules/dashboard/preview";
+import type { EditingActions } from "@/modules/dashboard/preview/utils/editingActions";
 import type { DocumentEditorMode } from "@/modules/dashboard/types/editor.types";
+import { attachDocumentPageBreakMarkers } from "../utils/documentPageBreakMarkers";
+import { attachDocumentScrollSync } from "../utils/documentScrollSync";
 
 export function DashboardWorkspace() {
-  const [documents, setDocuments] = useState(MOCK_DOCUMENTS);
-  const [selectedDocumentId, setSelectedDocumentId] =
-    useState(SELECTED_DOCUMENT_ID);
+  const documents = useDocumentStore((state) => state.documents);
+  const selectedDocumentId = useDocumentStore(
+    (state) => state.selectedDocumentId,
+  );
+  const selectDocumentInStore = useDocumentStore(
+    (state) => state.selectDocument,
+  );
+  const scheduleContentUpdate = useDocumentStore(
+    (state) => state.scheduleContentUpdate,
+  );
+  const flushPendingContent = useDocumentStore(
+    (state) => state.flushPendingContent,
+  );
   const [mobileSection, setMobileSection] =
     useState<MobileDashboardSection>("preview");
   const [mobileTransitionDirection, setMobileTransitionDirection] = useState<
@@ -30,10 +41,29 @@ export function DashboardWorkspace() {
   const [modeTransitionDirection, setModeTransitionDirection] = useState<
     "forward" | "backward" | null
   >(null);
+  const isPreviewMode = editorMode === "preview";
+  const [desktopPreviewVisible, setDesktopPreviewVisible] =
+    useState(isPreviewMode);
+  const [desktopEditingActions, setDesktopEditingActions] =
+    useState<EditingActions | null>(null);
+  const [documentPageBreakMarkers, setDocumentPageBreakMarkers] = useState<
+    number[]
+  >([]);
+  const [mobilePageBreakMarkers, setMobilePageBreakMarkers] = useState<number[]>(
+    [],
+  );
+  const pageBreakMarkerDocumentIdRef = useRef(selectedDocumentId);
+  const desktopDocumentScrollRef = useRef<HTMLDivElement | null>(null);
+  const desktopPreviewScrollRef = useRef<HTMLDivElement | null>(null);
+  const mobileDocumentScrollRef = useRef<HTMLDivElement | null>(null);
+  const mobilePageBreakPreviewRef = useRef<HTMLDivElement | null>(null);
   const mobileSectionScrollPositions = useRef<
     Record<MobileDashboardSection, number>
   >({ files: 0, preview: 0 });
-  const isPreviewMode = editorMode === "preview";
+  const isDesktopSplit = isPreviewMode || desktopPreviewVisible;
+  const selectedDocument =
+    documents.find((document) => document.id === selectedDocumentId) ??
+    documents[0];
 
   const saveMobileSectionScroll = (section: MobileDashboardSection) => {
     mobileSectionScrollPositions.current[section] = window.scrollY;
@@ -62,25 +92,78 @@ export function DashboardWorkspace() {
 
     return () => window.clearTimeout(timeoutId);
   }, [modeTransitionDirection]);
-  const selectedDocument =
-    documents.find((document) => document.id === selectedDocumentId) ??
-    documents[0];
 
-  const updateDocumentContent = (id: string, content: string) => {
-    setDocuments((currentDocuments) =>
-      currentDocuments.map((document) =>
-        document.id === id ? { ...document, content } : document,
-      ),
+  useEffect(() => {
+    if (isPreviewMode || !desktopPreviewVisible) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(
+      () => setDesktopPreviewVisible(false),
+      320,
     );
-  };
 
-  const updateSelectedDocumentContent = (content: string) => {
-    updateDocumentContent(selectedDocument.id, content);
-  };
+    return () => window.clearTimeout(timeoutId);
+  }, [desktopPreviewVisible, isPreviewMode]);
 
+  useEffect(() => {
+    if (!isPreviewMode) {
+      return;
+    }
+
+    return attachDocumentScrollSync(
+      desktopDocumentScrollRef.current,
+      desktopPreviewScrollRef.current,
+    );
+  }, [desktopPreviewVisible, isPreviewMode, mobileSection, selectedDocument.id]);
+
+  useEffect(() => {
+    if (pageBreakMarkerDocumentIdRef.current === selectedDocument.id) {
+      return;
+    }
+
+    pageBreakMarkerDocumentIdRef.current = selectedDocument.id;
+    setDocumentPageBreakMarkers([]);
+    setMobilePageBreakMarkers([]);
+  }, [selectedDocument.id]);
+
+  useEffect(() => {
+    if (!desktopPreviewVisible) {
+      return;
+    }
+
+    return attachDocumentPageBreakMarkers(
+      desktopDocumentScrollRef.current,
+      desktopPreviewScrollRef.current,
+      setDocumentPageBreakMarkers,
+    );
+  }, [
+    desktopPreviewVisible,
+    isPreviewMode,
+    mobileSection,
+    selectedDocument.id,
+  ]);
+
+  useEffect(() => {
+    if (mobileSection !== "preview" || editorMode !== "document") {
+      return;
+    }
+
+    return attachDocumentPageBreakMarkers(
+      mobileDocumentScrollRef.current,
+      mobilePageBreakPreviewRef.current,
+      setMobilePageBreakMarkers,
+    );
+  }, [editorMode, mobileSection, selectedDocument.id]);
   const changeEditorMode = (nextMode: DocumentEditorMode) => {
     if (nextMode === editorMode) {
       return;
+    }
+
+    flushPendingContent(selectedDocument.id);
+
+    if (nextMode === "preview") {
+      setDesktopPreviewVisible(true);
     }
 
     const modeOrder: DocumentEditorMode[] = ["markdown", "document", "preview"];
@@ -94,7 +177,7 @@ export function DashboardWorkspace() {
 
   const selectDocument = (id: string) => {
     saveMobileSectionScroll(mobileSection);
-    setSelectedDocumentId(id);
+    selectDocumentInStore(id);
     setMobileTransitionDirection("forward");
     setMobileSection("preview");
   };
@@ -113,7 +196,7 @@ export function DashboardWorkspace() {
 
   return (
     <div
-      className={`min-h-screen bg-muted/30 text-foreground lg:flex ${isPreviewMode ? "overflow-x-hidden lg:h-screen lg:overflow-hidden" : "overflow-visible lg:h-auto"}`}
+      className={`dashboard-workspace min-h-screen bg-muted/30 text-foreground lg:flex ${isDesktopSplit ? "overflow-x-hidden lg:h-screen lg:overflow-hidden" : "overflow-visible lg:h-auto"}`}
     >
       <aside className="hidden h-screen w-67.5 shrink-0 border-r border-border/80 bg-sidebar lg:sticky lg:top-0 lg:flex">
         <DocsSidebar
@@ -124,18 +207,67 @@ export function DashboardWorkspace() {
       </aside>
 
       <main
-        className={`min-w-0 flex-1 pb-20 lg:pb-0 ${isPreviewMode ? "lg:h-screen lg:min-h-0" : "lg:h-auto lg:min-h-screen"}`}
+        className={`min-w-0 flex-1 pb-20 lg:pb-0 ${isDesktopSplit ? "lg:h-screen lg:min-h-0" : "lg:h-auto lg:min-h-screen"}`}
       >
-        <div className={`hidden lg:block ${isPreviewMode ? "h-full" : ""}`}>
-          <DocumentPreview
+        <div
+          className={`hidden ${isDesktopSplit ? "lg:flex h-full min-h-0 flex-col" : "lg:block"}`}
+        >
+          <PreviewToolbar
             document={selectedDocument}
             mode={editorMode}
-            scrollScope="desktop"
             onModeChange={changeEditorMode}
-            onContentChange={updateSelectedDocumentContent}
-            modeTransitionDirection={modeTransitionDirection}
+            editingActions={desktopEditingActions}
+            splitMode={isPreviewMode}
           />
-          <PreviewZoomControl mode={editorMode} />
+          <div
+            className={isDesktopSplit ? "flex h-0 min-h-0 min-w-0 flex-1" : "min-w-0"}
+          >
+            <section
+              className={`relative h-full min-h-0 min-w-0 transition-[width] duration-300 ease-out ${isDesktopSplit ? (isPreviewMode ? "w-1/2" : "w-full") : "w-full"}`}
+            >
+              <DocumentPreview
+                document={selectedDocument}
+                mode={isPreviewMode ? "document" : editorMode}
+                embedded={isDesktopSplit}
+                showToolbar={false}
+                scrollScope="desktop"
+                onModeChange={changeEditorMode}
+                onContentChange={(content) =>
+                  scheduleContentUpdate(selectedDocument.id, content)
+                }
+                onEditingActionsChange={setDesktopEditingActions}
+                scrollContainerRef={desktopDocumentScrollRef}
+                pageBreakMarkers={documentPageBreakMarkers}
+                modeTransitionDirection={modeTransitionDirection}
+              />
+              <PreviewZoomControl
+                mode={isPreviewMode ? "document" : editorMode}
+                embedded={isDesktopSplit}
+              />
+            </section>
+            {desktopPreviewVisible ? (
+              <section
+                aria-hidden={!isPreviewMode}
+                className={`relative h-full min-h-0 min-w-0 overflow-hidden transition-[width,opacity,transform] duration-300 ease-out ${isPreviewMode ? "dashboard-desktop-preview-enter w-1/2 translate-x-0 opacity-100" : "pointer-events-none w-0 translate-x-4 opacity-0"}`}
+              >
+                <DocumentPreview
+                  document={selectedDocument}
+                  mode="preview"
+                  embedded
+                  showToolbar={false}
+                  scrollScope="desktop"
+                  onModeChange={changeEditorMode}
+                  onContentChange={(content) =>
+                    scheduleContentUpdate(selectedDocument.id, content)
+                  }
+                  scrollContainerRef={desktopPreviewScrollRef}
+                />
+                {isPreviewMode ? (
+                  <PreviewZoomControl mode="preview" embedded />
+                ) : null}
+              </section>
+            ) : null}
+          </div>
         </div>
         <div
           className={`relative lg:hidden ${isPreviewMode ? "overflow-hidden" : ""}`}
@@ -157,8 +289,12 @@ export function DashboardWorkspace() {
                 mode={editorMode}
                 scrollScope="mobile"
                 onModeChange={changeEditorMode}
-                onContentChange={updateSelectedDocumentContent}
+                onContentChange={(content) =>
+                  scheduleContentUpdate(selectedDocument.id, content)
+                }
                 modeTransitionDirection={modeTransitionDirection}
+                pageBreakMarkers={mobilePageBreakMarkers}
+                scrollContainerRef={mobileDocumentScrollRef}
               />
             )}
           </div>
@@ -169,6 +305,19 @@ export function DashboardWorkspace() {
           </div>
         ) : null}
       </main>
+
+      <div aria-hidden="true" className="print-document-preview">
+        <DocumentPreview
+          document={selectedDocument}
+          mode="preview"
+          scrollScope="mobile"
+          disableScrollSync
+          showToolbar={false}
+          onModeChange={() => undefined}
+          onContentChange={() => undefined}
+          scrollContainerRef={mobilePageBreakPreviewRef}
+        />
+      </div>
 
       <DashboardBottomNav
         activeSection={mobileSection}

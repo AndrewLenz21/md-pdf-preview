@@ -7,3 +7,6 @@
 @import "./styles/themes/ocean.css";
 @import "../modules/dashboard/document/styles/document-content.css";
 @import "./styles/base.css";
+@import "./styles/document.css";
+@import "./styles/print.css";
+@import "./styles/effects.css";

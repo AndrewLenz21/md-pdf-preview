@@ -138,9 +138,7 @@ export function createEditingActions(
     },
 
     print: () => {
-      if (context.modeRef.current === "preview") {
-        window.print();
-      }
+      window.print();
     },
   };
 }

@@ -1,11 +1,14 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { Editor } from "@tiptap/core";
 import { Slice } from "@tiptap/pm/model";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { MOCK_DOCUMENTS } from "@/modules/dashboard/constants/mock-documents";
+
 import { DocumentEditor } from "./DocumentEditor";
+import { tiptapToMarkdown } from "./markdown/tiptapToMarkdown";
 
 describe("DocumentEditor", () => {
   afterEach(() => {
@@ -209,5 +212,391 @@ describe("DocumentEditor", () => {
     vi.advanceTimersByTime(100);
 
     expect(onMarkdownChange).toHaveBeenCalledWith("## Updated section");
+  });
+
+  it("serializes an empty paragraph inserted after the non-goals heading", () => {
+    vi.useFakeTimers();
+    const editorRef = { current: null as Editor | null };
+    const onMarkdownChange = vi.fn();
+    const markdown = "## 🚫 Explicit Non-Goals\n\nKeep the scope controlled.";
+
+    render(
+      <DocumentEditor
+        markdown={markdown}
+        zoom={100}
+        editorRef={editorRef}
+        onMarkdownChange={onMarkdownChange}
+      />,
+    );
+
+    const editor = editorRef.current;
+    expect(editor).toBeTruthy();
+
+    let headingEnd = 0;
+    editor?.state.doc.descendants((node, position) => {
+      if (node.type.name === "heading") {
+        headingEnd = position + node.nodeSize - 1;
+      }
+    });
+    editor?.commands.setTextSelection(headingEnd);
+    editor?.commands.splitBlock();
+    vi.advanceTimersByTime(100);
+
+    expect(onMarkdownChange).toHaveBeenCalledWith(
+      "## 🚫 Explicit Non-Goals\n\n\nKeep the scope controlled.",
+    );
+  });
+
+  it("serializes the non-goals heading in the product proposal", () => {
+    vi.useFakeTimers();
+    const editorRef = { current: null as Editor | null };
+    const onMarkdownChange = vi.fn();
+    const markdown = MOCK_DOCUMENTS.find(
+      (document) => document.id === "product-proposal",
+    )?.content ?? "";
+
+    render(
+      <DocumentEditor
+        markdown={markdown}
+        zoom={100}
+        editorRef={editorRef}
+        onMarkdownChange={onMarkdownChange}
+      />,
+    );
+
+    const editor = editorRef.current;
+    expect(editor).toBeTruthy();
+
+    let headingEnd = 0;
+    editor?.state.doc.descendants((node, position) => {
+      if (
+        node.type.name === "heading" &&
+        node.textContent.includes("Explicit Non-Goals")
+      ) {
+        headingEnd = position + node.nodeSize - 1;
+      }
+    });
+    expect(headingEnd).toBeGreaterThan(0);
+    editor?.commands.setTextSelection(headingEnd);
+    editor?.commands.splitBlock();
+    vi.advanceTimersByTime(100);
+
+    expect(onMarkdownChange.mock.calls.at(-1)?.[0]).toContain(
+      "## 🚫 Explicit Non-Goals\n\n\nKeep the scope controlled.",
+    );
+  });
+
+  it("serializes the Phase 3 heading in the product proposal", () => {
+    vi.useFakeTimers();
+    const editorRef = { current: null as Editor | null };
+    const onMarkdownChange = vi.fn();
+    const markdown = MOCK_DOCUMENTS.find(
+      (document) => document.id === "product-proposal",
+    )?.content ?? "";
+
+    render(
+      <DocumentEditor
+        markdown={markdown}
+        zoom={100}
+        editorRef={editorRef}
+        onMarkdownChange={onMarkdownChange}
+      />,
+    );
+
+    const editor = editorRef.current;
+    expect(editor).toBeTruthy();
+
+    let headingEnd = 0;
+    editor?.state.doc.descendants((node, position) => {
+      if (
+        node.type.name === "heading" &&
+        node.textContent.includes("Phase 3 — Local history")
+      ) {
+        headingEnd = position + node.nodeSize - 1;
+      }
+    });
+    expect(headingEnd).toBeGreaterThan(0);
+    editor?.commands.setTextSelection(headingEnd);
+    editor?.commands.splitBlock();
+    vi.advanceTimersByTime(100);
+
+    expect(onMarkdownChange.mock.calls.at(-1)?.[0]).toContain(
+      "### Phase 3 — Local history\n\n\n- [ ] Save previews locally.",
+    );
+  });
+
+  it("serializes an empty paragraph between a heading and a task list", () => {
+    vi.useFakeTimers();
+    const editorRef = { current: null as Editor | null };
+    const onMarkdownChange = vi.fn();
+    const markdown = [
+      "### Phase 3 — Local history",
+      "",
+      "- [ ] Save previews locally.",
+      "- [ ] Reopen/edit previous documents.",
+    ].join("\n");
+
+    render(
+      <DocumentEditor
+        markdown={markdown}
+        zoom={100}
+        editorRef={editorRef}
+        onMarkdownChange={onMarkdownChange}
+      />,
+    );
+
+    const editor = editorRef.current;
+    expect(editor).toBeTruthy();
+
+    let headingEnd = 0;
+    editor?.state.doc.descendants((node, position) => {
+      if (node.type.name === "heading") {
+        headingEnd = position + node.nodeSize - 1;
+      }
+    });
+    editor?.commands.setTextSelection(headingEnd);
+    editor?.commands.splitBlock();
+    vi.advanceTimersByTime(100);
+
+    expect(tiptapToMarkdown(editor!)).toContain(
+      "### Phase 3 — Local history\n\n\n- [ ] Save previews locally.",
+    );
+    expect(onMarkdownChange.mock.calls.at(-1)?.[0]).toContain(
+      "### Phase 3 — Local history\n\n\n- [ ] Save previews locally.",
+    );
+  });
+
+  it("serializes another Enter when a blank space already precedes the task list", () => {
+    vi.useFakeTimers();
+    const editorRef = { current: null as Editor | null };
+    const onMarkdownChange = vi.fn();
+    const markdown = [
+      "### Phase 3 — Local history",
+      "",
+      "",
+      "- [ ] Save previews locally.",
+      "- [ ] Reopen/edit previous documents.",
+    ].join("\n");
+
+    render(
+      <DocumentEditor
+        markdown={markdown}
+        zoom={100}
+        editorRef={editorRef}
+        onMarkdownChange={onMarkdownChange}
+      />,
+    );
+
+    const editor = editorRef.current;
+    expect(editor).toBeTruthy();
+
+    let headingEnd = 0;
+    editor?.state.doc.descendants((node, position) => {
+      if (node.type.name === "heading") {
+        headingEnd = position + node.nodeSize - 1;
+      }
+    });
+    editor?.commands.setTextSelection(headingEnd);
+    editor?.commands.splitBlock();
+    vi.advanceTimersByTime(100);
+
+    expect(onMarkdownChange).toHaveBeenCalled();
+    expect(onMarkdownChange.mock.calls.at(-1)?.[0]).not.toBe(markdown);
+  });
+
+  it("serializes a physical Enter before a task list", () => {
+    vi.useFakeTimers();
+    const editorRef = { current: null as Editor | null };
+    const onMarkdownChange = vi.fn();
+    const markdown = [
+      "### Phase 3 — Local history",
+      "",
+      "- [ ] Save previews locally.",
+      "- [ ] Reopen/edit previous documents.",
+    ].join("\n");
+
+    render(
+      <DocumentEditor
+        markdown={markdown}
+        zoom={100}
+        editorRef={editorRef}
+        onMarkdownChange={onMarkdownChange}
+      />,
+    );
+
+    const editor = editorRef.current;
+    expect(editor).toBeTruthy();
+
+    let headingEnd = 0;
+    editor?.state.doc.descendants((node, position) => {
+      if (node.type.name === "heading") {
+        headingEnd = position + node.nodeSize - 1;
+      }
+    });
+    editor?.commands.setTextSelection(headingEnd);
+    fireEvent.keyDown(editor!.view.dom, {
+      key: "Enter",
+      code: "Enter",
+      keyCode: 13,
+      which: 13,
+    });
+    vi.advanceTimersByTime(100);
+
+    expect(onMarkdownChange.mock.calls.at(-1)?.[0]).toContain(
+      "### Phase 3 — Local history\n\n\n- [ ] Save previews locally.",
+    );
+  });
+
+  it("serializes a physical Enter in Phase 3 of the full product proposal", () => {
+    vi.useFakeTimers();
+    const editorRef = { current: null as Editor | null };
+    const onMarkdownChange = vi.fn();
+    const markdown = MOCK_DOCUMENTS.find(
+      (document) => document.id === "product-proposal",
+    )?.content ?? "";
+
+    render(
+      <DocumentEditor
+        markdown={markdown}
+        zoom={100}
+        editorRef={editorRef}
+        onMarkdownChange={onMarkdownChange}
+      />,
+    );
+
+    const editor = editorRef.current;
+    expect(editor).toBeTruthy();
+
+    let headingEnd = 0;
+    editor?.state.doc.descendants((node, position) => {
+      if (
+        node.type.name === "heading" &&
+        node.textContent.includes("Phase 3 — Local history")
+      ) {
+        headingEnd = position + node.nodeSize - 1;
+      }
+    });
+    expect(headingEnd).toBeGreaterThan(0);
+    editor?.commands.setTextSelection(headingEnd);
+    fireEvent.keyDown(editor!.view.dom, {
+      key: "Enter",
+      code: "Enter",
+      keyCode: 13,
+      which: 13,
+    });
+    vi.advanceTimersByTime(100);
+
+    expect(onMarkdownChange.mock.calls.at(-1)?.[0]).toContain(
+      "### Phase 3 — Local history\n\n\n- [ ] Save previews locally.",
+    );
+  });
+
+  it("serializes Enter pressed inside an existing blank-space node", () => {
+    vi.useFakeTimers();
+    const editorRef = { current: null as Editor | null };
+    const onMarkdownChange = vi.fn();
+    const markdown = [
+      "### Phase 3 — Local history",
+      "",
+      "",
+      "- [ ] Save previews locally.",
+      "- [ ] Reopen/edit previous documents.",
+    ].join("\n");
+
+    render(
+      <DocumentEditor
+        markdown={markdown}
+        zoom={100}
+        editorRef={editorRef}
+        onMarkdownChange={onMarkdownChange}
+      />,
+    );
+
+    const editor = editorRef.current;
+    expect(editor).toBeTruthy();
+
+    let blankSpacePosition = 0;
+    editor?.state.doc.descendants((node, position) => {
+      if (node.type.name === "blankSpace") {
+        blankSpacePosition = position;
+      }
+    });
+    expect(blankSpacePosition).toBeGreaterThan(0);
+    editor?.commands.setTextSelection(blankSpacePosition + 1);
+    fireEvent.keyDown(editor!.view.dom, {
+      key: "Enter",
+      code: "Enter",
+      keyCode: 13,
+      which: 13,
+    });
+    vi.advanceTimersByTime(100);
+
+    expect(onMarkdownChange).toHaveBeenCalled();
+  });
+
+  it("restores the list break instead of exposing its serializer token", () => {
+    vi.useFakeTimers();
+    const editorRef = { current: null as Editor | null };
+    const onMarkdownChange = vi.fn();
+
+    render(
+      <DocumentEditor
+        markdown={"### Phase 2 — Layout controls\n\n- [ ] Better handling for images, callouts, and code blocks.\n\n### Phase 3 — Local history"}
+        zoom={100}
+        editorRef={editorRef}
+        onMarkdownChange={onMarkdownChange}
+      />,
+    );
+
+    const editor = editorRef.current;
+    expect(editor).toBeTruthy();
+    editor?.commands.setContent({
+      type: "doc",
+      content: [
+        {
+          type: "heading",
+          attrs: { level: 3 },
+          content: [{ type: "text", text: "Phase 2 — Layout controls" }],
+        },
+        {
+          type: "taskList",
+          content: [
+            {
+              type: "taskItem",
+              attrs: { checked: false },
+              content: [
+                {
+                  type: "paragraph",
+                  content: [
+                    {
+                      type: "text",
+                      text: "Better handling for images, callouts, and code blocks.",
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              type: "taskItem",
+              attrs: { checked: false },
+              content: [{ type: "paragraph" }],
+            },
+          ],
+        },
+        {
+          type: "heading",
+          attrs: { level: 3 },
+          content: [{ type: "text", text: "Phase 3 — Local history" }],
+        },
+      ],
+    });
+    vi.advanceTimersByTime(100);
+
+    const serialized = onMarkdownChange.mock.calls.at(-1)?.[0] ?? "";
+
+    expect(serialized).not.toContain("DOCUMENT_EMPTY_LIST_BREAK");
+    expect(serialized).toContain(
+      "- [ ] Better handling for images, callouts, and code blocks.\n\n\n### Phase 3 — Local history",
+    );
   });
 });

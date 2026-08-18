@@ -80,12 +80,16 @@ function ZoomStepButton({
 export function PreviewZoomControl({
   mode,
   isMobile = false,
+  embedded = false,
 }: {
   mode: DocumentEditorMode;
   isMobile?: boolean;
+  embedded?: boolean;
 }) {
   const { zoom, zoomIn, zoomOut } = useModeZoom(mode);
-  const positioningClass = getPositioningClass(isMobile);
+  const positioningClass = embedded
+    ? "absolute bottom-6 right-6"
+    : getPositioningClass(isMobile);
 
   return (
     <div

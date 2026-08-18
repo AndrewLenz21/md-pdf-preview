@@ -101,11 +101,13 @@ export function PreviewToolbar({
   mode,
   onModeChange,
   editingActions,
+  splitMode = false,
 }: {
   document: MockDocument;
   mode: DocumentEditorMode;
   onModeChange: (mode: DocumentEditorMode) => void;
   editingActions?: EditingActions | null;
+  splitMode?: boolean;
 }) {
   const isPreviewMode = mode === "preview";
 
@@ -176,6 +178,9 @@ export function PreviewToolbar({
               className="mobile-preview-toolbar-separator hidden h-5 w-px bg-border lg:block"
               aria-hidden="true"
             />
+            {splitMode ? (
+              <EditingActionButtons editingActions={editingActions} />
+            ) : null}
             <PreviewActionButtons editingActions={editingActions} />
           </>
         ) : (

@@ -12,15 +12,34 @@ export type PreviewSourceBookmark = {
 };
 
 export type PreviewEditingController = {
+  canEditFragment: (
+    fragment: PageFragment,
+    parentBlock: DocumentBlock,
+  ) => boolean;
   isEditableFragment: (
     fragment: PageFragment,
     parentBlock: DocumentBlock,
   ) => boolean;
+  onFragmentMouseDown: (
+    event: React.MouseEvent<HTMLDivElement>,
+    fragment: PageFragment,
+    parentBlock: DocumentBlock,
+  ) => void;
   onEditorMount: (
     editor: Editor,
     root: HTMLElement,
     fragment: PageFragment,
     parentBlock: DocumentBlock,
+  ) => void;
+  onPageEditorMount?: (
+    editor: Editor,
+    pageFrom: number,
+    pageMarkdown: string,
+  ) => void;
+  onPageEditorChange?: (
+    pageFrom: number,
+    previousPageMarkdown: string,
+    nextPageMarkdown: string,
   ) => void;
   onEditorChange: (
     editor: Editor,

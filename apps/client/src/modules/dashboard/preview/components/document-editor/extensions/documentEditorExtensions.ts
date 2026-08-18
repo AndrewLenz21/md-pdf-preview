@@ -15,10 +15,15 @@ import { BlankSpace } from "./BlankSpace";
 import { SourceBlock } from "./SourceBlock";
 import { TaskInput } from "./TaskInput";
 
-export function createDocumentEditorExtensions() {
+export function createDocumentEditorExtensions({
+  disableTrailingNode = false,
+}: {
+  disableTrailingNode?: boolean;
+} = {}) {
   return [
     StarterKit.configure({
       link: false,
+      ...(disableTrailingNode ? { trailingNode: false } : {}),
     }),
     Link.configure({
       autolink: true,

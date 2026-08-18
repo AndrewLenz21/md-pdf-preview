@@ -10,6 +10,14 @@ function withDefinitions(source: string, definitions: string[]) {
     : source;
 }
 
+function getRenderableBlockSource(block: DocumentBlock) {
+  if (block.kind !== "blockquote") {
+    return block.source;
+  }
+
+  return block.source.replace(/(?:\r?\n[ \t]*>[ \t]*)+(?:\r?\n)?$/, "");
+}
+
 export function MarkdownContent({
   source,
   definitions,
@@ -64,7 +72,10 @@ export function DocumentBlockRenderer({
 
   return (
     <div className={`document-markdown-block document-block-${block.kind}`}>
-      <MarkdownContent source={block.source} definitions={definitions} />
+      <MarkdownContent
+        source={getRenderableBlockSource(block)}
+        definitions={definitions}
+      />
     </div>
   );
 }

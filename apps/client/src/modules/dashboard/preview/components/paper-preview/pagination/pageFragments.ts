@@ -139,7 +139,7 @@ function createPageFragment(
     sourceRange,
     sourceRepresentation,
     continuation: getContinuation(units, allUnits),
-    editable: isCompleteBlock && parentBlock.editable,
+    editable: parentBlock.editable,
   } satisfies PageFragment;
 }
 

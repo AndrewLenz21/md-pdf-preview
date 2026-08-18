@@ -1,0 +1,203 @@
+@layer base {
+  @media print {
+    @page {
+      size: A4;
+      margin: 0;
+    }
+
+    html,
+    body {
+      background: white !important;
+    }
+
+    body * {
+      visibility: hidden;
+    }
+
+    .document-preview-root[data-document-mode="preview"],
+    .document-preview-root[data-document-mode="preview"] * {
+      visibility: visible;
+    }
+
+    .document-preview-root[data-document-mode="preview"] {
+      position: static !important;
+      display: block !important;
+      height: auto !important;
+      min-height: 0 !important;
+      overflow: visible !important;
+      --document-page: white;
+      --document-text: oklch(0.18 0 0);
+      --document-muted: oklch(0.48 0 0);
+      --document-border: oklch(0.84 0 0);
+      --document-callout-info: oklch(0.96 0.02 250);
+      --document-callout-success: oklch(0.96 0.03 150);
+      --document-callout-warning: oklch(0.97 0.04 85);
+      --document-callout-danger: oklch(0.97 0.025 25);
+    }
+
+    .document-preview-root[data-document-mode="preview"] .document-preview-canvas {
+      display: block !important;
+      min-height: 0 !important;
+      overflow: visible !important;
+      background: white !important;
+    }
+
+    [data-document-control] {
+      display: none !important;
+    }
+
+    .document-preview-root[data-document-mode="preview"] .document-measure-surface {
+      display: none !important;
+    }
+
+    .document-preview-root[data-document-mode="preview"] .document-print-fallback {
+      display: none !important;
+    }
+
+    .document-preview-root[data-document-mode="preview"] .document-pagination-pending .document-pages {
+      display: none !important;
+    }
+
+    .document-preview-root[data-document-mode="preview"] .document-preview-rendering-overlay {
+      display: none !important;
+    }
+
+    .document-preview-root[data-document-mode="preview"] .document-pagination-pending .document-print-fallback {
+      display: block !important;
+      width: var(--document-print-width, 210mm) !important;
+      margin: 0 auto !important;
+    }
+
+    .document-preview-root[data-document-mode="preview"] .document-pages {
+      display: block !important;
+      min-width: 0 !important;
+    }
+
+    .document-preview-root[data-document-mode="preview"] .document-page-frame {
+      width: var(--document-print-width, 210mm) !important;
+      height: var(--document-print-height, 297mm) !important;
+      break-after: auto !important;
+      page-break-after: auto !important;
+      animation: none !important;
+    }
+
+    .document-preview-root[data-document-mode="preview"] .document-page-frame:last-child {
+      break-after: auto;
+      page-break-after: auto;
+    }
+
+    .document-preview-root[data-document-mode="preview"] .document-page-sheet {
+      width: var(--document-print-width, 210mm) !important;
+      height: var(--document-print-height, 297mm) !important;
+      border: 0 !important;
+      box-shadow: none !important;
+      transform: none !important;
+    }
+
+    .document-preview-root[data-document-mode="preview"] .document-page-frame.document-page-oversized {
+      height: auto !important;
+      min-height: var(--document-print-height, 297mm) !important;
+    }
+
+    .document-preview-root[data-document-mode="preview"] .document-page-frame.document-page-oversized .document-page-sheet {
+      height: auto !important;
+      min-height: var(--document-print-height, 297mm) !important;
+    }
+
+    .document-preview-root[data-document-mode="preview"] .document-page-content {
+      padding: var(--document-page-margin-top) var(--document-page-margin-right)
+        var(--document-page-margin-bottom) var(--document-page-margin-left) !important;
+    }
+
+    .document-preview-root[data-document-mode="preview"] .document-page-footer {
+      margin: 0 var(--document-page-margin-right) 0
+        var(--document-page-margin-left) !important;
+    }
+
+    .document-preview-root[data-document-mode="preview"] .document-markdown-block thead {
+      display: table-header-group;
+    }
+
+    .document-preview-root[data-document-mode="preview"] .document-markdown-block pre,
+    .document-preview-root[data-document-mode="preview"] .document-unsupported-block {
+      overflow: visible !important;
+      white-space: pre-wrap !important;
+      overflow-wrap: anywhere !important;
+    }
+
+    body .document-preview-root[data-document-mode="preview"],
+    body .document-preview-root[data-document-mode="preview"] * {
+      visibility: hidden !important;
+    }
+
+    .print-document-preview,
+    .print-document-preview .document-preview-root[data-document-mode="preview"],
+    .print-document-preview .document-preview-root[data-document-mode="preview"] * {
+      visibility: visible !important;
+    }
+
+    .print-document-preview {
+      position: static !important;
+      display: block !important;
+      z-index: auto !important;
+      width: 100% !important;
+      height: auto !important;
+      min-height: 0 !important;
+      overflow: visible !important;
+      opacity: 1 !important;
+      pointer-events: auto !important;
+    }
+
+    html,
+    body {
+      height: auto !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    .dashboard-workspace {
+      display: block !important;
+      height: auto !important;
+      min-height: 0 !important;
+      overflow: visible !important;
+    }
+
+    .dashboard-workspace > :not(.print-document-preview) {
+      display: none !important;
+    }
+
+    .print-document-preview .document-preview-root[data-document-mode="preview"] {
+      width: 100% !important;
+      min-height: 0 !important;
+      margin: 0 !important;
+    }
+
+    .print-document-preview .document-preview-stage {
+      height: auto !important;
+      min-width: 0 !important;
+      min-height: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    .print-document-preview .document-preview-canvas,
+    .print-document-preview .document-pagination-root,
+    .print-document-preview .document-pages {
+      height: auto !important;
+      min-height: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      overflow: visible !important;
+    }
+
+    .print-document-preview .document-page-frame {
+      margin-inline: auto !important;
+    }
+
+    .print-document-preview .document-page-frame:last-child {
+      break-after: avoid-page !important;
+      page-break-after: avoid !important;
+      margin-bottom: 0 !important;
+    }
+  }
+}

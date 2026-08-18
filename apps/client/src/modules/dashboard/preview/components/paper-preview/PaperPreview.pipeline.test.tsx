@@ -175,4 +175,49 @@ describe("PaperPreview measurement pipeline", () => {
     expect(container.querySelector(".document-pagination-ready")).toBeTruthy();
     expect(container.querySelectorAll(".document-blank-space").length).toBeGreaterThan(0);
   });
+
+  it("renders source whitespace between a heading and a task list", () => {
+    const markdown = [
+      "### Phase 3 — Local history",
+      "",
+      "",
+      "- [ ] Save previews locally.",
+      "- [ ] Reopen/edit previous documents.",
+    ].join("\n");
+    const { container } = render(
+      <PaperPreview
+        documentTitle="Whitespace before task list"
+        markdown={markdown}
+        paperDimensions={getPaperPreviewDimensions("a4", 100)}
+      />,
+    );
+
+    expect(container.querySelector("[data-document-measure-blank-space]")).toBeTruthy();
+    expect(container.querySelector(".document-pagination-ready")).toBeTruthy();
+    const blankSpace = container.querySelector<HTMLElement>(".document-blank-space");
+
+    expect(blankSpace).toBeTruthy();
+    expect(blankSpace?.style.getPropertyValue("--document-blank-line-count")).toBe(
+      "1",
+    );
+  });
+
+  it("shows a rendering state while measurements are pending", () => {
+    vi.mocked(window.requestAnimationFrame).mockImplementation(() => 1);
+
+    const { container } = render(
+      <PaperPreview
+        documentTitle="Pending preview"
+        markdown="# Pending"
+        paperDimensions={getPaperPreviewDimensions("a4", 100)}
+      />,
+    );
+
+    expect(
+      container.querySelector('[aria-busy="true"] .document-preview-rendering-overlay'),
+    ).toBeTruthy();
+    expect(container.querySelector('[role="status"]')?.textContent).toContain(
+      "Rendering preview",
+    );
+  });
 });

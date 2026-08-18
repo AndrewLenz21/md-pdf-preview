@@ -6,14 +6,16 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type MutableRefObject,
 } from "react";
 import type { Editor } from "@tiptap/core";
 
-import { useWorkspaceStore } from "@/modules/dashboard/stores";
+import { useDocumentStore, useWorkspaceStore } from "@/modules/dashboard/stores";
 import type { MockDocument } from "@/modules/dashboard/document/model/document.types";
 import type { DocumentEditorMode } from "@/modules/dashboard/types/editor.types";
 
 import { MarkdownSourceEditor } from "./MarkdownSourceEditor";
+import { DocumentPageBreakOverlay } from "./DocumentPageBreakOverlay";
 import { DocumentEditor } from "./document-editor/DocumentEditor";
 import { PreviewToolbar } from "./PreviewToolbar";
 import {
@@ -26,8 +28,6 @@ import {
   type EditingActions,
 } from "../utils/editingActions";
 import { useModeZoom } from "../hooks/useModeZoom";
-import { usePreviewEditing } from "../editing/usePreviewEditing";
-import type { PreviewEditingController } from "../editing/previewEditing.types";
 
 type DocumentPreviewScrollScope = "desktop" | "mobile";
 
@@ -108,24 +108,33 @@ function getPaperDimensions(
   }
 }
 
-function getRootClassName(mode: DocumentEditorMode) {
+function getRootClassName(mode: DocumentEditorMode, embedded: boolean) {
   switch (mode) {
     case "preview":
       return "document-preview-root document-preview-paper-root relative flex h-[calc(100dvh-5rem)] min-h-0 flex-col overflow-hidden lg:h-full";
     case "markdown":
-      return "document-preview-root document-markdown-root relative min-h-[calc(100dvh-5rem)]";
+      return embedded
+        ? "document-preview-root document-markdown-root relative flex h-full min-h-0 flex-col overflow-hidden"
+        : "document-preview-root document-markdown-root relative min-h-[calc(100dvh-5rem)]";
     case "document":
-      return "document-preview-root document-editor-root relative min-h-[calc(100dvh-5rem)]";
+      return embedded
+        ? "document-preview-root document-editor-root relative flex h-full min-h-0 flex-col overflow-hidden"
+        : "document-preview-root document-editor-root relative min-h-[calc(100dvh-5rem)]";
   }
 }
 
-function getCanvasClassName(mode: DocumentEditorMode) {
+function getCanvasClassName(mode: DocumentEditorMode, embedded: boolean) {
   switch (mode) {
     case "preview":
       return "document-preview-canvas min-h-0 flex-1 overflow-auto bg-muted/40";
     case "markdown":
+      return embedded
+        ? "document-preview-canvas document-continuous-canvas min-h-0 flex-1 overflow-auto"
+        : "document-preview-canvas document-continuous-canvas";
     case "document":
-      return "document-preview-canvas document-continuous-canvas";
+      return embedded
+        ? "document-preview-canvas document-continuous-canvas relative min-h-0 flex-1 overflow-auto"
+        : "document-preview-canvas document-continuous-canvas relative";
   }
 }
 
@@ -174,7 +183,6 @@ function ModeContent({
   documentEditorRef,
   paperDimensions,
   onContentChange,
-  previewEditing,
 }: {
   mode: DocumentEditorMode;
   documentTitle: string;
@@ -184,7 +192,6 @@ function ModeContent({
   documentEditorRef: React.RefObject<Editor | null>;
   paperDimensions: PaperPreviewDimensions | null;
   onContentChange: (content: string) => void;
-  previewEditing?: PreviewEditingController;
 }) {
   switch (mode) {
     case "markdown":
@@ -216,7 +223,6 @@ function ModeContent({
           documentTitle={documentTitle}
           markdown={markdown}
           paperDimensions={paperDimensions}
-          previewEditing={previewEditing}
         />
       );
   }
@@ -229,6 +235,12 @@ export function DocumentPreview({
   onModeChange,
   onContentChange,
   modeTransitionDirection = null,
+  embedded = false,
+  showToolbar = true,
+  disableScrollSync = false,
+  onEditingActionsChange,
+  scrollContainerRef,
+  pageBreakMarkers,
 }: {
   document: MockDocument;
   mode: DocumentEditorMode;
@@ -236,26 +248,37 @@ export function DocumentPreview({
   onModeChange: (mode: DocumentEditorMode) => void;
   onContentChange: (content: string) => void;
   modeTransitionDirection?: "forward" | "backward" | null;
+  embedded?: boolean;
+  showToolbar?: boolean;
+  disableScrollSync?: boolean;
+  onEditingActionsChange?: (actions: EditingActions | null) => void;
+  scrollContainerRef?: MutableRefObject<HTMLDivElement | null>;
+  pageBreakMarkers?: number[];
 }) {
   const paperSize = useWorkspaceStore((state) => state.paperSize);
+  const pendingContent = useDocumentStore(
+    (state) => state.pendingContentByDocumentId[document.id],
+  );
   const { zoom } = useModeZoom(mode);
   const paperDimensions = getPaperDimensions(mode, paperSize, zoom);
-  const markdown = document.content ?? "";
+  const storedMarkdown = pendingContent ?? document.content ?? "";
+  const markdown = storedMarkdown;
   const previewRootRef = useRef<HTMLDivElement>(null);
-  const previewEditing = usePreviewEditing({
-    enabled: mode === "preview",
-    markdown,
-    onMarkdownChange: onContentChange,
-  });
   const documentEditorRef = useRef<Editor | null>(null);
   const markdownEditorRef = useRef<HTMLTextAreaElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  const previousEmbeddedRef = useRef(embedded);
   const modeRef = useRef(mode);
   const markdownRef = useRef(markdown);
   const onContentChangeRef = useRef(onContentChange);
   const [editingActions, setEditingActions] =
     useState<EditingActions | null>(null);
+  const usesCanvasScroll = mode === "preview" || embedded;
+
+  const handleContentChange = (nextMarkdown: string) => {
+    onContentChange(nextMarkdown);
+  };
 
   useEffect(() => {
     modeRef.current = mode;
@@ -273,17 +296,40 @@ export function DocumentPreview({
     });
 
     setEditingActions(actions);
-  }, []);
+    onEditingActionsChange?.(actions);
+
+    return () => onEditingActionsChange?.(null);
+  }, [onEditingActionsChange]);
 
   useLayoutEffect(() => {
-    if (!isActiveScrollScope(scrollScope)) {
+    if (disableScrollSync || !isActiveScrollScope(scrollScope)) {
       return;
     }
 
     const key = `${scrollScope}:${document.id}:${mode}`;
     const canvas = canvasRef.current;
+    const previousEmbedded = previousEmbeddedRef.current;
+    previousEmbeddedRef.current = embedded;
     let firstFrame: number | null = null;
     let secondFrame: number | null = null;
+
+    if (previousEmbedded && !embedded) {
+      const scrollTop = canvas?.scrollTop ?? window.scrollY;
+
+      window.scrollTo({ top: scrollTop, behavior: "auto" });
+      writeScrollPosition(key, {
+        windowTop: scrollTop,
+        canvasTop: scrollTop,
+      });
+    } else if (!previousEmbedded && embedded && canvas) {
+      const scrollTop = window.scrollY;
+
+      canvas.scrollTop = scrollTop;
+      writeScrollPosition(key, {
+        windowTop: scrollTop,
+        canvasTop: scrollTop,
+      });
+    }
 
     const restore = () => {
       const savedPosition = readScrollPosition(key);
@@ -292,7 +338,7 @@ export function DocumentPreview({
         return;
       }
 
-      if (mode === "preview") {
+      if (usesCanvasScroll) {
         if (canvas) {
           canvas.scrollTop = savedPosition.canvasTop;
         }
@@ -320,7 +366,7 @@ export function DocumentPreview({
     });
 
     const resizeObserver =
-      mode === "preview" && typeof ResizeObserver !== "undefined"
+      usesCanvasScroll && typeof ResizeObserver !== "undefined"
         ? new ResizeObserver(restore)
         : null;
     if (resizeObserver) {
@@ -347,25 +393,46 @@ export function DocumentPreview({
         window.cancelAnimationFrame(secondFrame);
       }
     };
-  }, [document.id, mode, scrollScope]);
+  }, [
+    disableScrollSync,
+    document.id,
+    embedded,
+    mode,
+    scrollScope,
+    usesCanvasScroll,
+  ]);
 
   return (
     <div
       ref={previewRootRef}
-      className={getRootClassName(mode)}
+      className={getRootClassName(mode, embedded)}
       data-document-mode={mode}
       style={getRootStyle(mode, paperDimensions)}
     >
       <style media="print">{getPrintPageRule(mode, paperDimensions)}</style>
-      <div ref={canvasRef} className={getCanvasClassName(mode)}>
-        <PreviewToolbar
-          document={document}
-          mode={mode}
-          onModeChange={onModeChange}
-          editingActions={editingActions}
-        />
+      <div
+        ref={(element) => {
+          canvasRef.current = element;
 
-          <div ref={stageRef} className={getStageClassName(mode)}>
+          if (scrollContainerRef) {
+            scrollContainerRef.current = element;
+          }
+        }}
+        className={getCanvasClassName(mode, embedded)}
+      >
+        {showToolbar ? (
+          <PreviewToolbar
+            document={document}
+            mode={mode}
+            onModeChange={onModeChange}
+            editingActions={editingActions}
+          />
+        ) : null}
+        {mode === "document" && pageBreakMarkers ? (
+          <DocumentPageBreakOverlay positions={pageBreakMarkers} />
+        ) : null}
+
+        <div ref={stageRef} className={getStageClassName(mode)}>
           <div
             className={`w-full ${modeTransitionDirection ? `dashboard-mobile-section dashboard-mobile-section-${modeTransitionDirection}` : ""}`}
           >
@@ -377,13 +444,11 @@ export function DocumentPreview({
               markdownEditorRef={markdownEditorRef}
               documentEditorRef={documentEditorRef}
               paperDimensions={paperDimensions}
-              onContentChange={onContentChange}
-              previewEditing={previewEditing}
+              onContentChange={handleContentChange}
             />
           </div>
         </div>
       </div>
-
     </div>
   );
 }

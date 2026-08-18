@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import type { Editor } from "@tiptap/core";
 
 import type { DocumentBlock } from "@/modules/dashboard/document/model/document-block.types";
 
 import type { PageFragment } from "../components/paper-preview/pagination/pagination.types";
 import {
   getSourceBookmarkAtSelection,
+  getSourceBookmarkAtPoint,
   getPreviewListSelection,
   isEditablePreviewFragment,
   restoreSourceBookmark,
@@ -35,6 +37,88 @@ function replaceFragmentSource(
   );
 }
 
+function isBookmarkInFragment(
+  bookmark: PreviewSourceBookmark | null,
+  fragment: PageFragment,
+  parentBlock: DocumentBlock,
+) {
+  const fragmentStart = parentBlock.range.start + fragment.sourceRange.from;
+  const fragmentEnd = parentBlock.range.start + fragment.sourceRange.to;
+
+  if (!bookmark) {
+    return false;
+  }
+
+  if (bookmark.parentBlockId !== parentBlock.id) {
+    return (
+      bookmark.documentOffset >= fragmentStart &&
+      bookmark.documentOffset < fragmentEnd
+    );
+  }
+
+  return (
+    bookmark.documentOffset >= fragmentStart &&
+    (bookmark.documentOffset < fragmentEnd ||
+      (bookmark.documentOffset === fragmentEnd &&
+        fragment.sourceRange.to === parentBlock.source.length))
+  );
+}
+
+function getMarkdownChange(
+  previousMarkdown: string,
+  nextMarkdown: string,
+) {
+  let from = 0;
+
+  while (
+    from < previousMarkdown.length &&
+    from < nextMarkdown.length &&
+    previousMarkdown[from] === nextMarkdown[from]
+  ) {
+    from += 1;
+  }
+
+  let previousTo = previousMarkdown.length;
+  let nextTo = nextMarkdown.length;
+
+  while (
+    previousTo > from &&
+    nextTo > from &&
+    previousMarkdown[previousTo - 1] === nextMarkdown[nextTo - 1]
+  ) {
+    previousTo -= 1;
+    nextTo -= 1;
+  }
+
+  return {
+    from,
+    previousTo,
+    nextLength: nextTo - from,
+  };
+}
+
+function getEditorPositionAtTextOffset(editor: Editor, targetOffset: number) {
+  const documentSize = editor.state.doc.content.size;
+  let bestPosition = 1;
+  let bestDistance = Number.POSITIVE_INFINITY;
+
+  for (let position = 1; position <= documentSize; position += 1) {
+    const renderedOffset = editor.state.doc.textBetween(0, position, "\n\n").length;
+    const distance = Math.abs(renderedOffset - targetOffset);
+
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      bestPosition = position;
+    }
+
+    if (distance === 0 && renderedOffset >= targetOffset) {
+      break;
+    }
+  }
+
+  return bestPosition;
+}
+
 export function usePreviewEditing({
   enabled = true,
   markdown,
@@ -45,9 +129,48 @@ export function usePreviewEditing({
   onMarkdownChange: (markdown: string) => void;
 }): PreviewEditingController {
   const [bookmark, setBookmark] = useState<PreviewSourceBookmark | null>(null);
+  const [activeFragmentId, setActiveFragmentId] = useState<string | null>(null);
+  const activationPointRef = useRef<{ left: number; top: number } | null>(null);
+  const canEditFragment = (fragment: PageFragment, parentBlock: DocumentBlock) =>
+    enabled && isEditablePreviewFragment(fragment, parentBlock);
+  const isActiveFragment = (
+    fragment: PageFragment,
+    parentBlock: DocumentBlock,
+  ) =>
+    activeFragmentId === fragment.id ||
+    isBookmarkInFragment(bookmark, fragment, parentBlock);
+
   return {
+    canEditFragment,
     isEditableFragment: (fragment, parentBlock) =>
-      enabled && isEditablePreviewFragment(fragment, parentBlock),
+      canEditFragment(fragment, parentBlock) &&
+      isActiveFragment(fragment, parentBlock),
+    onFragmentMouseDown: (event, fragment, parentBlock) => {
+      if (
+        isActiveFragment(fragment, parentBlock) ||
+        !canEditFragment(fragment, parentBlock)
+      ) {
+        return;
+      }
+
+      const nextBookmark = getSourceBookmarkAtPoint(
+        event,
+        fragment,
+        parentBlock,
+      );
+
+      if (!nextBookmark) {
+        return;
+      }
+
+      event.preventDefault();
+      activationPointRef.current = {
+        left: event.clientX,
+        top: event.clientY,
+      };
+      setBookmark(nextBookmark);
+      setActiveFragmentId(fragment.id);
+    },
     onEditorMount: (editor, root, fragment, parentBlock) => {
       if (!enabled || !isEditablePreviewFragment(fragment, parentBlock)) {
         return;
@@ -66,6 +189,74 @@ export function usePreviewEditing({
       ) {
         restoreSourceBookmark(root, fragment, parentBlock, bookmark);
       }
+    },
+    onPageEditorMount: (editor, pageFrom, pageMarkdown) => {
+      const point = activationPointRef.current;
+      activationPointRef.current = null;
+      const position = point ? editor.view.posAtCoords(point) : null;
+
+      if (position) {
+        editor.commands.focus(position.pos);
+      } else if (
+        bookmark &&
+        bookmark.documentOffset >= pageFrom &&
+        bookmark.documentOffset <= pageFrom + pageMarkdown.length
+      ) {
+        const sourceOffset = bookmark.documentOffset - pageFrom;
+        const renderedLength = editor.state.doc.textBetween(
+          0,
+          editor.state.doc.content.size,
+          "\n\n",
+        ).length;
+        editor.commands.focus(
+          getEditorPositionAtTextOffset(
+            editor,
+            Math.min(sourceOffset, renderedLength),
+          ),
+        );
+      } else {
+        editor.commands.focus();
+      }
+    },
+    onPageEditorChange: (pageFrom, previousPageMarkdown, nextPageMarkdown) => {
+      if (previousPageMarkdown === nextPageMarkdown) {
+        return;
+      }
+
+      const change = getMarkdownChange(previousPageMarkdown, nextPageMarkdown);
+
+      setBookmark((currentBookmark) => {
+        if (!currentBookmark) {
+          return currentBookmark;
+        }
+
+        const localOffset = currentBookmark.documentOffset - pageFrom;
+
+        if (localOffset < 0 || localOffset > previousPageMarkdown.length) {
+          return currentBookmark;
+        }
+
+        const nextLocalOffset =
+          localOffset < change.from
+            ? localOffset
+            : localOffset >= change.previousTo
+              ? localOffset +
+                change.nextLength -
+                (change.previousTo - change.from)
+              : change.from + change.nextLength;
+        const nextDocumentOffset = pageFrom + nextLocalOffset;
+        const documentOffsetDelta =
+          nextDocumentOffset - currentBookmark.documentOffset;
+
+        return {
+          ...currentBookmark,
+          documentOffset: nextDocumentOffset,
+          sourceOffset: Math.max(
+            0,
+            currentBookmark.sourceOffset + documentOffsetDelta,
+          ),
+        };
+      });
     },
     onEditorChange: (editor, root, fragment, parentBlock) => {
       if (!enabled || !isEditablePreviewFragment(fragment, parentBlock)) {

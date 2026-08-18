@@ -5,8 +5,9 @@ import {
   useLayoutEffect,
   useRef,
   type MutableRefObject,
+  type ReactNode,
 } from "react";
-import type { Editor } from "@tiptap/core";
+import type { Editor, JSONContent } from "@tiptap/core";
 import { EditorContent, useEditor } from "@tiptap/react";
 import { EditorState } from "@tiptap/pm/state";
 
@@ -17,12 +18,82 @@ import { tiptapToMarkdown } from "./markdown/tiptapToMarkdown";
 import { SelectionToolbar } from "./menus/SelectionToolbar";
 import { SlashCommandMenu } from "./menus/SlashCommandMenu";
 
+function hasOnlySyntheticTrailingParagraph(editor: Editor, markdown: string) {
+  const trailingNode = editor.state.doc.lastChild;
+
+  if (
+    !trailingNode ||
+    trailingNode.type.name !== "paragraph" ||
+    trailingNode.content.size > 0
+  ) {
+    return false;
+  }
+
+  if (editor.state.selection.$from.parent === trailingNode) {
+    return false;
+  }
+
+  const contentEnd = editor.state.doc.content.size - trailingNode.nodeSize;
+  const documentWithoutTrailingParagraph = editor.state.doc.copy(
+    editor.state.doc.content.cut(0, contentEnd),
+  );
+  const expectedDocument = editor.schema.nodeFromJSON(
+    markdownToTiptapDocument(markdown),
+  );
+
+  return documentWithoutTrailingParagraph.eq(expectedDocument);
+}
+
+function getEditorDocumentContent(
+  markdown: string,
+  variant: "document" | "preview",
+) {
+  const document = markdownToTiptapDocument(markdown);
+
+  if (variant === "preview") {
+    return document;
+  }
+
+  const content = document.content ?? [];
+  const lastNode = content.at(-1);
+  const hasEmptyTrailingParagraph =
+    lastNode?.type === "paragraph" &&
+    (!lastNode.content || lastNode.content.length === 0);
+
+  if (hasEmptyTrailingParagraph) {
+    return document;
+  }
+
+  return {
+    ...document,
+    content: [...content, { type: "paragraph" } satisfies JSONContent],
+  };
+}
+
+function ensureDocumentTrailingParagraph(editor: Editor) {
+  const lastNode = editor.state.doc.lastChild;
+
+  if (
+    lastNode?.type.name === "paragraph" &&
+    lastNode.content.size === 0
+  ) {
+    return;
+  }
+
+  const paragraph = editor.schema.nodes.paragraph.create();
+  editor.view.dispatch(
+    editor.state.tr.insert(editor.state.doc.content.size, paragraph),
+  );
+}
+
 export function DocumentEditor({
   markdown,
   zoom,
   editorRef,
   onMarkdownChange,
   variant = "document",
+  page = false,
+  fallback,
   onEditorMount,
   onEditorUpdate,
   onEditorKeyDown,
@@ -32,9 +103,15 @@ export function DocumentEditor({
   editorRef?: MutableRefObject<Editor | null>;
   onMarkdownChange?: (markdown: string) => void;
   variant?: "document" | "preview";
+  page?: boolean;
+  fallback?: ReactNode;
   onEditorMount?: (editor: Editor, root: HTMLElement) => void;
   onEditorUpdate?: (editor: Editor, root: HTMLElement) => void;
-  onEditorKeyDown?: (event: React.KeyboardEvent<HTMLDivElement>) => void;
+  onEditorKeyDown?: (
+    event: React.KeyboardEvent<HTMLDivElement>,
+    editor: Editor,
+    flushSerialization: () => void,
+  ) => void;
 }) {
   const onMarkdownChangeRef = useRef(onMarkdownChange);
   const lastSerializedMarkdownRef = useRef(markdown);
@@ -45,18 +122,21 @@ export function DocumentEditor({
   const rootRef = useRef<HTMLDivElement>(null);
   const onEditorMountRef = useRef(onEditorMount);
   const onEditorUpdateRef = useRef(onEditorUpdate);
+  const mountedEditorRef = useRef<Editor | null>(null);
   const editor = useEditor(
     {
-      extensions: createDocumentEditorExtensions(),
-      content: markdownToTiptapDocument(markdown),
+       extensions: createDocumentEditorExtensions({
+         disableTrailingNode: variant === "preview",
+       }),
+       content: getEditorDocumentContent(markdown, variant),
       immediatelyRender: false,
       editorProps: {
         attributes: {
           class:
             variant === "preview"
-              ? "document-editor-content preview-fragment-editor-content"
+              ? `document-editor-content preview-fragment-editor-content${page ? " preview-page-editor-content" : ""}`
               : "document-editor-content",
-          spellcheck: "true",
+          spellcheck: "false",
           "aria-label":
             variant === "preview" ? "Preview document editor" : "Document editor",
         },
@@ -81,6 +161,20 @@ export function DocumentEditor({
         },
       },
       onUpdate: ({ editor: currentEditor }) => {
+        if (variant === "document") {
+          ensureDocumentTrailingParagraph(currentEditor);
+        }
+
+        if (
+          variant === "document" &&
+          hasOnlySyntheticTrailingParagraph(
+            currentEditor,
+            lastSerializedMarkdownRef.current,
+          )
+        ) {
+          return;
+        }
+
         pendingEditorRef.current = currentEditor;
 
         if (serializeTimeoutRef.current !== null) {
@@ -105,9 +199,14 @@ export function DocumentEditor({
     const root = rootRef.current;
 
     if (editor && root) {
+      if (page && mountedEditorRef.current === editor) {
+        return;
+      }
+
       onEditorMountRef.current?.(editor, root);
+      mountedEditorRef.current = editor;
     }
-  }, [editor, markdown, variant]);
+  }, [editor, markdown, page, variant]);
 
   useEffect(() => {
     const flushSerialization = () => {
@@ -167,30 +266,38 @@ export function DocumentEditor({
       return;
     }
 
+    if (page) {
+      return;
+    }
+
     flushSerializationRef.current();
 
     const nextDocument = editor.schema.nodeFromJSON(
-      markdownToTiptapDocument(markdown),
+      getEditorDocumentContent(markdown, variant),
     );
     editor.view.updateState(
       EditorState.create({
-        doc: nextDocument,
-        plugins: editor.state.plugins,
-        schema: editor.schema,
+      doc: nextDocument,
+      plugins: editor.state.plugins,
+      schema: editor.schema,
       }),
     );
     lastSerializedMarkdownRef.current = markdown;
-  }, [editor, markdown]);
+  }, [editor, markdown, page, variant]);
 
   return (
     <div
       ref={rootRef}
       className={
           variant === "preview"
-          ? "preview-fragment-editor"
+          ? `preview-fragment-editor${page ? " preview-page-editor" : ""}`
           : "document-editor-workspace"
       }
-      onKeyDownCapture={onEditorKeyDown}
+      onKeyDownCapture={(event) => {
+        if (editor) {
+          onEditorKeyDown?.(event, editor, flushSerializationRef.current);
+        }
+      }}
     >
       <div
         className={
@@ -210,7 +317,9 @@ export function DocumentEditor({
             <SlashCommandMenu editor={editor} />
             <SelectionToolbar editor={editor} />
           </>
-        ) : null}
+        ) : (
+          fallback
+        )}
         </div>
       </div>
     </div>

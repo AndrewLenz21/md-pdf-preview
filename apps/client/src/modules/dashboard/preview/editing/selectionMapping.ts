@@ -106,6 +106,11 @@ export function getPreviewListItems(block: DocumentBlock): PreviewListItem[] {
   }
 
   const list = block.node as MarkdownList;
+  const blockNodeStart = block.node.position?.start?.offset;
+
+  if (blockNodeStart === undefined) {
+    return [];
+  }
 
   return (list.children ?? []).flatMap((item, index) => {
     const start = item.position?.start?.offset;
@@ -119,8 +124,8 @@ export function getPreviewListItems(block: DocumentBlock): PreviewListItem[] {
       return [];
     }
 
-    const from = start - block.range.start;
-    const to = end - block.range.start;
+    const from = start - blockNodeStart;
+    const to = end - blockNodeStart;
     const source = block.source.slice(from, to);
     const prefix = getListItemPrefix(source);
 
@@ -147,6 +152,12 @@ function getPreviewListItemRanges(block: DocumentBlock): PreviewListItemRange[] 
     return [];
   }
 
+  const blockNodeStart = block.node.position?.start?.offset;
+
+  if (blockNodeStart === undefined) {
+    return [];
+  }
+
   return ((block.node as MarkdownList).children ?? []).flatMap((item, index) => {
     const start = item.position?.start?.offset;
     const end = item.position?.end?.offset;
@@ -155,8 +166,8 @@ function getPreviewListItemRanges(block: DocumentBlock): PreviewListItemRange[] 
       ? [
           {
             index,
-            from: start - block.range.start,
-            to: end - block.range.start,
+            from: start - blockNodeStart,
+            to: end - blockNodeStart,
           },
         ]
       : [];
@@ -173,15 +184,11 @@ export function isEditablePreviewFragment(
         item.from >= fragment.sourceRange.from &&
         item.to <= fragment.sourceRange.to,
     );
-    const editableItemIndexes = new Set(
-      getPreviewListItems(parentBlock).map((item) => item.index),
-    );
 
     return (
       parentBlock.editable &&
       fragment.kind === "list" &&
-      fragmentItems.length > 0 &&
-      fragmentItems.every((item) => editableItemIndexes.has(item.index))
+      fragmentItems.length > 0
     );
   }
 
@@ -405,8 +412,6 @@ export function getSourceBookmarkAtPoint(
         listItemIndex: listSelection.item.index,
       };
     }
-
-    return null;
   }
 
   const textRoot = getEditableTextRoot(root);

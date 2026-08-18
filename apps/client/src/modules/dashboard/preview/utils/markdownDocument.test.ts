@@ -384,7 +384,7 @@ describe("Markdown document model", () => {
 
   it("Test L: includes A4 print rules and hides workspace controls", async () => {
     const css = await readFile(
-      new URL("../../../../app/styles/base.css", import.meta.url),
+      new URL("../../../../app/styles/print.css", import.meta.url),
       "utf8",
     );
 
@@ -392,5 +392,9 @@ describe("Markdown document model", () => {
     expect(css).toContain("size: A4");
     expect(css).toContain(".document-preview-root");
     expect(css).toContain(".document-measure-surface");
+    expect(css).toContain(".print-document-preview");
+    expect(css).toContain(".dashboard-workspace > :not(.print-document-preview)");
+    expect(css).toContain(".print-document-preview .document-preview-stage");
+    expect(css).toContain(".print-document-preview .document-page-frame:last-child");
   });
 });

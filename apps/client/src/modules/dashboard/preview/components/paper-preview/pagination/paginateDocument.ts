@@ -277,7 +277,9 @@ export function paginateDocument(
           : getStrategy(nextUnit)?.getFirstFragmentHeight?.(nextUnit) ??
             getUnitHeight(nextUnit) ??
             0
-      : 0;
+        : 0;
+    const leadingGap = getLeadingGap(currentPage, unit, blockGap);
+    const availableHeight = pageContentHeight - usedHeight - leadingGap;
     const shouldKeepWithNext =
       unit.keepWithNext &&
       nextUnit !== undefined &&
@@ -285,11 +287,14 @@ export function paginateDocument(
       nextUnit.kind !== "blankSpace" &&
       unitHeight !== undefined &&
       unitHeight + blockGap + nextUnitHeight <= pageContentHeight;
-    const leadingGap = getLeadingGap(currentPage, unit, blockGap);
+    const keepWithNextInRemainingSpace =
+      shouldKeepWithNext &&
+      unitHeight !== undefined &&
+      unitHeight + blockGap + nextUnitHeight <= availableHeight;
     const neededHeight =
       leadingGap +
       (unitHeight ?? 0) +
-      (shouldKeepWithNext ? blockGap + nextUnitHeight : 0);
+      (keepWithNextInRemainingSpace ? blockGap + nextUnitHeight : 0);
 
     if (
       currentPage.units.length > 0 &&

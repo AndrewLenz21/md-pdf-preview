@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, type RefObject } from "react";
+import { useLayoutEffect, useState, type RefObject } from "react";
 
 function resizeTextarea(textarea: HTMLTextAreaElement | null) {
   if (!textarea) {
@@ -50,10 +50,16 @@ export function MarkdownSourceEditor({
   onMarkdownChange: (markdown: string) => void;
 }) {
   const zoomFactor = zoom / 100;
+  const [draftState, setDraftState] = useState({
+    source: markdown,
+    value: markdown,
+  });
+  const draftMarkdown =
+    draftState.source === markdown ? draftState.value : markdown;
 
   useLayoutEffect(() => {
     resizeTextarea(textareaRef.current);
-  }, [markdown, textareaRef, zoom]);
+  }, [draftMarkdown, textareaRef]);
 
   useLayoutEffect(() => {
     const handleResize = () => resizeTextarea(textareaRef.current);
@@ -63,15 +69,28 @@ export function MarkdownSourceEditor({
     return () => window.removeEventListener("resize", handleResize);
   }, [textareaRef]);
 
+  const handleTransitionEnd = (
+    event: React.TransitionEvent<HTMLTextAreaElement>,
+  ) => {
+    if (event.propertyName === "font-size") {
+      resizeTextarea(event.currentTarget);
+    }
+  };
+
   return (
     <div className="markdown-workspace" aria-label={`${documentTitle} Markdown source`}>
       <div className="markdown-editor-column">
         <textarea
           ref={textareaRef}
-          value={markdown}
+          value={draftMarkdown}
           rows={1}
-          onInput={(event) => resizeTextarea(event.currentTarget)}
-          onChange={(event) => onMarkdownChange(event.currentTarget.value)}
+          onChange={(event) => {
+            const nextMarkdown = event.currentTarget.value;
+
+            setDraftState({ source: markdown, value: nextMarkdown });
+            onMarkdownChange(nextMarkdown);
+          }}
+          onTransitionEnd={handleTransitionEnd}
           placeholder="Start writing or paste Markdown..."
           aria-label={`${documentTitle} Markdown source`}
           spellCheck={false}

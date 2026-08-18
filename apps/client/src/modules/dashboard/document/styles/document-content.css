@@ -38,15 +38,116 @@
     cursor: text;
   }
 
+  .document-page-break-overlay {
+    position: absolute;
+    z-index: 10;
+    inset: 0;
+    pointer-events: none;
+    overflow-anchor: none;
+  }
+
+  .document-page-break-marker {
+    position: absolute;
+    right: 1.25rem;
+    left: 1.25rem;
+    display: flex;
+    justify-content: flex-end;
+    border-top: 1px dashed color-mix(in oklab, var(--primary) 58%, transparent);
+    color: color-mix(in oklab, var(--primary) 76%, var(--document-text));
+    font-size: 0.68rem;
+    line-height: 1;
+  }
+
+  .document-page-break-marker span {
+    transform: translateY(-50%);
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--document-page) 92%, var(--primary) 8%);
+    padding: 0.22rem 0.5rem;
+    box-shadow: 0 0 0 0.2rem color-mix(in oklab, var(--document-page) 75%, transparent);
+  }
+
+  .document-page-break-overlay-document .document-page-break-marker {
+    border-top-color: color-mix(in oklab, var(--primary) 32%, transparent);
+    color: color-mix(in oklab, var(--primary) 58%, var(--document-text));
+    opacity: 0.72;
+  }
+
+  .document-page-break-overlay-document .document-page-break-marker span {
+    background: color-mix(in oklab, var(--document-page) 96%, var(--primary) 4%);
+    box-shadow: 0 0 0 0.2rem color-mix(in oklab, var(--document-page) 86%, transparent);
+  }
+
   [data-preview-editable-fragment="true"] {
     border-radius: 0.3rem;
     cursor: text;
+    --document-preview-hover: color-mix(
+      in oklab,
+      var(--primary) 10%,
+      var(--document-page) 90%
+    );
+    --document-preview-hover-item: color-mix(
+      in oklab,
+      var(--primary) 18%,
+      var(--document-page) 82%
+    );
+  }
+
+  [data-preview-editable-fragment="true"] > .document-markdown-block > p,
+  [data-preview-editable-fragment="true"] > .document-markdown-block > h1,
+  [data-preview-editable-fragment="true"] > .document-markdown-block > h2,
+  [data-preview-editable-fragment="true"] > .document-markdown-block > h3,
+  [data-preview-editable-fragment="true"] > .document-markdown-block > h4,
+  [data-preview-editable-fragment="true"] > .document-markdown-block > blockquote,
+  [data-preview-editable-fragment="true"] > .document-markdown-block > pre,
+  [data-preview-editable-fragment="true"] > .document-markdown-block > ul,
+  [data-preview-editable-fragment="true"] > .document-markdown-block > ol,
+  [data-preview-editable-fragment="true"] > .document-markdown-block li,
+  [data-preview-editable-fragment="true"] > .document-callout {
+    border-radius: 0.3rem;
     transition: background-color 180ms cubic-bezier(0.22, 1, 0.36, 1);
   }
 
-  [data-preview-editable-fragment="true"]:hover,
-  [data-preview-editable-fragment="true"][contenteditable="true"] {
-    background: color-mix(in oklab, var(--accent) 7%, transparent);
+  [data-preview-editable-fragment="true"] > .document-markdown-block > p:hover,
+  [data-preview-editable-fragment="true"] > .document-markdown-block > h1:hover,
+  [data-preview-editable-fragment="true"] > .document-markdown-block > h2:hover,
+  [data-preview-editable-fragment="true"] > .document-markdown-block > h3:hover,
+  [data-preview-editable-fragment="true"] > .document-markdown-block > h4:hover,
+  [data-preview-editable-fragment="true"] > .document-markdown-block > blockquote:hover,
+  [data-preview-editable-fragment="true"] > .document-markdown-block li:hover {
+    background: var(--document-preview-hover);
+  }
+
+  [data-preview-editable-fragment="true"] > .document-markdown-block > ul:hover,
+  [data-preview-editable-fragment="true"] > .document-markdown-block > ol:hover {
+    background: var(--document-preview-hover);
+  }
+
+  [data-preview-editable-fragment="true"] > .document-markdown-block li:hover {
+    background: var(--document-preview-hover-item);
+  }
+
+  [data-preview-editable-fragment="true"] > .document-markdown-block > pre:hover {
+    background: color-mix(
+      in oklab,
+      var(--primary) 18%,
+      var(--document-page) 82%
+    );
+  }
+
+  [data-preview-editable-fragment="true"] > .document-callout-info:hover {
+    background: color-mix(in oklab, var(--document-callout-info) 78%, var(--primary) 22%);
+  }
+
+  [data-preview-editable-fragment="true"] > .document-callout-success:hover {
+    background: color-mix(in oklab, var(--document-callout-success) 78%, var(--primary) 22%);
+  }
+
+  [data-preview-editable-fragment="true"] > .document-callout-warning:hover {
+    background: color-mix(in oklab, var(--document-callout-warning) 78%, var(--primary) 22%);
+  }
+
+  [data-preview-editable-fragment="true"] > .document-callout-danger:hover {
+    background: color-mix(in oklab, var(--document-callout-danger) 78%, var(--primary) 22%);
   }
 
   .document-editor-content > .document-blank-space:hover,

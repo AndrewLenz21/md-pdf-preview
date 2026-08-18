@@ -7,7 +7,7 @@ import {
   getParagraphMeasurementCandidates,
 } from "@/modules/dashboard/preview/measurement/paragraphMeasurement";
 import { createListMeasurementProfile } from "@/modules/dashboard/preview/measurement/listMeasurement";
-import { getDocumentPageHeight } from "./document-layout";
+import { getDocumentPageHeight } from "@/modules/dashboard/document/utils";
 import { createDocumentLayoutUnits } from "./documentLayout";
 import { paginateDocument } from "./paginateDocument";
 
