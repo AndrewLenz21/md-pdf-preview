@@ -99,4 +99,24 @@ describe("Tiptap Markdown serialization", () => {
     expect(output).toContain("- [ ] Open task");
     expect(output).toContain("- [x] Completed task");
   });
+
+  it("serializes editable tables as Markdown instead of raw HTML", () => {
+    const markdown = [
+      "| Name | Value |",
+      "| --- | --- |",
+      "| Gross revenue | €25,200.00 |",
+      "| Total | €25,200.00 |",
+    ].join("\n");
+
+    editor = new Editor({
+      extensions: documentEditorExtensions,
+      content: markdownToTiptapDocument(markdown),
+    });
+
+    const output = tiptapToMarkdown(editor);
+
+    expect(output).not.toContain("<table");
+    expect(output).toContain("| Name | Value |");
+    expect(parseMarkdownDocument(output).blocks[0]?.kind).toBe("table");
+  });
 });

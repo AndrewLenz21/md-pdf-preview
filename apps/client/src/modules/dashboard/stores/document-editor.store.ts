@@ -1,9 +1,15 @@
 import { create } from "zustand";
 
 import { WORKSPACE_ZOOM } from "./workspace.store";
+import {
+  readZoomPreferences,
+  writeZoomPreferences,
+} from "./zoomPersistence";
 
 type DocumentEditorState = {
   zoom: number;
+  responsiveZoomInitialized: boolean;
+  initializeViewportZoom: (isSmallScreen: boolean) => void;
   setZoom: (zoom: number) => void;
   zoomIn: () => void;
   zoomOut: () => void;
@@ -21,16 +27,32 @@ const clampZoom = (zoom: number) => {
   );
 };
 
-export const useDocumentEditorStore = create<DocumentEditorState>((set) => ({
+export const useDocumentEditorStore = create<DocumentEditorState>((set, get) => ({
   zoom: WORKSPACE_ZOOM.default,
-  setZoom: (zoom) => set({ zoom: clampZoom(zoom) }),
+  responsiveZoomInitialized: false,
+  initializeViewportZoom: (isSmallScreen) => {
+    if (get().responsiveZoomInitialized) {
+      return;
+    }
+
+    const stored = readZoomPreferences();
+    const zoom = clampZoom(
+      stored.documentZoom ??
+        (isSmallScreen ? WORKSPACE_ZOOM.mobileDefault : WORKSPACE_ZOOM.default),
+    );
+
+    set({ zoom, responsiveZoomInitialized: true });
+    writeZoomPreferences({ documentZoom: zoom });
+  },
+  setZoom: (zoom) => {
+    const nextZoom = clampZoom(zoom);
+
+    set({ zoom: nextZoom });
+    writeZoomPreferences({ documentZoom: nextZoom });
+  },
   zoomIn: () =>
-    set((state) => ({
-      zoom: clampZoom(state.zoom + WORKSPACE_ZOOM.increment),
-    })),
+    get().setZoom(get().zoom + WORKSPACE_ZOOM.increment),
   zoomOut: () =>
-    set((state) => ({
-      zoom: clampZoom(state.zoom - WORKSPACE_ZOOM.increment),
-    })),
-  resetZoom: () => set({ zoom: WORKSPACE_ZOOM.default }),
+    get().setZoom(get().zoom - WORKSPACE_ZOOM.increment),
+  resetZoom: () => get().setZoom(WORKSPACE_ZOOM.default),
 }));

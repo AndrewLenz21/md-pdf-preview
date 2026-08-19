@@ -112,7 +112,14 @@ export function PaperPage({
                       source: fragment.source,
                       editable: fragment.editable,
                       keepWithNext: false,
+                      callout:
+                        parentBlock.callout &&
+                        (fragment.continuation === "middle" ||
+                          fragment.continuation === "end")
+                          ? { ...parentBlock.callout, icon: undefined }
+                          : parentBlock.callout,
                     }}
+                    calloutContent={fragment.calloutContent}
                     definitions={definitions}
                   />
                 }
@@ -148,6 +155,7 @@ export function PaperPage({
     ) : null;
   });
   const isPageEditorActive =
+    !pagePlan.fragments.some((fragment) => fragment.kind === "table") &&
     pageSourceRange != null &&
     onPageMarkdownChange !== undefined &&
     pagePlan.fragments.some((fragment) => {
@@ -166,9 +174,10 @@ export function PaperPage({
       style={{
         width: paperDimensions.width,
         height: pageHeight * paperDimensions.scale,
-        "--document-print-width": paperDimensions.printWidth,
-        "--document-print-height": paperDimensions.printHeight,
-      } as React.CSSProperties}
+          "--document-print-width": paperDimensions.printWidth,
+          "--document-print-height": paperDimensions.printHeight,
+          "--paper-page-entry-delay": `${pageIndex * 70}ms`,
+        } as React.CSSProperties}
       aria-label={`Page ${pageIndex + 1}`}
     >
       <article

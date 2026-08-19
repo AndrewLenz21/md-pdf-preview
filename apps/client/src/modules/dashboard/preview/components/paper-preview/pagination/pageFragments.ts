@@ -119,7 +119,7 @@ function createPageFragment(
     !units.some((unit) =>
       ["paragraphFragment", "listFragment", "codeFragment"].includes(
         unit.kind,
-      ),
+      ) || unit.kind === "calloutFragment",
     );
   const source = isCompleteBlock
     ? parentBlock.source
@@ -140,6 +140,7 @@ function createPageFragment(
     sourceRepresentation,
     continuation: getContinuation(units, allUnits),
     editable: parentBlock.editable,
+    calloutContent: units[0]?.calloutContent,
   } satisfies PageFragment;
 }
 

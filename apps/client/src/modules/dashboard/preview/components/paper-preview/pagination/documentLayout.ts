@@ -22,8 +22,9 @@ function createLayoutUnit(
     | "sourceRepresentation"
      | "splittingStrategy"
      | "listMetadata"
-     | "codeMetadata"
-     | "blankSpaceMetadata"
+      | "codeMetadata"
+      | "blankSpaceMetadata"
+      | "calloutContent"
   >>,
 ): DocumentLayoutUnit {
   return {
@@ -300,6 +301,25 @@ function getTableUnits(block: DocumentBlock) {
   );
 }
 
+function getCalloutUnit(block: DocumentBlock) {
+  const content = block.callout?.innerMarkdown;
+
+  if (!content) {
+    return createLayoutUnit(block, "block", block.source);
+  }
+
+  const contentStart = block.source.indexOf(content);
+
+  return createLayoutUnit(block, "block", block.source, 0, {
+    sourceRange:
+      contentStart >= 0
+        ? { from: contentStart, to: contentStart + content.length }
+        : { from: 0, to: block.source.length },
+    splittingStrategy: "callout",
+    calloutContent: content,
+  });
+}
+
 function getCodeUnits(block: DocumentBlock) {
   const codeMetadata = getCodeLayoutMetadata(block);
 
@@ -336,6 +356,8 @@ function getUnitsForBlock(block: DocumentBlock) {
       return getListUnits(block);
     case "table":
       return getTableUnits(block);
+    case "callout":
+      return [getCalloutUnit(block)];
     case "code":
       return getCodeUnits(block);
     case "paragraph":
@@ -433,7 +455,10 @@ export function getLayoutUnitSource(units: DocumentLayoutUnit[]) {
     return `${firstUnit.tableHeader}\n${units.map((unit) => unit.tableRow).join("\n")}`;
   }
 
-  if (firstUnit.kind === "paragraphFragment") {
+  if (
+    firstUnit.kind === "paragraphFragment" ||
+    firstUnit.kind === "calloutFragment"
+  ) {
     return units.map((unit) => unit.source).join("");
   }
 

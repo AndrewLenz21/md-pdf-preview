@@ -40,19 +40,37 @@ function createParagraphFragment(
   from: number,
   to: number,
 ) {
+  const isCallout = unit.splittingStrategy === "callout";
+  const content = unit.calloutContent?.slice(from, to) ?? "";
+
   return {
     ...unit,
-    id: `${unit.id}:paragraph:${from}-${to}`,
-    kind: "paragraphFragment" as const,
-    source: unit.source.slice(from, to),
+    id: `${unit.id}:${isCallout ? "callout" : "paragraph"}:${from}-${to}`,
+    kind: isCallout ? ("calloutFragment" as const) : ("paragraphFragment" as const),
+    source: isCallout
+      ? createCalloutSource(unit, content, from === 0)
+      : unit.source.slice(from, to),
     sourceRange: {
       from: unit.sourceRange.from + from,
       to: unit.sourceRange.from + to,
     },
-    sourceRepresentation: "direct" as const,
+    sourceRepresentation: isCallout ? ("reconstructed" as const) : ("direct" as const),
+    calloutContent: isCallout ? content : undefined,
     splittingStrategy: "atomic" as const,
     keepWithNext: false,
   };
+}
+
+function createCalloutSource(
+  unit: DocumentLayoutUnit,
+  content: string,
+  includeIcon: boolean,
+) {
+  const callout = unit.parentBlock.callout;
+  const openingTag = callout?.openingTag ?? "<aside>";
+  const icon = includeIcon && callout?.icon ? `${callout.icon}\n\n` : "";
+
+  return `${openingTag}\n${icon}${content}\n\n</aside>`;
 }
 
 function createListFragment(
@@ -138,6 +156,16 @@ function getLeadingGap(
     return 0;
   }
 
+  const previousUnit = currentPage.units.at(-1);
+
+  if (
+    previousUnit?.kind === "tableRow" &&
+    unit.kind === "tableRow" &&
+    previousUnit.parentBlock.id === unit.parentBlock.id
+  ) {
+    return 0;
+  }
+
   return currentPage.units.at(-1)?.kind === "blankSpace" ||
     (unit.kind === "blankSpace" &&
       unit.blankSpaceMetadata?.boundary === "trailing")
@@ -175,6 +203,11 @@ export function paginateDocument(
   const listProfileMap = new Map(
     listProfiles.map((profile) => [profile.unitId, profile]),
   );
+  const tableMeasurementMap = new Map(
+    measurements
+      .filter((measurement) => measurement.table)
+      .map((measurement) => [measurement.id, measurement.table!]),
+  );
   const codeProfileMap = new Map(
     codeProfiles.map((profile) => [profile.unitId, profile]),
   );
@@ -186,9 +219,11 @@ export function paginateDocument(
     units.some(
       (unit) =>
         !heights.has(unit.id) ||
-        (unit.splittingStrategy === "paragraph" &&
+        ((unit.splittingStrategy === "paragraph" ||
+          unit.splittingStrategy === "callout") &&
           (!profiles.has(unit.id) ||
-            profiles.get(unit.id)?.sourceLength !== unit.source.length)) ||
+            profiles.get(unit.id)?.sourceLength !==
+              (unit.calloutContent?.length ?? unit.source.length))) ||
         (unit.splittingStrategy === "list" &&
           (!unit.listMetadata ||
             !listProfileMap.has(unit.id) ||
@@ -205,8 +240,13 @@ export function paginateDocument(
   }
 
   const getUnitHeight = (unit: DocumentLayoutUnit) => {
+    if (unit.kind === "tableRow") {
+      return tableMeasurementMap.get(unit.id)?.rowHeight ?? heights.get(unit.id);
+    }
+
     switch (unit.splittingStrategy) {
       case "paragraph":
+      case "callout":
         return profiles.get(unit.id)?.fullHeight;
       case "list":
         return listProfileMap.get(unit.id)?.fullHeight;
@@ -258,6 +298,27 @@ export function paginateDocument(
     }
   };
 
+  const getTableStartHeight = (unit: DocumentLayoutUnit) => {
+    if (unit.kind !== "tableRow") {
+      return 0;
+    }
+
+    const previousUnit = currentPage.units.at(-1);
+
+    if (
+      previousUnit?.kind === "tableRow" &&
+      previousUnit.parentBlock.id === unit.parentBlock.id
+    ) {
+      return 0;
+    }
+
+    const measurement = tableMeasurementMap.get(unit.id);
+
+    return measurement
+      ? measurement.headerHeight + measurement.overhead
+      : 0;
+  };
+
   const addAtomicUnit = (unit: DocumentLayoutUnit, index: number) => {
     const unitHeight = getUnitHeight(unit);
     const nextUnit = units[index + 1];
@@ -278,7 +339,8 @@ export function paginateDocument(
             getUnitHeight(nextUnit) ??
             0
         : 0;
-    const leadingGap = getLeadingGap(currentPage, unit, blockGap);
+    let tableStartHeight = getTableStartHeight(unit);
+    let leadingGap = getLeadingGap(currentPage, unit, blockGap);
     const availableHeight = pageContentHeight - usedHeight - leadingGap;
     const shouldKeepWithNext =
       unit.keepWithNext &&
@@ -293,6 +355,7 @@ export function paginateDocument(
       unitHeight + blockGap + nextUnitHeight <= availableHeight;
     const neededHeight =
       leadingGap +
+      tableStartHeight +
       (unitHeight ?? 0) +
       (keepWithNextInRemainingSpace ? blockGap + nextUnitHeight : 0);
 
@@ -301,9 +364,11 @@ export function paginateDocument(
       usedHeight + neededHeight > pageContentHeight
     ) {
       finishCurrentPage();
+      tableStartHeight = getTableStartHeight(unit);
+      leadingGap = getLeadingGap(currentPage, unit, blockGap);
     }
 
-    addUnitToCurrentPage(unit, unitHeight ?? 0);
+    addUnitToCurrentPage(unit, tableStartHeight + (unitHeight ?? 0));
   };
 
   const addStrategyUnit = (
@@ -521,7 +586,10 @@ export function paginateDocument(
       return;
     }
 
-    if (unit.splittingStrategy === "paragraph") {
+    if (
+      unit.splittingStrategy === "paragraph" ||
+      unit.splittingStrategy === "callout"
+    ) {
       addParagraphUnit(unit);
       return;
     }

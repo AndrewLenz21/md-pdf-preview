@@ -127,7 +127,17 @@ function getPageHeadText(page: HTMLElement) {
   );
 
   for (const root of roots) {
-    const text = getRawText(getTextEntries(root));
+    const tableBody = root.querySelector<HTMLElement>("table tbody");
+    // Continued preview tables repeat their header, but the editor has only
+    // one header. Anchor the break to the first body row instead.
+    const firstTableRow = tableBody?.firstElementChild;
+    const text = getRawText(
+      getTextEntries(
+        firstTableRow instanceof HTMLElement
+          ? firstTableRow
+          : (tableBody ?? root),
+      ),
+    );
 
     if (normalizeText(text).text.length > 0) {
       return text;
@@ -143,7 +153,16 @@ function getPageTailText(page: HTMLElement) {
   );
 
   for (let index = roots.length - 1; index >= 0; index -= 1) {
-    const text = getRawText(getTextEntries(roots[index] ?? page));
+    const root = roots[index] ?? page;
+    const tableBody = root.querySelector<HTMLElement>("table tbody");
+    const lastTableRow = tableBody?.lastElementChild;
+    const text = getRawText(
+      getTextEntries(
+        lastTableRow instanceof HTMLElement
+          ? lastTableRow
+          : (tableBody ?? root),
+      ),
+    );
 
     if (normalizeText(text).text.length > 0) {
       return text;

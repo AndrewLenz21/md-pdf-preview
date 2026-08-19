@@ -8,6 +8,7 @@ import type { CodeLayoutMetadata } from "@/modules/dashboard/document/model/code
 export type DocumentLayoutUnitKind =
   | "block"
   | "paragraphFragment"
+  | "calloutFragment"
   | "listFragment"
   | "tableRow"
   | "codeFragment"
@@ -24,6 +25,7 @@ export type SourceRepresentation = "direct" | "reconstructed";
 export type LayoutUnitSplittingStrategy =
   | "atomic"
   | "paragraph"
+  | "callout"
   | "list"
   | "code"
   | "blankSpace";
@@ -56,6 +58,7 @@ export type PageFragment = {
   sourceRepresentation: SourceRepresentation;
   continuation: PageFragmentContinuation;
   editable: boolean;
+  calloutContent?: string;
   blankSpace?: {
     boundary: "leading" | "between" | "trailing";
     lineCount: number;
@@ -76,6 +79,7 @@ export type DocumentLayoutUnit = {
   listMetadata?: ListLayoutMetadata;
   codeMetadata?: CodeLayoutMetadata;
   blankSpaceMetadata?: BlankSpaceLayoutMetadata;
+  calloutContent?: string;
   tableHeader?: string;
   tableRow?: string;
   keepWithNext: boolean;

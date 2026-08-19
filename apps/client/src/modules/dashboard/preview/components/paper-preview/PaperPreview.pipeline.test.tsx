@@ -3,7 +3,10 @@
 import { render } from "@testing-library/react";
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 
-import { MOCK_DOCUMENTS } from "@/modules/dashboard/constants/mock-documents";
+import {
+  CASH_BASIS_TAX_VIEW_MARKDOWN,
+  MOCK_DOCUMENTS,
+} from "@/modules/dashboard/constants/mock-documents";
 
 import { PaperPreview } from "./PaperPreview";
 import { getPaperPreviewDimensions } from "./paper-sizes";
@@ -33,9 +36,17 @@ describe("PaperPreview measurement pipeline", () => {
     vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
       function (this: HTMLElement) {
         const height = this.dataset.documentMeasureParagraphCandidate
-          ? 20
+          ? this.querySelector(".document-callout")
+            ? 100
+            : 20
           : this.dataset.documentMeasureBlock
             ? 100
+            : this.tagName === "TABLE"
+              ? 100
+              : this.tagName === "THEAD"
+                ? 30
+                : this.tagName === "TR"
+                  ? 70
             : this.tagName === "LI"
               ? 20
               : 0;
@@ -219,5 +230,30 @@ describe("PaperPreview measurement pipeline", () => {
     expect(container.querySelector('[role="status"]')?.textContent).toContain(
       "Rendering preview",
     );
+  });
+
+  it("profiles the cash-basis tax tables across the preview pages", () => {
+    const { container } = render(
+      <PaperPreview
+        documentTitle="Cash-Basis Tax View"
+        markdown={CASH_BASIS_TAX_VIEW_MARKDOWN}
+        paperDimensions={getPaperPreviewDimensions("a4", 100)}
+      />,
+    );
+
+    const pages = [...container.querySelectorAll<HTMLElement>("[data-document-page]")];
+    const monthlyRevenueTablePages = pages.reduce<number[]>(
+      (result, page, index) => {
+        const hasMonthlyRevenueTable = [...page.querySelectorAll("table")].some(
+          (table) => table.textContent?.includes("Est. final tax + INPS"),
+        );
+
+        return hasMonthlyRevenueTable ? [...result, index + 1] : result;
+      },
+      [],
+    );
+
+    expect(pages.length).toBeGreaterThan(0);
+    expect(monthlyRevenueTablePages).toHaveLength(1);
   });
 });

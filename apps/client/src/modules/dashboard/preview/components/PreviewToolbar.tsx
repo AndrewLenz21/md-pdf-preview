@@ -76,15 +76,19 @@ function EditingActionButtons({
   );
 }
 
-function PreviewActionButtons({
+export function PreviewActionButtons({
   editingActions,
+  hideOnDesktop = false,
 }: {
   editingActions?: EditingActions | null;
+  hideOnDesktop?: boolean;
 }) {
   const disabled = !editingActions;
 
   return (
-    <div className="mobile-preview-toolbar-editing-actions flex items-center gap-1">
+    <div
+      className={`mobile-preview-toolbar-editing-actions flex items-center gap-1 ${hideOnDesktop ? "mobile-preview-toolbar-print-action" : ""}`}
+    >
       <button
         type="button"
         title="Print"
@@ -97,6 +101,24 @@ function PreviewActionButtons({
         <span className="hidden sm:inline">Print</span>
       </button>
     </div>
+  );
+}
+
+export function PreviewPaneToolbar({
+  editingActions,
+}: {
+  editingActions?: EditingActions | null;
+}) {
+  return (
+    <header
+      data-document-control
+      className="desktop-preview-pane-toolbar relative z-50 flex h-14 shrink-0 items-center justify-end overflow-visible border-y border-border/80 bg-card/80 px-4 shadow-lg backdrop-blur-sm lg:px-6"
+    >
+      <div className="flex items-center gap-2 sm:gap-3">
+        <PaperSizeSelect />
+        <PreviewActionButtons editingActions={editingActions} />
+      </div>
+    </header>
   );
 }
 
@@ -181,7 +203,9 @@ export function PreviewToolbar({
       </div>
 
       <div className="mobile-preview-toolbar-right flex shrink-0 items-center gap-2 sm:gap-3">
-        <div className="mobile-preview-toolbar-paper paper-size-control-slot">
+        <div
+          className={`mobile-preview-toolbar-paper paper-size-control-slot ${isPreviewMode ? "mobile-preview-toolbar-paper-action" : ""}`}
+        >
           <div
             className={`paper-size-control ${isPreviewMode ? "paper-size-control-visible" : "paper-size-control-hidden"}`}
             aria-hidden={!isPreviewMode}
@@ -202,7 +226,10 @@ export function PreviewToolbar({
             {splitMode ? (
               <EditingActionButtons editingActions={editingActions} />
             ) : null}
-            <PreviewActionButtons editingActions={editingActions} />
+            <PreviewActionButtons
+              editingActions={editingActions}
+              hideOnDesktop
+            />
           </>
         ) : (
           <EditingActionButtons editingActions={editingActions} />

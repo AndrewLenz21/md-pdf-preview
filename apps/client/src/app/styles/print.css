@@ -8,6 +8,8 @@
     html,
     body {
       background: white !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
     }
 
     body * {
@@ -33,6 +35,13 @@
       --document-callout-success: oklch(0.96 0.03 150);
       --document-callout-warning: oklch(0.97 0.04 85);
       --document-callout-danger: oklch(0.97 0.025 25);
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    .document-preview-root[data-document-mode="preview"] * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
     }
 
     .document-preview-root[data-document-mode="preview"] .document-preview-canvas {
@@ -40,6 +49,19 @@
       min-height: 0 !important;
       overflow: visible !important;
       background: white !important;
+    }
+
+    .document-preview-root[data-document-mode="preview"]
+      .document-markdown-block
+      th,
+    .document-preview-root[data-document-mode="preview"]
+      .document-markdown-block
+      td {
+      border-color: color-mix(
+        in oklab,
+        var(--document-border) 52%,
+        transparent
+      ) !important;
     }
 
     [data-document-control] {

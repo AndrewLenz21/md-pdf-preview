@@ -7,9 +7,14 @@ import {
   DashboardBottomNav,
   type MobileDashboardSection,
 } from "@/modules/dashboard/mobile-navigation";
-import { useDocumentStore } from "@/modules/dashboard/stores";
+import {
+  useDocumentEditorStore,
+  useDocumentStore,
+  useWorkspaceStore,
+} from "@/modules/dashboard/stores";
 import {
   DocumentPreview,
+  PreviewPaneToolbar,
   PreviewToolbar,
   PreviewZoomControl,
 } from "@/modules/dashboard/preview";
@@ -34,6 +39,12 @@ export function DashboardWorkspace() {
   );
   const flushPendingContent = useDocumentStore(
     (state) => state.flushPendingContent,
+  );
+  const initializeWorkspaceZoom = useWorkspaceStore(
+    (state) => state.initializeViewportZoom,
+  );
+  const initializeDocumentEditorZoom = useDocumentEditorStore(
+    (state) => state.initializeViewportZoom,
   );
   const [mobileSection, setMobileSection] =
     useState<MobileDashboardSection>("preview");
@@ -70,6 +81,15 @@ export function DashboardWorkspace() {
   const selectedDocument =
     documents.find((document) => document.id === selectedDocumentId) ??
     documents[0];
+
+  useLayoutEffect(() => {
+    const isSmallScreen =
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(max-width: 1023px)").matches;
+
+    initializeWorkspaceZoom(isSmallScreen);
+    initializeDocumentEditorZoom(isSmallScreen);
+  }, [initializeDocumentEditorZoom, initializeWorkspaceZoom]);
 
   const saveMobileSectionScroll = (section: MobileDashboardSection) => {
     mobileSectionScrollPositions.current[section] = window.scrollY;
@@ -257,20 +277,23 @@ export function DashboardWorkspace() {
             {desktopPreviewVisible ? (
               <section
                 aria-hidden={!isPreviewMode}
-                className={`relative h-full min-h-0 min-w-0 overflow-hidden transition-[width,opacity,transform] duration-300 ease-out ${isPreviewMode ? "dashboard-desktop-preview-enter w-1/2 translate-x-0 opacity-100" : "pointer-events-none w-0 translate-x-4 opacity-0"}`}
+                className={`relative flex h-full min-h-0 min-w-0 flex-col overflow-hidden transition-[width,opacity,transform] duration-300 ease-out ${isPreviewMode ? "dashboard-desktop-preview-enter w-1/2 translate-x-0 opacity-100" : "pointer-events-none w-0 translate-x-4 opacity-0"}`}
               >
-                <DocumentPreview
-                  document={selectedDocument}
-                  mode="preview"
-                  embedded
-                  showToolbar={false}
-                  scrollScope="desktop"
-                  onModeChange={changeEditorMode}
-                  onContentChange={(content) =>
-                    scheduleContentUpdate(selectedDocument.id, content)
-                  }
-                  scrollContainerRef={desktopPreviewScrollRef}
-                />
+                <PreviewPaneToolbar editingActions={desktopEditingActions} />
+                <div className="min-h-0 min-w-0 flex-1">
+                  <DocumentPreview
+                    document={selectedDocument}
+                    mode="preview"
+                    embedded
+                    showToolbar={false}
+                    scrollScope="desktop"
+                    onModeChange={changeEditorMode}
+                    onContentChange={(content) =>
+                      scheduleContentUpdate(selectedDocument.id, content)
+                    }
+                    scrollContainerRef={desktopPreviewScrollRef}
+                  />
+                </div>
                 {isPreviewMode ? (
                   <PreviewZoomControl mode="preview" embedded />
                 ) : null}

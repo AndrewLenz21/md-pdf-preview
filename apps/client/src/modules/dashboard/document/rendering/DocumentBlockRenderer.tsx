@@ -37,9 +37,11 @@ export function MarkdownContent({
 export function DocumentBlockRenderer({
   block,
   definitions,
+  calloutContent,
 }: {
   block: DocumentBlock;
   definitions: string[];
+  calloutContent?: string;
 }) {
   if (block.kind === "unsupported") {
     return (
@@ -62,7 +64,7 @@ export function DocumentBlockRenderer({
         ) : null}
         <div className="document-callout-content">
           <MarkdownContent
-            source={block.callout.innerMarkdown}
+            source={calloutContent ?? block.callout.innerMarkdown}
             definitions={definitions}
           />
         </div>

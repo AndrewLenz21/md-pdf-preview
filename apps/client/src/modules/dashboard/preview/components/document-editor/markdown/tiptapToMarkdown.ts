@@ -10,6 +10,33 @@ function getCodeLanguage(node: Element) {
   return language ?? "";
 }
 
+function serializeTableCell(service: TurndownService, cell: HTMLTableCellElement) {
+  return service
+    .turndown(cell.innerHTML)
+    .replace(/\s+/g, " ")
+    .replace(/\|/g, "\\|")
+    .trim();
+}
+
+function serializeTable(service: TurndownService, node: Element) {
+  const rows = Array.from((node as HTMLTableElement).rows);
+
+  if (rows.length === 0) {
+    return "";
+  }
+
+  const getCells = (row: HTMLTableRowElement) =>
+    Array.from(row.cells).map((cell) => serializeTableCell(service, cell));
+  const header = getCells(rows[0]);
+  const separator = header.map(() => "---");
+  const body = rows.slice(1).map(getCells);
+  const lines = [header, separator, ...body].map(
+    (cells) => `| ${cells.join(" | ")} |`,
+  );
+
+  return `\n\n${lines.join("\n")}\n\n`;
+}
+
 type BlankSpaceTokenGroup = {
   lineEnding: string;
   normalLineCount: number;
@@ -41,6 +68,10 @@ function createMarkdownSerializer(
   let emptyParagraphTokenIndex = 0;
 
   service.use(gfm);
+  service.addRule("documentTable", {
+    filter: "table",
+    replacement: (_content, node) => serializeTable(service, node),
+  });
   service.addRule("documentBlankSpace", {
     filter: (node) =>
       node.nodeName === "DIV" && node.hasAttribute("data-document-blank-space"),

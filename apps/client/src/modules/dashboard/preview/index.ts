@@ -6,6 +6,10 @@ export {
   PaperSizeSelect,
   getPaperPreviewDimensions,
 } from "./components/paper-preview";
-export { PreviewToolbar } from "./components/PreviewToolbar";
+export {
+  PreviewActionButtons,
+  PreviewPaneToolbar,
+  PreviewToolbar,
+} from "./components/PreviewToolbar";
 export { PreviewZoomControl } from "./components/PreviewZoomControl";
 export { PreviewZoomSlider } from "./components/PreviewZoomSlider";

@@ -8,7 +8,10 @@ import { parseMarkdownDocument } from "@/modules/dashboard/document";
 import { MOCK_DOCUMENTS } from "@/modules/dashboard/constants/mock-documents";
 import type { PreviewEditingController } from "../../editing/previewEditing.types";
 import { usePreviewEditing } from "../../editing/usePreviewEditing";
-import { getPreviewListItems } from "../../editing/selectionMapping";
+import {
+  getPreviewListItems,
+  isEditablePreviewFragment,
+} from "../../editing/selectionMapping";
 import { createPageFragments } from "./pagination/pageFragments";
 import { createDocumentLayoutUnits } from "./pagination/documentLayout";
 import { PaperPage } from "./PaperPage";
@@ -76,6 +79,26 @@ describe("PaperPage", () => {
 
     expect(container.querySelector(".document-callout-icon")?.textContent).toBe("🎯");
     expect(container.querySelector("strong")?.textContent).toBe("Core idea:");
+  });
+
+  it("only enables direct editing for a complete table fragment", () => {
+    const markdown = [
+      "| Name | Value |",
+      "| --- | --- |",
+      "| Total | 100 |",
+    ].join("\n");
+    const [block] = parseMarkdownDocument(markdown).blocks;
+    const units = createDocumentLayoutUnits([block]);
+    const [fragment] = createPageFragments(units, units);
+
+    expect(fragment).toBeTruthy();
+    expect(isEditablePreviewFragment(fragment!, block)).toBe(true);
+    expect(
+      isEditablePreviewFragment(
+        { ...fragment!, continuation: "end" },
+        block,
+      ),
+    ).toBe(false);
   });
 
   it("renders the explicit fragment order supplied by the page plan", () => {

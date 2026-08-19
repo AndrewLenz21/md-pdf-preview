@@ -178,6 +178,14 @@ export function isEditablePreviewFragment(
   fragment: PageFragment,
   parentBlock: DocumentBlock,
 ) {
+  if (parentBlock.kind === "table") {
+    return (
+      parentBlock.editable &&
+      fragment.kind === "table" &&
+      fragment.continuation === "none"
+    );
+  }
+
   if (parentBlock.kind === "list") {
     const fragmentItems = getPreviewListItemRanges(parentBlock).filter(
       (item) =>

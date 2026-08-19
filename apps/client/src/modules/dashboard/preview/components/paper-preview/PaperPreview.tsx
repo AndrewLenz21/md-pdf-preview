@@ -61,15 +61,18 @@ export function PaperPreview({
     [layoutUnits],
   );
   const measurementUnits = useMemo(
-    () =>
+      () =>
       layoutUnits.map((unit) => ({
         id: unit.id,
         parentBlockId: unit.parentBlock.id,
+        kind: unit.kind,
         source: unit.source,
         splittingStrategy: unit.splittingStrategy,
-        listMetadata: unit.listMetadata,
-        codeMetadata: unit.codeMetadata,
-        blankSpaceMetadata: unit.blankSpaceMetadata,
+         listMetadata: unit.listMetadata,
+         codeMetadata: unit.codeMetadata,
+         blankSpaceMetadata: unit.blankSpaceMetadata,
+         calloutContent: unit.calloutContent,
+         measurementSource: unit.calloutContent,
       })),
     [layoutUnits],
   );
@@ -240,10 +243,11 @@ export function PaperPreview({
                     lineCount={unit.blankSpaceMetadata?.lineCount ?? 0}
                   />
                 ) : (
-                  <DocumentBlockRenderer
-                    block={getLayoutUnitBlock(unit)}
-                    definitions={parsedDocument.definitions}
-                  />
+                   <DocumentBlockRenderer
+                     block={getLayoutUnitBlock(unit)}
+                     calloutContent={unit.calloutContent}
+                     definitions={parsedDocument.definitions}
+                   />
                 )}
               </div>
             );
@@ -265,6 +269,7 @@ export function PaperPreview({
                     id: candidate.id,
                     source: candidate.source,
                   }}
+                  calloutContent={candidate.content}
                   definitions={parsedDocument.definitions}
                 />
               </div>
@@ -292,7 +297,7 @@ export function PaperPreview({
               pageIndex={pageIndex}
               pagePlan={pagePlan}
               paperDimensions={paperDimensions}
-              animateEntry={pageIndex > 0}
+              animateEntry
               pageSourceRange={pageSourceRange}
                 onPageMarkdownChange={
                   pageSourceRange && onContentChange

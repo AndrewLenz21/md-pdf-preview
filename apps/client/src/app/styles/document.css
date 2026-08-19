@@ -1,6 +1,55 @@
 @layer base {
   .document-pagination-root {
+    position: relative;
     min-width: 100%;
+  }
+
+  .document-preview-rendering-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: grid;
+    min-height: 12rem;
+    place-items: center;
+    pointer-events: none;
+    background: color-mix(in oklab, var(--background) 58%, transparent);
+    backdrop-filter: blur(8px);
+  }
+
+  .document-preview-rendering-card {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    border: 1px solid color-mix(in oklab, var(--border) 78%, transparent);
+    border-radius: 999px;
+    background: var(--card);
+    padding: 0.6rem 0.9rem;
+    color: var(--card-foreground);
+    box-shadow: 0 16px 38px -24px color-mix(in oklab, var(--foreground) 48%, transparent);
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .document-preview-rendering-spinner {
+    width: 0.9rem;
+    height: 0.9rem;
+    flex: 0 0 0.9rem;
+    border: 2px solid color-mix(in oklab, var(--primary) 22%, transparent);
+    border-top-color: var(--primary);
+    border-radius: 999px;
+    animation: document-preview-rendering-spin 800ms linear infinite;
+  }
+
+  @keyframes document-preview-rendering-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .document-preview-rendering-spinner {
+      animation: none;
+    }
   }
 
   .document-pages {

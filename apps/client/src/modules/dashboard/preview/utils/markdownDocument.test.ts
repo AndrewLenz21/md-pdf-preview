@@ -235,6 +235,49 @@ describe("Markdown document model", () => {
     expect(units.map((unit) => unit.tableRow).join("\n")).toContain("| Row 10 | 10 |");
   });
 
+  it("splits a long aside while preserving its semantic wrapper", () => {
+    const markdown = [
+      "<aside>",
+      "🧾",
+      "",
+      "First section of the callout. Second section continues on the next page.",
+      "",
+      "</aside>",
+    ].join("\n");
+    const [unit] = createDocumentLayoutUnits(
+      parseMarkdownDocument(markdown).blocks,
+    );
+    const calloutContent = unit.calloutContent ?? "";
+    const splitOffset = calloutContent.indexOf("Second");
+    const pages = paginateDocument(
+      [unit],
+      [{ id: unit.id, height: 240 }],
+      150,
+      0,
+      [
+        {
+          unitId: unit.id,
+          parentBlockId: unit.parentBlock.id,
+          sourceLength: calloutContent.length,
+          fullHeight: 240,
+          fitPoints: [
+            { sourceOffset: 0, height: 0, isLineBoundary: true },
+            { sourceOffset: splitOffset, height: 120, isLineBoundary: true },
+            { sourceOffset: calloutContent.length, height: 240, isLineBoundary: true },
+          ],
+        },
+      ],
+    );
+
+    expect(pages).toHaveLength(2);
+    expect(pages[0].fragments[0]?.kind).toBe("callout");
+    expect(pages[1].fragments[0]?.kind).toBe("callout");
+    expect(pages[0].fragments[0]?.source).toContain("<aside>");
+    expect(pages[1].fragments[0]?.source).toContain("</aside>");
+    expect(pages[0].fragments[0]?.calloutContent).toContain("First");
+    expect(pages[1].fragments[0]?.calloutContent).toContain("Second");
+  });
+
   it("Test F: fragments long code without losing lines", () => {
     const markdown = [
       "```ts",
@@ -393,6 +436,8 @@ describe("Markdown document model", () => {
     expect(css).toContain(".document-preview-root");
     expect(css).toContain(".document-measure-surface");
     expect(css).toContain(".print-document-preview");
+    expect(css).toContain("-webkit-print-color-adjust: exact");
+    expect(css).toContain("print-color-adjust: exact");
     expect(css).toContain(".dashboard-workspace > :not(.print-document-preview)");
     expect(css).toContain(".print-document-preview .document-preview-stage");
     expect(css).toContain(".print-document-preview .document-page-frame:last-child");

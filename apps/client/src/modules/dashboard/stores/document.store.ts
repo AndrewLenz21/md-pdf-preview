@@ -8,6 +8,7 @@ import type { MockDocument } from "@/modules/dashboard/document/model/document.t
 
 export const DOCUMENT_CONTENT_DEBOUNCE_MS = 500;
 export const MAX_MARKDOWN_CHARACTERS = 20_000;
+export const UNTITLED_DOCUMENT_TITLE = "Untitled";
 
 type PendingContentUpdate = {
   content: string;
@@ -41,6 +42,78 @@ function limitMarkdownContent(content: string) {
   return content.slice(0, MAX_MARKDOWN_CHARACTERS);
 }
 
+function getFirstNonEmptyLine(markdown: string) {
+  let offset = 0;
+
+  while (offset <= markdown.length) {
+    const lineEnd = markdown.indexOf("\n", offset);
+    const end = lineEnd === -1 ? markdown.length : lineEnd;
+    const line = markdown.slice(offset, end).replace(/\r$/, "");
+
+    if (line.trim().length > 0) {
+      return { line, offset };
+    }
+
+    if (lineEnd === -1) {
+      break;
+    }
+
+    offset = lineEnd + 1;
+  }
+
+  return null;
+}
+
+function getFirstHeadingTitle(markdown: string) {
+  const firstLine = getFirstNonEmptyLine(markdown);
+  const match = firstLine?.line.match(
+    /^[ \t]{0,3}#(?:[ \t]+(.*?))?[ \t]*$/,
+  );
+
+  if (!match) {
+    return null;
+  }
+
+  const title = (match[1] ?? "")
+    .replace(/[ \t]+#+[ \t]*$/, "")
+    .trim();
+
+  return title;
+}
+
+export function normalizeMarkdownDocument(markdown: string) {
+  const firstLine = getFirstNonEmptyLine(markdown);
+  const title = getFirstHeadingTitle(markdown);
+
+  if (firstLine && title !== null) {
+    return {
+      content: limitMarkdownContent(
+        firstLine.offset > 0 ? markdown.slice(firstLine.offset) : markdown,
+      ),
+      title: title || UNTITLED_DOCUMENT_TITLE,
+    };
+  }
+
+  const body = firstLine ? markdown.slice(firstLine.offset) : "";
+
+  return {
+    content: limitMarkdownContent(
+      `# ${UNTITLED_DOCUMENT_TITLE}\n\n${body}`,
+    ),
+    title: UNTITLED_DOCUMENT_TITLE,
+  };
+}
+
+function normalizeDocument(document: MockDocument) {
+  const normalized = normalizeMarkdownDocument(document.content ?? "");
+
+  return {
+    ...document,
+    content: normalized.content,
+    title: normalized.title,
+  };
+}
+
 function commitContent(
   set: (updater: (state: DocumentStoreState) => Partial<DocumentStoreState>) => void,
   documentId: string,
@@ -48,8 +121,10 @@ function commitContent(
 ) {
   set((state) => {
     const document = state.documents.find((item) => item.id === documentId);
+    const title =
+      getFirstHeadingTitle(content) || UNTITLED_DOCUMENT_TITLE;
 
-    if (!document || document.content === content) {
+    if (!document || (document.content === content && document.title === title)) {
       return {
         pendingContentByDocumentId: omitPendingContent(
           state.pendingContentByDocumentId,
@@ -60,7 +135,7 @@ function commitContent(
 
     return {
       documents: state.documents.map((item) =>
-        item.id === documentId ? { ...item, content } : item,
+        item.id === documentId ? { ...item, content, title } : item,
       ),
       pendingContentByDocumentId: omitPendingContent(
         state.pendingContentByDocumentId,
@@ -80,7 +155,7 @@ function omitPendingContent(
 }
 
 export const useDocumentStore = create<DocumentStoreState>((set, get) => ({
-  documents: MOCK_DOCUMENTS,
+  documents: MOCK_DOCUMENTS.map(normalizeDocument),
   pendingContentByDocumentId: {},
   selectedDocumentId: SELECTED_DOCUMENT_ID,
 
@@ -100,7 +175,8 @@ export const useDocumentStore = create<DocumentStoreState>((set, get) => ({
 
   scheduleContentUpdate: (documentId, content) => {
     const document = get().documents.find((item) => item.id === documentId);
-    const limitedContent = limitMarkdownContent(content);
+    const normalized = normalizeMarkdownDocument(content);
+    const limitedContent = normalized.content;
 
     if (!document) {
       return;

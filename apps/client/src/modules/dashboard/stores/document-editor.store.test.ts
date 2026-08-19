@@ -5,6 +5,7 @@ import { useDocumentEditorStore, useWorkspaceStore, WORKSPACE_ZOOM } from "./ind
 describe("document editor zoom store", () => {
   afterEach(() => {
     useDocumentEditorStore.getState().resetZoom();
+    useDocumentEditorStore.setState({ responsiveZoomInitialized: false });
     useWorkspaceStore.getState().resetMarkdownZoom();
     useWorkspaceStore.getState().resetPreviewZoom();
   });
@@ -18,6 +19,14 @@ describe("document editor zoom store", () => {
     );
     expect(useWorkspaceStore.getState().previewZoom).toBe(
       WORKSPACE_ZOOM.default,
+    );
+  });
+
+  it("starts at 50% on a small screen", () => {
+    useDocumentEditorStore.getState().initializeViewportZoom(true);
+
+    expect(useDocumentEditorStore.getState().zoom).toBe(
+      WORKSPACE_ZOOM.mobileDefault,
     );
   });
 });

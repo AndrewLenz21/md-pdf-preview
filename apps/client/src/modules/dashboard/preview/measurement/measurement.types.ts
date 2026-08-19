@@ -1,10 +1,20 @@
 import type { ListLayoutMetadata } from "@/modules/dashboard/document/model/list.types";
 import type { CodeLayoutMetadata } from "@/modules/dashboard/document/model/code.types";
-import type { BlankSpaceLayoutMetadata } from "../components/paper-preview/pagination/pagination.types";
+import type {
+  BlankSpaceLayoutMetadata,
+  DocumentLayoutUnitKind,
+} from "../components/paper-preview/pagination/pagination.types";
+
+export type TableMeasurement = {
+  headerHeight: number;
+  rowHeight: number;
+  overhead: number;
+};
 
 export type MeasuredLayoutUnit = {
   id: string;
   height: number;
+  table?: TableMeasurement;
 };
 
 export type ParagraphMeasurementCandidate = {
@@ -13,23 +23,34 @@ export type ParagraphMeasurementCandidate = {
   parentBlockId: string;
   sourceOffset: number;
   source: string;
+  content?: string;
 };
 
 export type ParagraphMeasurementUnit = {
   id: string;
   parentBlockId: string;
   source: string;
-  splittingStrategy: "paragraph";
+  splittingStrategy: "paragraph" | "callout";
+  measurementSource?: string;
 };
 
 export type BlockMeasurementUnit = {
   id: string;
   parentBlockId: string;
   source: string;
-  splittingStrategy: "atomic" | "paragraph" | "list" | "code" | "blankSpace";
+  kind?: DocumentLayoutUnitKind;
+  splittingStrategy:
+    | "atomic"
+    | "paragraph"
+    | "callout"
+    | "list"
+    | "code"
+    | "blankSpace";
+  measurementSource?: string;
   listMetadata?: ListLayoutMetadata;
   codeMetadata?: CodeLayoutMetadata;
   blankSpaceMetadata?: BlankSpaceLayoutMetadata;
+  calloutContent?: string;
 };
 
 export type ListMeasurementUnit = BlockMeasurementUnit & {

@@ -33,6 +33,12 @@ export function PageFragmentRenderer({
     return activeEditor;
   }
 
+  const callout =
+    parentBlock.callout &&
+    (fragment.continuation === "middle" || fragment.continuation === "end")
+      ? { ...parentBlock.callout, icon: undefined }
+      : parentBlock.callout;
+
   return (
     <DocumentBlockRenderer
       block={{
@@ -41,7 +47,9 @@ export function PageFragmentRenderer({
         source: fragment.source,
         editable: fragment.editable,
         keepWithNext: false,
+        callout,
       }}
+      calloutContent={fragment.calloutContent}
       definitions={definitions}
     />
   );

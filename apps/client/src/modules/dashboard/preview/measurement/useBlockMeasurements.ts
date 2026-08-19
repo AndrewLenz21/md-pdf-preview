@@ -51,9 +51,11 @@ function collectMeasurements(
   const measurements: MeasuredLayoutUnit[] = [];
   const heightById = new Map<string, number>();
   const measuredBlockById = new Map<string, HTMLElement>();
+  const unitById = new Map(units.map((unit) => [unit.id, unit]));
   const paragraphUnits = units.filter(
     (unit): unit is ParagraphMeasurementUnit =>
-      unit.splittingStrategy === "paragraph",
+      unit.splittingStrategy === "paragraph" ||
+      unit.splittingStrategy === "callout",
   );
   const listUnits = units.filter(
     (unit): unit is ListMeasurementUnit =>
@@ -100,7 +102,31 @@ function collectMeasurements(
       }
 
       measuredIds.add(unitId);
-      measurements.push({ id: unitId, height });
+      const unit = unitById.get(unitId);
+      const tableElement =
+        unit?.kind === "tableRow"
+          ? element.querySelector<HTMLTableElement>("table")
+          : null;
+      const headerElement = tableElement?.querySelector<HTMLElement>("thead");
+      const rowElement = tableElement?.querySelector<HTMLElement>("tbody tr");
+      const tableRect = tableElement?.getBoundingClientRect();
+      const headerHeight = headerElement?.getBoundingClientRect().height;
+      const rowHeight = rowElement?.getBoundingClientRect().height;
+      const table =
+        tableRect &&
+        headerHeight !== undefined &&
+        rowHeight !== undefined &&
+        isValidMeasurement(tableRect.height) &&
+        isValidMeasurement(headerHeight) &&
+        isValidMeasurement(rowHeight)
+          ? {
+              headerHeight,
+              rowHeight,
+              overhead: Math.max(0, height - tableRect.height),
+            }
+          : undefined;
+
+      measurements.push({ id: unitId, height, table });
       heightById.set(unitId, height);
       measuredBlockById.set(unitId, element);
     });
@@ -139,7 +165,7 @@ function collectMeasurements(
     const profile = createParagraphMeasurementProfile({
       unitId: unit.id,
       parentBlockId: unit.parentBlockId,
-      sourceLength: unit.source.length,
+      sourceLength: unit.measurementSource?.length ?? unit.source.length,
       candidates,
       heights: candidateHeights,
     });

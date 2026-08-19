@@ -20,16 +20,22 @@ function getWordBoundaryOffsets(source: string) {
 export function getParagraphMeasurementCandidates(
   unit: BlockMeasurementUnit,
 ): ParagraphMeasurementCandidate[] {
-  if (unit.splittingStrategy !== "paragraph") {
+  if (
+    unit.splittingStrategy !== "paragraph" &&
+    unit.splittingStrategy !== "callout"
+  ) {
     return [];
   }
 
-  return getWordBoundaryOffsets(unit.source).map((sourceOffset) => ({
+  const measurementSource = unit.measurementSource ?? unit.source;
+
+  return getWordBoundaryOffsets(measurementSource).map((sourceOffset) => ({
     id: `${unit.id}:paragraph:${sourceOffset}`,
     unitId: unit.id,
     parentBlockId: unit.parentBlockId,
     sourceOffset,
     source: unit.source.slice(0, sourceOffset),
+    content: measurementSource.slice(0, sourceOffset),
   }));
 }
 
@@ -52,7 +58,8 @@ export function createParagraphMeasurementProfile({
         !Number.isInteger(candidate.sourceOffset) ||
         candidate.sourceOffset <= 0 ||
         candidate.sourceOffset > sourceLength ||
-        candidate.source.length !== candidate.sourceOffset,
+        (candidate.content ?? candidate.source).length !==
+          candidate.sourceOffset,
     )
   ) {
     return null;
