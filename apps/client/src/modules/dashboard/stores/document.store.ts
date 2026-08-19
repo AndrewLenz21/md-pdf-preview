@@ -19,6 +19,7 @@ export type DocumentStoreState = {
   documents: MockDocument[];
   pendingContentByDocumentId: Record<string, string>;
   selectedDocumentId: string;
+  createDocument: () => string;
   selectDocument: (documentId: string) => void;
   scheduleContentUpdate: (documentId: string, content: string) => void;
   flushPendingContent: (documentId: string) => void;
@@ -66,17 +67,13 @@ function getFirstNonEmptyLine(markdown: string) {
 
 function getFirstHeadingTitle(markdown: string) {
   const firstLine = getFirstNonEmptyLine(markdown);
-  const match = firstLine?.line.match(
-    /^[ \t]{0,3}#(?:[ \t]+(.*?))?[ \t]*$/,
-  );
+  const match = firstLine?.line.match(/^[ \t]{0,3}#(?:[ \t]+(.*?))?[ \t]*$/);
 
   if (!match) {
     return null;
   }
 
-  const title = (match[1] ?? "")
-    .replace(/[ \t]+#+[ \t]*$/, "")
-    .trim();
+  const title = (match[1] ?? "").replace(/[ \t]+#+[ \t]*$/, "").trim();
 
   return title;
 }
@@ -97,9 +94,7 @@ export function normalizeMarkdownDocument(markdown: string) {
   const body = firstLine ? markdown.slice(firstLine.offset) : "";
 
   return {
-    content: limitMarkdownContent(
-      `# ${UNTITLED_DOCUMENT_TITLE}\n\n${body}`,
-    ),
+    content: limitMarkdownContent(`# ${UNTITLED_DOCUMENT_TITLE}\n\n${body}`),
     title: UNTITLED_DOCUMENT_TITLE,
   };
 }
@@ -115,16 +110,20 @@ function normalizeDocument(document: MockDocument) {
 }
 
 function commitContent(
-  set: (updater: (state: DocumentStoreState) => Partial<DocumentStoreState>) => void,
+  set: (
+    updater: (state: DocumentStoreState) => Partial<DocumentStoreState>,
+  ) => void,
   documentId: string,
   content: string,
 ) {
   set((state) => {
     const document = state.documents.find((item) => item.id === documentId);
-    const title =
-      getFirstHeadingTitle(content) || UNTITLED_DOCUMENT_TITLE;
+    const title = getFirstHeadingTitle(content) || UNTITLED_DOCUMENT_TITLE;
 
-    if (!document || (document.content === content && document.title === title)) {
+    if (
+      !document ||
+      (document.content === content && document.title === title)
+    ) {
       return {
         pendingContentByDocumentId: omitPendingContent(
           state.pendingContentByDocumentId,
@@ -154,10 +153,35 @@ function omitPendingContent(
   return nextPendingContent;
 }
 
+function createDocumentId() {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+
+  return `document-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
 export const useDocumentStore = create<DocumentStoreState>((set, get) => ({
   documents: MOCK_DOCUMENTS.map(normalizeDocument),
   pendingContentByDocumentId: {},
   selectedDocumentId: SELECTED_DOCUMENT_ID,
+
+  createDocument: () => {
+    const id = createDocumentId();
+    const document: MockDocument = {
+      id,
+      title: UNTITLED_DOCUMENT_TITLE,
+      group: "documents",
+      updatedAt: "Edited just now",
+      content: `# ${UNTITLED_DOCUMENT_TITLE}\n\n`,
+    };
+
+    set((state) => ({
+      documents: [...state.documents, document],
+    }));
+
+    return id;
+  },
 
   selectDocument: (documentId) => {
     const currentDocumentId = get().selectedDocumentId;

@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useId, useLayoutEffect, useRef } from "react";
+import { useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
+
+const subscribeToMount = () => () => {};
+const getClientMountSnapshot = () => true;
+const getServerMountSnapshot = () => false;
 
 function CloseIcon() {
   return (
@@ -33,11 +39,38 @@ export function ModalShell({
   maxWidth?: string;
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
+  const shellRef = useRef<HTMLDivElement>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
   const titleId = useId();
+  const mounted = useSyncExternalStore(
+    subscribeToMount,
+    getClientMountSnapshot,
+    getServerMountSnapshot,
+  );
+
+  useLayoutEffect(() => {
+    if (open) {
+      const activeElement = document.activeElement;
+
+      previouslyFocusedRef.current =
+        activeElement instanceof HTMLElement ? activeElement : null;
+      closeRef.current?.focus();
+      return;
+    }
+
+    const activeElement = document.activeElement;
+
+    if (
+      activeElement instanceof HTMLElement &&
+      shellRef.current?.contains(activeElement)
+    ) {
+      activeElement.blur();
+      previouslyFocusedRef.current?.focus();
+    }
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
-    closeRef.current?.focus();
 
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
@@ -47,21 +80,25 @@ export function ModalShell({
     return () => document.removeEventListener("keydown", closeOnEscape);
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!mounted || typeof document === "undefined") return null;
 
-  return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+  return createPortal(
+    <div
+      ref={shellRef}
+      inert={!open}
+      className={`modal-shell ${open ? "modal-shell-open" : "modal-shell-closed"} fixed inset-0 z-[300] flex items-center justify-center p-4`}
+    >
       <button
         type="button"
         aria-label={closeLabel}
-        className="absolute inset-0 bg-foreground/30 backdrop-blur-sm"
+        className="modal-shell-backdrop absolute inset-0 bg-foreground/30 backdrop-blur-sm"
         onClick={onClose}
       />
       <section
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className={`relative max-h-[calc(100dvh-2rem)] w-full ${maxWidth} overflow-y-auto rounded-2xl border border-border bg-popover p-5 shadow-2xl sm:p-6`}
+        className={`modal-shell-content relative max-h-[calc(100dvh-2rem)] w-full ${maxWidth} overflow-y-auto rounded-2xl border border-border bg-popover p-5 shadow-2xl sm:p-6`}
       >
         <header className="mb-5 flex items-start justify-between gap-4">
           <div>
@@ -86,6 +123,7 @@ export function ModalShell({
         </header>
         {children}
       </section>
-    </div>
+    </div>,
+    document.body,
   );
 }

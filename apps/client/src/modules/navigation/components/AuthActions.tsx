@@ -52,13 +52,15 @@ export function AuthActions({
   const settingsLabel = t.has("settings.open")
     ? t("settings.open")
     : "Open settings";
+  const mobileProfileSurface =
+    settingsMode === "menu" ? "bg-sidebar-accent" : "bg-card/60";
 
   if (isPending) {
     return (
       <div
         className={
           mobile
-            ? "h-[74px] rounded-lg border border-border bg-card/60"
+            ? `h-[74px] rounded-lg border border-border ${mobileProfileSurface}`
             : "h-9 w-52 rounded-md bg-muted/60"
         }
         aria-hidden="true"
@@ -108,7 +110,9 @@ export function AuthActions({
 
   if (mobile) {
     return (
-      <div className="space-y-3 rounded-lg border border-border bg-card/60 p-3">
+      <div
+        className={`space-y-3 rounded-lg border border-border p-3 ${mobileProfileSurface}`}
+      >
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
@@ -124,7 +128,11 @@ export function AuthActions({
             </span>
           </div>
           {settingsMode === "menu" ? (
-            <SettingsMenu placement="sidebar" />
+            <SettingsMenu
+              placement="sidebar"
+              onSignOut={handleSignOut}
+              signOutLabel={signOutLabel}
+            />
           ) : (
             <button
               type="button"
@@ -138,14 +146,16 @@ export function AuthActions({
             </button>
           )}
         </div>
-        <button
-          type="button"
-          onClick={handleSignOut}
-          className="flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent/60"
-        >
-          <SignOutIcon />
-          {signOutLabel}
-        </button>
+        {settingsMode === "dialog" ? (
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent/60"
+          >
+            <SignOutIcon />
+            {signOutLabel}
+          </button>
+        ) : null}
       </div>
     );
   }

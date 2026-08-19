@@ -1,12 +1,27 @@
 "use client";
 
 import { createPortal } from "react-dom";
-import { Settings2 } from "lucide-react";
+import {
+  ChevronRight,
+  House,
+  Languages,
+  LogOut,
+  Palette,
+  Settings2,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 
-import { LanguageSelector } from "./LanguageSelector";
-import { ThemeMenu } from "./ThemeMenu";
+import { Link } from "@/core/i18n";
+
+import { LanguageDialog } from "./LanguageDialog";
+import { ThemeDialog } from "./ThemeDialog";
 
 type PopoverPosition = {
   left: number;
@@ -15,12 +30,22 @@ type PopoverPosition = {
 
 export function SettingsMenu({
   placement = "bottom",
+  onSignOut,
+  signOutLabel = "Sign out",
 }: {
   placement?: "bottom" | "sidebar";
+  onSignOut?: () => void | Promise<void>;
+  signOutLabel?: string;
 }) {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
+  const closeMenuTimerRef = useRef<number | undefined>(undefined);
   const [open, setOpen] = useState(false);
+  const [menuRendered, setMenuRendered] = useState(false);
+  const [menuClosing, setMenuClosing] = useState(false);
+  const [activeDialog, setActiveDialog] = useState<"language" | "theme" | null>(
+    null,
+  );
   const [position, setPosition] = useState<PopoverPosition | null>(null);
   const t = useTranslations("Navigation");
   const settingsLabel = t.has("settings.label")
@@ -29,21 +54,66 @@ export function SettingsMenu({
   const openSettingsLabel = t.has("settings.open")
     ? t("settings.open")
     : "Open settings";
+  const themeLabel = t.has("theme.label") ? t("theme.label") : "Theme";
+  const languageLabel = t.has("language.label")
+    ? t("language.label")
+    : "Language";
+  const landingLabel = t.has("links.landing")
+    ? t("links.landing")
+    : "Back to landing page";
+
+  const clearCloseMenuTimer = useCallback(() => {
+    if (closeMenuTimerRef.current !== undefined) {
+      window.clearTimeout(closeMenuTimerRef.current);
+      closeMenuTimerRef.current = undefined;
+    }
+  }, []);
+
+  const requestCloseMenu = useCallback(() => {
+    clearCloseMenuTimer();
+    setOpen(false);
+    setMenuClosing(true);
+    closeMenuTimerRef.current = window.setTimeout(() => {
+      setMenuRendered(false);
+      setMenuClosing(false);
+      closeMenuTimerRef.current = undefined;
+    }, 260);
+  }, [clearCloseMenuTimer]);
+
+  const toggleMenu = () => {
+    if (open) {
+      requestCloseMenu();
+      return;
+    }
+
+    clearCloseMenuTimer();
+    setMenuClosing(false);
+    setMenuRendered(true);
+    setOpen(true);
+  };
 
   useEffect(() => {
     const closeMenu = (event: MouseEvent) => {
+      if (activeDialog) {
+        return;
+      }
+
       const target = event.target as Node;
 
       if (
         !triggerRef.current?.contains(target) &&
         !popoverRef.current?.contains(target)
       ) {
-        setOpen(false);
+        requestCloseMenu();
       }
     };
     const closeOnEscape = (event: KeyboardEvent) => {
+      if (activeDialog) {
+        return;
+      }
+
       if (event.key === "Escape") {
-        setOpen(false);
+        requestCloseMenu();
       }
     };
 
@@ -54,7 +124,11 @@ export function SettingsMenu({
       document.removeEventListener("mousedown", closeMenu);
       document.removeEventListener("keydown", closeOnEscape);
     };
-  }, []);
+  }, [activeDialog, requestCloseMenu]);
+
+  useEffect(() => {
+    return () => clearCloseMenuTimer();
+  }, [clearCloseMenuTimer]);
 
   useLayoutEffect(() => {
     if (!open) {
@@ -135,19 +209,19 @@ export function SettingsMenu({
         className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         onClick={() => {
           setPosition(null);
-          setOpen((value) => !value);
+          toggleMenu();
         }}
       >
         <Settings2 className="h-4 w-4" strokeWidth={1.7} />
       </button>
 
-      {open && typeof document !== "undefined"
+      {menuRendered && typeof document !== "undefined"
         ? createPortal(
             <div
               ref={popoverRef}
               role="menu"
               aria-label={settingsLabel}
-              className="fixed z-[200] max-h-[calc(100dvh-1rem)] w-72 max-w-[calc(100vw-1rem)] overflow-y-auto rounded-xl border border-border bg-background p-2 shadow-xl"
+              className={`${menuClosing ? "settings-menu-popover-exit" : "settings-menu-popover-enter"} fixed z-[200] max-h-[calc(100dvh-1rem)] w-72 max-w-[calc(100vw-1rem)] overflow-y-auto rounded-xl border border-border p-2 shadow-xl ${placement === "sidebar" ? "bg-sidebar-accent" : "bg-background"}`}
               style={{
                 left: position?.left ?? 0,
                 top: position?.top ?? 0,
@@ -165,17 +239,84 @@ export function SettingsMenu({
                 </p>
               </div>
               <div className="space-y-1 pt-2">
-                <div className="rounded-lg px-1 py-0.5 hover:bg-accent/40">
-                  <ThemeMenu showLabel inline />
-                </div>
-                <div className="rounded-lg px-1 py-0.5 hover:bg-accent/40">
-                  <LanguageSelector showLabel inline />
-                </div>
+                <button
+                  type="button"
+                  role="menuitem"
+                  aria-haspopup="dialog"
+                  className="flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-foreground transition-colors hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  onClick={() => setActiveDialog("theme")}
+                >
+                  <Palette
+                    className="h-4 w-4 text-muted-foreground"
+                    strokeWidth={1.7}
+                  />
+                  <span className="min-w-0 flex-1">{themeLabel}</span>
+                  <ChevronRight
+                    className="h-3.5 w-3.5 text-muted-foreground"
+                    strokeWidth={1.7}
+                  />
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  aria-haspopup="dialog"
+                  className="flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-foreground transition-colors hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  onClick={() => setActiveDialog("language")}
+                >
+                  <Languages
+                    className="h-4 w-4 text-muted-foreground"
+                    strokeWidth={1.7}
+                  />
+                  <span className="min-w-0 flex-1">{languageLabel}</span>
+                  <ChevronRight
+                    className="h-3.5 w-3.5 text-muted-foreground"
+                    strokeWidth={1.7}
+                  />
+                </button>
+                {placement === "sidebar" ? (
+                  <Link
+                    href="/"
+                    role="menuitem"
+                    className="flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-foreground transition-colors hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    onClick={requestCloseMenu}
+                  >
+                    <House
+                      className="h-4 w-4 text-muted-foreground"
+                      strokeWidth={1.7}
+                    />
+                    <span className="min-w-0 flex-1">{landingLabel}</span>
+                  </Link>
+                ) : null}
               </div>
+              {onSignOut ? (
+                <>
+                  <div className="my-2 border-t border-border/70" />
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-muted-foreground transition-colors hover:bg-accent/60 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    onClick={() => {
+                      requestCloseMenu();
+                      void onSignOut();
+                    }}
+                  >
+                    <LogOut className="h-3.5 w-3.5" strokeWidth={1.7} />
+                    {signOutLabel}
+                  </button>
+                </>
+              ) : null}
             </div>,
             document.body,
           )
         : null}
+      <ThemeDialog
+        open={activeDialog === "theme"}
+        onClose={() => setActiveDialog(null)}
+      />
+      <LanguageDialog
+        open={activeDialog === "language"}
+        onClose={() => setActiveDialog(null)}
+      />
     </div>
   );
 }

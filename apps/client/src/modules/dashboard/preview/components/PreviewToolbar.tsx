@@ -30,7 +30,7 @@ function EditingActionButtons({
   };
 
   return (
-    <div className="mobile-preview-toolbar-editing-actions flex items-center gap-1">
+    <div className="mobile-preview-toolbar-editing-actions mobile-preview-toolbar-select-actions flex items-center gap-1">
       <button
         type="button"
         title="Select all"
@@ -38,7 +38,7 @@ function EditingActionButtons({
         disabled={disabled}
         onPointerDown={(event) => event.preventDefault()}
         onClick={() => editingActions?.selectAll()}
-        className="h-8 rounded-md px-2 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40"
+        className="h-8 shrink-0 whitespace-nowrap rounded-md px-2 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40"
       >
         Select all
       </button>
@@ -138,12 +138,13 @@ export function PreviewToolbar({
   const isPreviewMode = mode === "preview";
   const markdownCharacterCount = useDocumentStore((state) => {
     const pendingContent = state.pendingContentByDocumentId[document.id];
-    const storedDocument = state.documents.find((item) => item.id === document.id);
+    const storedDocument = state.documents.find(
+      (item) => item.id === document.id,
+    );
 
     return (pendingContent ?? storedDocument?.content ?? "").length;
   });
-  const isAtCharacterLimit =
-    markdownCharacterCount >= MAX_MARKDOWN_CHARACTERS;
+  const isAtCharacterLimit = markdownCharacterCount >= MAX_MARKDOWN_CHARACTERS;
 
   return (
     <header
@@ -155,9 +156,7 @@ export function PreviewToolbar({
           {document.title}
         </p>
         <p className="mt-0.5 flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
-          <span className="truncate">
-            Personal document · {document.updatedAt.toLowerCase()}
-          </span>
+          <span className="truncate">{document.updatedAt}</span>
           <span
             className={`shrink-0 tabular-nums ${isAtCharacterLimit ? "font-semibold text-destructive" : ""}`}
             title="Markdown character count"

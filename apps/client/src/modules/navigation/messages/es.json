@@ -18,7 +18,8 @@
   "links": {
     "product": "Producto",
     "dashboard": "Panel",
-    "about": "Acerca de"
+    "about": "Acerca de",
+    "landing": "Volver a la página principal"
   },
   "actions": {
     "signIn": "Iniciar sesión",

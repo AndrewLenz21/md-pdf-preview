@@ -18,7 +18,8 @@
   "links": {
     "product": "Prodotto",
     "dashboard": "Dashboard",
-    "about": "Informazioni"
+    "about": "Informazioni",
+    "landing": "Torna alla pagina principale"
   },
   "actions": {
     "signIn": "Accedi",

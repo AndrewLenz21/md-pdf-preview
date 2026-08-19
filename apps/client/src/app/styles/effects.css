@@ -63,8 +63,22 @@
     .navigation-overlay,
     .navigation-drawer,
     .dashboard-mobile-section,
-    .dashboard-paper-page-enter {
+    .dashboard-paper-page-enter,
+    .sidebar-source-title-enter,
+    .settings-menu-popover-enter,
+    .settings-menu-popover-exit {
       animation: none;
+      transition: none;
+    }
+
+    .modal-shell,
+    .modal-shell-backdrop,
+    .modal-shell-content {
+      animation: none;
+      transition: none;
+    }
+
+    .sidebar-source-toggle-indicator {
       transition: none;
     }
   }

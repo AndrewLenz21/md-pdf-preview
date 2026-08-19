@@ -143,6 +143,19 @@ describe("document store", () => {
     expect(getTitle()).toBe("📝 New title");
   });
 
+  it("creates a blank Untitled document", () => {
+    const documentId = useDocumentStore.getState().createDocument();
+    const document = useDocumentStore
+      .getState()
+      .documents.find((item) => item.id === documentId);
+
+    expect(document).toMatchObject({
+      title: "Untitled",
+      content: "# Untitled\n\n",
+      updatedAt: "Edited just now",
+    });
+  });
+
   it("adds an Untitled H1 when the first block is not a heading", () => {
     const markdown = "Paragraph first.\n\n# A later section";
     const expected = "# Untitled\n\nParagraph first.\n\n# A later section";

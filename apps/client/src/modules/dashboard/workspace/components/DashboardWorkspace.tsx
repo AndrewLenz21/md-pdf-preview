@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 
 import { DocsSidebar } from "@/modules/dashboard/docs-sidebar";
 import {
@@ -9,6 +16,7 @@ import {
 } from "@/modules/dashboard/mobile-navigation";
 import {
   useDocumentEditorStore,
+  useDocumentOrganizationStore,
   useDocumentStore,
   useWorkspaceStore,
 } from "@/modules/dashboard/stores";
@@ -25,6 +33,10 @@ import { SettingsDialog } from "@/modules/navigation/components/SettingsDialog";
 import { ThemeDialog } from "@/modules/navigation/components/ThemeDialog";
 import { attachDocumentPageBreakMarkers } from "../utils/documentPageBreakMarkers";
 import { attachDocumentScrollSync } from "../utils/documentScrollSync";
+
+const DESKTOP_SIDEBAR_DEFAULT_WIDTH = 270;
+const DESKTOP_SIDEBAR_MIN_WIDTH = 220;
+const DESKTOP_SIDEBAR_MAX_WIDTH = 600;
 
 export function DashboardWorkspace() {
   const documents = useDocumentStore((state) => state.documents);
@@ -61,23 +73,29 @@ export function DashboardWorkspace() {
   const isPreviewMode = editorMode === "preview";
   const [desktopPreviewVisible, setDesktopPreviewVisible] =
     useState(isPreviewMode);
+  const [desktopSidebarWidth, setDesktopSidebarWidth] = useState(
+    DESKTOP_SIDEBAR_DEFAULT_WIDTH,
+  );
   const [desktopEditingActions, setDesktopEditingActions] =
     useState<EditingActions | null>(null);
   const [documentPageBreakMarkers, setDocumentPageBreakMarkers] = useState<
     number[]
   >([]);
-  const [mobilePageBreakMarkers, setMobilePageBreakMarkers] = useState<number[]>(
-    [],
-  );
+  const [mobilePageBreakMarkers, setMobilePageBreakMarkers] = useState<
+    number[]
+  >([]);
   const pageBreakMarkerDocumentIdRef = useRef(selectedDocumentId);
   const desktopDocumentScrollRef = useRef<HTMLDivElement | null>(null);
   const desktopPreviewScrollRef = useRef<HTMLDivElement | null>(null);
+  const desktopWorkspaceRef = useRef<HTMLDivElement | null>(null);
+  const isSidebarResizingRef = useRef(false);
   const mobileDocumentScrollRef = useRef<HTMLDivElement | null>(null);
   const mobilePageBreakPreviewRef = useRef<HTMLDivElement | null>(null);
   const mobileSectionScrollPositions = useRef<
     Record<MobileDashboardSection, number>
   >({ files: 0, preview: 0 });
   const isDesktopSplit = isPreviewMode || desktopPreviewVisible;
+  const isMobileFilesSection = mobileSection === "files";
   const selectedDocument =
     documents.find((document) => document.id === selectedDocumentId) ??
     documents[0];
@@ -90,6 +108,50 @@ export function DashboardWorkspace() {
     initializeWorkspaceZoom(isSmallScreen);
     initializeDocumentEditorZoom(isSmallScreen);
   }, [initializeDocumentEditorZoom, initializeWorkspaceZoom]);
+
+  useEffect(() => {
+    const handlePointerMove = (event: PointerEvent) => {
+      if (!isSidebarResizingRef.current) {
+        return;
+      }
+
+      const workspace = desktopWorkspaceRef.current;
+
+      if (!workspace) {
+        return;
+      }
+
+      const workspaceLeft = workspace.getBoundingClientRect().left;
+      const nextWidth = Math.min(
+        DESKTOP_SIDEBAR_MAX_WIDTH,
+        Math.max(DESKTOP_SIDEBAR_MIN_WIDTH, event.clientX - workspaceLeft),
+      );
+
+      setDesktopSidebarWidth(nextWidth);
+    };
+
+    const handlePointerUp = () => {
+      if (!isSidebarResizingRef.current) {
+        return;
+      }
+
+      isSidebarResizingRef.current = false;
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      document.body.style.touchAction = "";
+    };
+
+    document.addEventListener("pointermove", handlePointerMove);
+    document.addEventListener("pointerup", handlePointerUp);
+    document.addEventListener("pointercancel", handlePointerUp);
+
+    return () => {
+      document.removeEventListener("pointermove", handlePointerMove);
+      document.removeEventListener("pointerup", handlePointerUp);
+      document.removeEventListener("pointercancel", handlePointerUp);
+      handlePointerUp();
+    };
+  }, []);
 
   const saveMobileSectionScroll = (section: MobileDashboardSection) => {
     mobileSectionScrollPositions.current[section] = window.scrollY;
@@ -141,7 +203,12 @@ export function DashboardWorkspace() {
       desktopDocumentScrollRef.current,
       desktopPreviewScrollRef.current,
     );
-  }, [desktopPreviewVisible, isPreviewMode, mobileSection, selectedDocument.id]);
+  }, [
+    desktopPreviewVisible,
+    isPreviewMode,
+    mobileSection,
+    selectedDocument.id,
+  ]);
 
   useEffect(() => {
     if (pageBreakMarkerDocumentIdRef.current === selectedDocument.id) {
@@ -208,6 +275,23 @@ export function DashboardWorkspace() {
     setMobileSection("preview");
   };
 
+  const handleDocumentDeleted = (id: string) => {
+    if (selectedDocument.id !== id) {
+      return;
+    }
+
+    const localDocumentOrganization =
+      useDocumentOrganizationStore.getState().localDocuments;
+    const nextDocument = documents.find(
+      (document) =>
+        document.id !== id && !localDocumentOrganization[document.id]?.deleted,
+    );
+
+    if (nextDocument) {
+      selectDocument(nextDocument.id);
+    }
+  };
+
   const changeMobileSection = (section: MobileDashboardSection) => {
     if (section === mobileSection) {
       return;
@@ -222,21 +306,66 @@ export function DashboardWorkspace() {
 
   const openDocsSidebarSettings = () => setDocsSidebarModal("settings");
 
+  const startSidebarResize = (event: ReactPointerEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    isSidebarResizingRef.current = true;
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+    document.body.style.touchAction = "none";
+  };
+
+  const resizeSidebarWithKeyboard = (
+    event: ReactKeyboardEvent<HTMLDivElement>,
+  ) => {
+    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") {
+      return;
+    }
+
+    event.preventDefault();
+    const direction = event.key === "ArrowRight" ? 1 : -1;
+
+    setDesktopSidebarWidth((width) =>
+      Math.min(
+        DESKTOP_SIDEBAR_MAX_WIDTH,
+        Math.max(DESKTOP_SIDEBAR_MIN_WIDTH, width + direction * 16),
+      ),
+    );
+  };
+
   return (
     <div
-      className={`dashboard-workspace min-h-screen bg-muted/30 text-foreground lg:flex ${isDesktopSplit ? "overflow-x-hidden lg:h-screen lg:overflow-hidden" : "overflow-visible lg:h-auto"}`}
+      ref={desktopWorkspaceRef}
+      className={`dashboard-workspace min-h-screen bg-muted/30 text-foreground lg:flex ${isDesktopSplit ? "overflow-x-hidden lg:h-screen lg:overflow-hidden" : isMobileFilesSection ? "overflow-hidden lg:h-auto lg:overflow-visible" : "overflow-visible lg:h-auto"}`}
     >
-      <aside className="hidden h-screen w-67.5 shrink-0 border-r border-border/80 bg-sidebar lg:sticky lg:top-0 lg:flex">
+      <aside
+        style={{ width: desktopSidebarWidth }}
+        className="hidden h-screen min-w-0 shrink-0 overflow-hidden bg-sidebar lg:sticky lg:top-0 lg:flex"
+      >
         <DocsSidebar
           documents={documents}
           selectedId={selectedDocument.id}
           onSelect={selectDocument}
+          onDelete={handleDocumentDeleted}
           onOpenSettings={openDocsSidebarSettings}
         />
       </aside>
+      <div
+        role="separator"
+        aria-label="Resize sidebar"
+        aria-orientation="vertical"
+        aria-valuemin={DESKTOP_SIDEBAR_MIN_WIDTH}
+        aria-valuemax={DESKTOP_SIDEBAR_MAX_WIDTH}
+        aria-valuenow={Math.round(desktopSidebarWidth)}
+        tabIndex={0}
+        className="group relative hidden w-2 shrink-0 cursor-col-resize touch-none items-center justify-center border-r border-border/80 bg-background/30 transition-colors hover:bg-primary/10 focus-visible:bg-primary/10 lg:flex"
+        onPointerDown={startSidebarResize}
+        onKeyDown={resizeSidebarWithKeyboard}
+      >
+        <span className="pointer-events-none h-10 w-0.5 rounded-full bg-border/70 transition-colors group-hover:bg-primary group-focus-visible:bg-primary" />
+      </div>
 
       <main
-        className={`min-w-0 flex-1 pb-20 lg:pb-0 ${isDesktopSplit ? "lg:h-screen lg:min-h-0" : "lg:h-auto lg:min-h-screen"}`}
+        className={`min-w-0 flex-1 ${isMobileFilesSection ? "h-[calc(100dvh-var(--mobile-dashboard-nav-height))] overflow-hidden pb-0 lg:h-auto lg:overflow-visible" : "pb-20"} lg:pb-0 ${isDesktopSplit ? "lg:h-screen lg:min-h-0" : "lg:h-auto lg:min-h-screen"}`}
       >
         <div
           className={`hidden ${isDesktopSplit ? "lg:flex h-full min-h-0 flex-col" : "lg:block"}`}
@@ -249,7 +378,9 @@ export function DashboardWorkspace() {
             splitMode={isPreviewMode}
           />
           <div
-            className={isDesktopSplit ? "flex h-0 min-h-0 min-w-0 flex-1" : "min-w-0"}
+            className={
+              isDesktopSplit ? "flex h-0 min-h-0 min-w-0 flex-1" : "min-w-0"
+            }
           >
             <section
               className={`relative h-full min-h-0 min-w-0 transition-[width] duration-300 ease-out ${isDesktopSplit ? (isPreviewMode ? "w-1/2" : "w-full") : "w-full"}`}
@@ -302,7 +433,7 @@ export function DashboardWorkspace() {
           </div>
         </div>
         <div
-          className={`relative lg:hidden ${isPreviewMode ? "overflow-hidden" : ""}`}
+          className={`relative h-full min-h-0 lg:hidden ${isPreviewMode || isMobileFilesSection ? "overflow-hidden" : ""}`}
         >
           <div
             key={mobileSection}
@@ -313,6 +444,7 @@ export function DashboardWorkspace() {
                 documents={documents}
                 selectedId={selectedDocument.id}
                 onSelect={selectDocument}
+                onDelete={handleDocumentDeleted}
                 onOpenSettings={openDocsSidebarSettings}
                 mobile
               />

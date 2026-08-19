@@ -18,7 +18,8 @@
   "links": {
     "product": "Product",
     "dashboard": "Dashboard",
-    "about": "About"
+    "about": "About",
+    "landing": "Back to landing page"
   },
   "actions": {
     "signIn": "Sign in",
