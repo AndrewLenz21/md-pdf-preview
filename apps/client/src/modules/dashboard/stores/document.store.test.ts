@@ -7,6 +7,7 @@ import {
 
 import {
   DOCUMENT_CONTENT_DEBOUNCE_MS,
+  MAX_MARKDOWN_CHARACTERS,
   useDocumentStore,
 } from "./document.store";
 
@@ -87,5 +88,30 @@ describe("document store", () => {
 
     expect(useDocumentStore.getState().selectedDocumentId).toBe(nextDocumentId);
     expect(getContent(SELECTED_DOCUMENT_ID)).toBe("Saved before switching");
+  });
+
+  it("limits Markdown to 20000 characters and still allows deleting", () => {
+    const atLimit = "a".repeat(MAX_MARKDOWN_CHARACTERS);
+
+    useDocumentStore
+      .getState()
+      .scheduleContentUpdate(SELECTED_DOCUMENT_ID, `${atLimit}b`);
+
+    expect(
+      useDocumentStore.getState().pendingContentByDocumentId[
+        SELECTED_DOCUMENT_ID
+      ],
+    ).toBe(atLimit);
+
+    useDocumentStore.getState().flushPendingContent(SELECTED_DOCUMENT_ID);
+    expect(getContent()).toBe(atLimit);
+
+    const afterDelete = atLimit.slice(0, -1);
+    useDocumentStore
+      .getState()
+      .scheduleContentUpdate(SELECTED_DOCUMENT_ID, afterDelete);
+    useDocumentStore.getState().flushPendingContent(SELECTED_DOCUMENT_ID);
+
+    expect(getContent()).toBe(afterDelete);
   });
 });

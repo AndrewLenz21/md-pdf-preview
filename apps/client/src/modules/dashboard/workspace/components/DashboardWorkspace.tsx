@@ -15,6 +15,9 @@ import {
 } from "@/modules/dashboard/preview";
 import type { EditingActions } from "@/modules/dashboard/preview/utils/editingActions";
 import type { DocumentEditorMode } from "@/modules/dashboard/types/editor.types";
+import { LanguageDialog } from "@/modules/navigation/components/LanguageDialog";
+import { SettingsDialog } from "@/modules/navigation/components/SettingsDialog";
+import { ThemeDialog } from "@/modules/navigation/components/ThemeDialog";
 import { attachDocumentPageBreakMarkers } from "../utils/documentPageBreakMarkers";
 import { attachDocumentScrollSync } from "../utils/documentScrollSync";
 
@@ -34,6 +37,9 @@ export function DashboardWorkspace() {
   );
   const [mobileSection, setMobileSection] =
     useState<MobileDashboardSection>("preview");
+  const [docsSidebarModal, setDocsSidebarModal] = useState<
+    "language" | "settings" | "theme" | null
+  >(null);
   const [mobileTransitionDirection, setMobileTransitionDirection] = useState<
     "forward" | "backward"
   >("forward");
@@ -194,6 +200,8 @@ export function DashboardWorkspace() {
     setMobileSection(section);
   };
 
+  const openDocsSidebarSettings = () => setDocsSidebarModal("settings");
+
   return (
     <div
       className={`dashboard-workspace min-h-screen bg-muted/30 text-foreground lg:flex ${isDesktopSplit ? "overflow-x-hidden lg:h-screen lg:overflow-hidden" : "overflow-visible lg:h-auto"}`}
@@ -203,6 +211,7 @@ export function DashboardWorkspace() {
           documents={documents}
           selectedId={selectedDocument.id}
           onSelect={selectDocument}
+          onOpenSettings={openDocsSidebarSettings}
         />
       </aside>
 
@@ -281,6 +290,7 @@ export function DashboardWorkspace() {
                 documents={documents}
                 selectedId={selectedDocument.id}
                 onSelect={selectDocument}
+                onOpenSettings={openDocsSidebarSettings}
                 mobile
               />
             ) : (
@@ -322,6 +332,21 @@ export function DashboardWorkspace() {
       <DashboardBottomNav
         activeSection={mobileSection}
         onChange={changeMobileSection}
+      />
+
+      <SettingsDialog
+        open={docsSidebarModal === "settings"}
+        onClose={() => setDocsSidebarModal(null)}
+        onOpenLanguage={() => setDocsSidebarModal("language")}
+        onOpenTheme={() => setDocsSidebarModal("theme")}
+      />
+      <LanguageDialog
+        open={docsSidebarModal === "language"}
+        onClose={() => setDocsSidebarModal(null)}
+      />
+      <ThemeDialog
+        open={docsSidebarModal === "theme"}
+        onClose={() => setDocsSidebarModal(null)}
       />
     </div>
   );

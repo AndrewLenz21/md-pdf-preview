@@ -11,11 +11,13 @@ export function DocsSidebar({
   documents,
   selectedId,
   onSelect,
+  onOpenSettings,
   mobile = false,
 }: {
   documents: MockDocument[];
   selectedId: string;
   onSelect: (id: string) => void;
+  onOpenSettings?: () => void;
   mobile?: boolean;
 }) {
   const locale = useLocale();
@@ -81,7 +83,11 @@ export function DocsSidebar({
       </div>
 
       <div className="border-t border-border/80 p-3">
-        <AuthActions mobile />
+        <AuthActions
+          mobile
+          onOpenSettings={onOpenSettings}
+          settingsMode={mobile ? "dialog" : "menu"}
+        />
       </div>
     </div>
   );

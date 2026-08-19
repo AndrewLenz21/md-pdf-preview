@@ -2,6 +2,8 @@
 
 import { useLayoutEffect, useState, type RefObject } from "react";
 
+import { MAX_MARKDOWN_CHARACTERS } from "@/modules/dashboard/stores";
+
 function resizeTextarea(textarea: HTMLTextAreaElement | null) {
   if (!textarea) {
     return;
@@ -84,6 +86,7 @@ export function MarkdownSourceEditor({
           ref={textareaRef}
           value={draftMarkdown}
           rows={1}
+          maxLength={MAX_MARKDOWN_CHARACTERS}
           onChange={(event) => {
             const nextMarkdown = event.currentTarget.value;
 

@@ -25,6 +25,12 @@
     "signUp": "Sign up",
     "signOut": "Sign out"
   },
+  "settings": {
+    "label": "Settings",
+    "open": "Open settings",
+    "dialogTitle": "Settings",
+    "description": "Customize your workspace."
+  },
   "language": {
     "select": "Select language",
     "label": "Language",

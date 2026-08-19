@@ -25,6 +25,12 @@
     "signUp": "Registrati",
     "signOut": "Esci"
   },
+  "settings": {
+    "label": "Impostazioni",
+    "open": "Apri impostazioni",
+    "dialogTitle": "Impostazioni",
+    "description": "Personalizza il tuo spazio di lavoro."
+  },
   "language": {
     "select": "Seleziona lingua",
     "label": "Lingua",

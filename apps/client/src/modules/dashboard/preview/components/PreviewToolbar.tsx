@@ -10,6 +10,10 @@ import {
 } from "lucide-react";
 
 import type { MockDocument } from "@/modules/dashboard/document/model/document.types";
+import {
+  MAX_MARKDOWN_CHARACTERS,
+  useDocumentStore,
+} from "@/modules/dashboard/stores";
 import type { DocumentEditorMode } from "@/modules/dashboard/types/editor.types";
 
 import { PaperSizeSelect } from "./paper-preview/PaperSizeSelect";
@@ -110,6 +114,14 @@ export function PreviewToolbar({
   splitMode?: boolean;
 }) {
   const isPreviewMode = mode === "preview";
+  const markdownCharacterCount = useDocumentStore((state) => {
+    const pendingContent = state.pendingContentByDocumentId[document.id];
+    const storedDocument = state.documents.find((item) => item.id === document.id);
+
+    return (pendingContent ?? storedDocument?.content ?? "").length;
+  });
+  const isAtCharacterLimit =
+    markdownCharacterCount >= MAX_MARKDOWN_CHARACTERS;
 
   return (
     <header
@@ -120,8 +132,17 @@ export function PreviewToolbar({
         <p className="truncate text-sm font-semibold text-foreground">
           {document.title}
         </p>
-        <p className="mt-0.5 truncate text-xs text-muted-foreground">
-          Personal document · {document.updatedAt.toLowerCase()}
+        <p className="mt-0.5 flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
+          <span className="truncate">
+            Personal document · {document.updatedAt.toLowerCase()}
+          </span>
+          <span
+            className={`shrink-0 tabular-nums ${isAtCharacterLimit ? "font-semibold text-destructive" : ""}`}
+            title="Markdown character count"
+          >
+            {markdownCharacterCount.toLocaleString()} /
+            {MAX_MARKDOWN_CHARACTERS.toLocaleString()}
+          </span>
         </p>
       </div>
 

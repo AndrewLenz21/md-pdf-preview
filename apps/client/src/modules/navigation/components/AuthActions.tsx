@@ -1,9 +1,12 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { Settings2 } from "lucide-react";
 
 import { Link } from "@/core/i18n";
 import { authClient } from "@/lib/auth-client";
+
+import { SettingsMenu } from "./SettingsMenu";
 
 function getInitial(value: string) {
   return value.trim().charAt(0).toUpperCase() || "U";
@@ -31,9 +34,13 @@ function SignOutIcon() {
 export function AuthActions({
   mobile = false,
   onClose,
+  onOpenSettings,
+  settingsMode = mobile ? "dialog" : "menu",
 }: {
   mobile?: boolean;
   onClose?: () => void;
+  onOpenSettings?: () => void;
+  settingsMode?: "dialog" | "menu";
 }) {
   const t = useTranslations("Navigation");
   const { data, isPending } = authClient.useSession();
@@ -42,6 +49,9 @@ export function AuthActions({
   const signOutLabel = t.has("actions.signOut")
     ? t("actions.signOut")
     : "Sign out";
+  const settingsLabel = t.has("settings.open")
+    ? t("settings.open")
+    : "Open settings";
 
   if (isPending) {
     return (
@@ -99,18 +109,34 @@ export function AuthActions({
   if (mobile) {
     return (
       <div className="space-y-3 rounded-lg border border-border bg-card/60 p-3">
-        <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
-            {getInitial(displayName)}
-          </span>
-          <span className="min-w-0">
-            <span className="block truncate text-sm font-semibold text-foreground">
-              {displayName}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+              {getInitial(displayName)}
             </span>
-            <span className="block truncate text-xs text-muted-foreground">
-              {user.email}
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-semibold text-foreground">
+                {displayName}
+              </span>
+              <span className="block truncate text-xs text-muted-foreground">
+                {user.email}
+              </span>
             </span>
-          </span>
+          </div>
+          {settingsMode === "menu" ? (
+            <SettingsMenu placement="sidebar" />
+          ) : (
+            <button
+              type="button"
+              aria-label={settingsLabel}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              onClick={() => {
+                onOpenSettings?.();
+              }}
+            >
+              <Settings2 className="h-4 w-4" strokeWidth={1.7} />
+            </button>
+          )}
         </div>
         <button
           type="button"
@@ -134,6 +160,7 @@ export function AuthActions({
           {displayName}
         </span>
       </div>
+      <SettingsMenu />
       <button
         type="button"
         onClick={handleSignOut}

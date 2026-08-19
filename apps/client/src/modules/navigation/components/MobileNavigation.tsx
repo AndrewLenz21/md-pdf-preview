@@ -6,6 +6,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 
 import { LanguageDialog } from "./LanguageDialog";
 import { MobileDrawer } from "./MobileDrawer";
+import { SettingsDialog } from "./SettingsDialog";
 import { ThemeDialog } from "./ThemeDialog";
 
 const subscribeToMount = () => () => {};
@@ -36,7 +37,9 @@ function MenuIcon({ close }: { close: boolean }) {
 
 export function MobileNavigation() {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [modal, setModal] = useState<"language" | "theme" | null>(null);
+  const [modal, setModal] = useState<
+    "language" | "settings" | "theme" | null
+  >(null);
   const mounted = useSyncExternalStore(
     subscribeToMount,
     getClientMountSnapshot,
@@ -77,6 +80,10 @@ export function MobileNavigation() {
     setDrawerOpen(false);
   };
 
+  const openSettings = () => {
+    setModal("settings");
+  };
+
   const overlay = (
     <button
       type="button"
@@ -110,6 +117,11 @@ export function MobileNavigation() {
               <MobileDrawer
                 open={drawerOpen}
                 onClose={closeDrawer}
+                onOpenSettings={openSettings}
+              />
+              <SettingsDialog
+                open={modal === "settings"}
+                onClose={() => setModal(null)}
                 onOpenLanguage={() => setModal("language")}
                 onOpenTheme={() => setModal("theme")}
               />

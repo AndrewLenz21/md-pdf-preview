@@ -7,6 +7,7 @@ import {
 import type { MockDocument } from "@/modules/dashboard/document/model/document.types";
 
 export const DOCUMENT_CONTENT_DEBOUNCE_MS = 500;
+export const MAX_MARKDOWN_CHARACTERS = 20_000;
 
 type PendingContentUpdate = {
   content: string;
@@ -34,6 +35,10 @@ function cancelPendingContentUpdate(documentId: string) {
 
   clearTimeout(pendingUpdate.timeoutId);
   pendingContentUpdates.delete(documentId);
+}
+
+function limitMarkdownContent(content: string) {
+  return content.slice(0, MAX_MARKDOWN_CHARACTERS);
 }
 
 function commitContent(
@@ -95,12 +100,13 @@ export const useDocumentStore = create<DocumentStoreState>((set, get) => ({
 
   scheduleContentUpdate: (documentId, content) => {
     const document = get().documents.find((item) => item.id === documentId);
+    const limitedContent = limitMarkdownContent(content);
 
     if (!document) {
       return;
     }
 
-    if (document.content === content) {
+    if (document.content === limitedContent) {
       cancelPendingContentUpdate(documentId);
       set((state) => ({
         pendingContentByDocumentId: omitPendingContent(
@@ -115,7 +121,7 @@ export const useDocumentStore = create<DocumentStoreState>((set, get) => ({
     set((state) => ({
       pendingContentByDocumentId: {
         ...state.pendingContentByDocumentId,
-        [documentId]: content,
+        [documentId]: limitedContent,
       },
     }));
 
@@ -130,7 +136,10 @@ export const useDocumentStore = create<DocumentStoreState>((set, get) => ({
       commitContent(set, documentId, pendingUpdate.content);
     }, DOCUMENT_CONTENT_DEBOUNCE_MS);
 
-    pendingContentUpdates.set(documentId, { content, timeoutId });
+    pendingContentUpdates.set(documentId, {
+      content: limitedContent,
+      timeoutId,
+    });
   },
 
   flushPendingContent: (documentId) => {

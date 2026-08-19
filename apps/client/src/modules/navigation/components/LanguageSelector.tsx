@@ -50,8 +50,10 @@ function ChevronDownIcon() {
 
 export function LanguageSelector({
   showLabel = false,
+  inline = false,
 }: {
   showLabel?: boolean;
+  inline?: boolean;
 }) {
   const menuRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
@@ -111,7 +113,7 @@ export function LanguageSelector({
         <div
           role="menu"
           aria-label={t("language.select")}
-          className="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-44 rounded-lg border border-border bg-card p-1.5 shadow-lg"
+          className={`${inline ? "relative mt-1 w-full" : "absolute right-0 top-[calc(100%+0.5rem)] z-50 w-44"} rounded-lg border border-border bg-card p-1.5 shadow-lg`}
         >
           <p className="px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
             {t("language.label")}
