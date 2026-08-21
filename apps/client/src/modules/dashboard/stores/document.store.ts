@@ -1,13 +1,13 @@
 import { create } from "zustand";
 
-import {
-  MOCK_DOCUMENTS,
-  SELECTED_DOCUMENT_ID,
-} from "@/modules/dashboard/constants/mock-documents";
+import { SELECTED_DOCUMENT_ID } from "@/modules/dashboard/constants/mock-documents";
+import { LOCAL_WORKSPACE_DATA } from "@/modules/dashboard/constants/document-workspaces";
 import type { MockDocument } from "@/modules/dashboard/document/model/document.types";
+import { useDocumentOrganizationStore } from "./document-organization.store";
 
 export const DOCUMENT_CONTENT_DEBOUNCE_MS = 500;
 export const MAX_MARKDOWN_CHARACTERS = 20_000;
+export const SESSION_MARKDOWN_CHARACTER_LIMIT = Number.POSITIVE_INFINITY;
 export const UNTITLED_DOCUMENT_TITLE = "Untitled";
 
 type PendingContentUpdate = {
@@ -19,7 +19,7 @@ export type DocumentStoreState = {
   documents: MockDocument[];
   pendingContentByDocumentId: Record<string, string>;
   selectedDocumentId: string;
-  createDocument: () => string;
+  createDocument: (title?: string) => string;
   selectDocument: (documentId: string) => void;
   scheduleContentUpdate: (documentId: string, content: string) => void;
   flushPendingContent: (documentId: string) => void;
@@ -39,8 +39,10 @@ function cancelPendingContentUpdate(documentId: string) {
   pendingContentUpdates.delete(documentId);
 }
 
-function limitMarkdownContent(content: string) {
-  return content.slice(0, MAX_MARKDOWN_CHARACTERS);
+function limitMarkdownContent(content: string, maxCharacters: number) {
+  return Number.isFinite(maxCharacters)
+    ? content.slice(0, maxCharacters)
+    : content;
 }
 
 function getFirstNonEmptyLine(markdown: string) {
@@ -78,7 +80,10 @@ function getFirstHeadingTitle(markdown: string) {
   return title;
 }
 
-export function normalizeMarkdownDocument(markdown: string) {
+export function normalizeMarkdownDocument(
+  markdown: string,
+  maxCharacters = MAX_MARKDOWN_CHARACTERS,
+) {
   const firstLine = getFirstNonEmptyLine(markdown);
   const title = getFirstHeadingTitle(markdown);
 
@@ -86,6 +91,7 @@ export function normalizeMarkdownDocument(markdown: string) {
     return {
       content: limitMarkdownContent(
         firstLine.offset > 0 ? markdown.slice(firstLine.offset) : markdown,
+        maxCharacters,
       ),
       title: title || UNTITLED_DOCUMENT_TITLE,
     };
@@ -94,13 +100,19 @@ export function normalizeMarkdownDocument(markdown: string) {
   const body = firstLine ? markdown.slice(firstLine.offset) : "";
 
   return {
-    content: limitMarkdownContent(`# ${UNTITLED_DOCUMENT_TITLE}\n\n${body}`),
+    content: limitMarkdownContent(
+      `# ${UNTITLED_DOCUMENT_TITLE}\n\n${body}`,
+      maxCharacters,
+    ),
     title: UNTITLED_DOCUMENT_TITLE,
   };
 }
 
 function normalizeDocument(document: MockDocument) {
-  const normalized = normalizeMarkdownDocument(document.content ?? "");
+  const normalized = normalizeMarkdownDocument(
+    document.content ?? "",
+    SESSION_MARKDOWN_CHARACTER_LIMIT,
+  );
 
   return {
     ...document,
@@ -161,19 +173,26 @@ function createDocumentId() {
   return `document-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+export function createInitialMarkdown(title?: string) {
+  const trimmedTitle = title?.trim();
+
+  return trimmedTitle ? `# ${trimmedTitle}\n\n` : "#\n\n";
+}
+
 export const useDocumentStore = create<DocumentStoreState>((set, get) => ({
-  documents: MOCK_DOCUMENTS.map(normalizeDocument),
+  documents: LOCAL_WORKSPACE_DATA.documents.map(normalizeDocument),
   pendingContentByDocumentId: {},
   selectedDocumentId: SELECTED_DOCUMENT_ID,
 
-  createDocument: () => {
+  createDocument: (title) => {
     const id = createDocumentId();
+    const trimmedTitle = title?.trim();
     const document: MockDocument = {
       id,
-      title: UNTITLED_DOCUMENT_TITLE,
+      title: trimmedTitle || UNTITLED_DOCUMENT_TITLE,
       group: "documents",
       updatedAt: "Edited just now",
-      content: `# ${UNTITLED_DOCUMENT_TITLE}\n\n`,
+      content: createInitialMarkdown(trimmedTitle),
     };
 
     set((state) => ({
@@ -199,7 +218,11 @@ export const useDocumentStore = create<DocumentStoreState>((set, get) => ({
 
   scheduleContentUpdate: (documentId, content) => {
     const document = get().documents.find((item) => item.id === documentId);
-    const normalized = normalizeMarkdownDocument(content);
+    const maxCharacters =
+      useDocumentOrganizationStore.getState().activeSource === "local"
+        ? SESSION_MARKDOWN_CHARACTER_LIMIT
+        : MAX_MARKDOWN_CHARACTERS;
+    const normalized = normalizeMarkdownDocument(content, maxCharacters);
     const limitedContent = normalized.content;
 
     if (!document) {

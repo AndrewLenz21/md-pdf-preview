@@ -1,3 +1,5 @@
+import type { AppTheme } from "@/core/theme";
+
 type ThemeColors = {
   background: string;
   surface: string;
@@ -6,7 +8,7 @@ type ThemeColors = {
   border: string;
 };
 
-const THEME_META: Record<string, ThemeColors> = {
+const THEME_META: Record<AppTheme, ThemeColors> = {
   light: {
     background: "oklch(1 0 0)",
     surface: "oklch(0.97 0 0)",
@@ -51,11 +53,14 @@ const THEME_META: Record<string, ThemeColors> = {
   },
 };
 
+/**
+ * Renders a compact visual preview for one of the supported application themes.
+ */
 export function ThemePreview({
   theme,
   compact = false,
 }: {
-  theme: string;
+  theme: AppTheme;
   compact?: boolean;
 }) {
   const colors = THEME_META[theme];

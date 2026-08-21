@@ -12,6 +12,7 @@ import {
 import type { MockDocument } from "@/modules/dashboard/document/model/document.types";
 import {
   MAX_MARKDOWN_CHARACTERS,
+  useDocumentOrganizationStore,
   useDocumentStore,
 } from "@/modules/dashboard/stores";
 import type { DocumentEditorMode } from "@/modules/dashboard/types/editor.types";
@@ -136,6 +137,10 @@ export function PreviewToolbar({
   splitMode?: boolean;
 }) {
   const isPreviewMode = mode === "preview";
+  const activeSource = useDocumentOrganizationStore(
+    (state) => state.activeSource,
+  );
+  const hasCharacterLimit = activeSource === "cloud";
   const markdownCharacterCount = useDocumentStore((state) => {
     const pendingContent = state.pendingContentByDocumentId[document.id];
     const storedDocument = state.documents.find(
@@ -144,7 +149,8 @@ export function PreviewToolbar({
 
     return (pendingContent ?? storedDocument?.content ?? "").length;
   });
-  const isAtCharacterLimit = markdownCharacterCount >= MAX_MARKDOWN_CHARACTERS;
+  const isAtCharacterLimit =
+    hasCharacterLimit && markdownCharacterCount >= MAX_MARKDOWN_CHARACTERS;
 
   return (
     <header
@@ -161,8 +167,10 @@ export function PreviewToolbar({
             className={`shrink-0 tabular-nums ${isAtCharacterLimit ? "font-semibold text-destructive" : ""}`}
             title="Markdown character count"
           >
-            {markdownCharacterCount.toLocaleString()} /
-            {MAX_MARKDOWN_CHARACTERS.toLocaleString()}
+            {markdownCharacterCount.toLocaleString()}
+            {hasCharacterLimit
+              ? ` / ${MAX_MARKDOWN_CHARACTERS.toLocaleString()}`
+              : null}
           </span>
         </p>
       </div>

@@ -1,5 +1,9 @@
 import { create } from "zustand";
 
+import {
+  CLOUD_WORKSPACE_DATA,
+  LOCAL_WORKSPACE_DATA,
+} from "@/modules/dashboard/constants/document-workspaces";
 import type {
   DocumentFolder,
   DocumentOrganization,
@@ -9,82 +13,16 @@ import type {
 
 export const MAX_FOLDER_DEPTH = 20;
 
-const LOCAL_RECENT_FOLDER_ID = "local-folder-recent";
-const LOCAL_DOCUMENTS_FOLDER_ID = "local-folder-documents";
-const LOCAL_ROOT_FOLDER_ID = "local-folder-root";
 const CLOUD_ROOT_FOLDER_ID = "cloud-folder-root";
-const LOCAL_WORKING_SET_FOLDER_ID = "local-folder-working-set";
-const LOCAL_RESEARCH_NOTES_FOLDER_ID = "local-folder-research-notes";
-const LOCAL_PLANNING_FOLDER_ID = "local-folder-planning";
-const LOCAL_NOTES_FOLDER_ID = "local-folder-notes";
-
-const INITIAL_LOCAL_FOLDERS: DocumentFolder[] = [
-  {
-    id: LOCAL_ROOT_FOLDER_ID,
-    name: "Workspace",
-    parentId: null,
-    color: "primary",
-  },
-  {
-    id: LOCAL_RECENT_FOLDER_ID,
-    name: "Recents",
-    parentId: LOCAL_ROOT_FOLDER_ID,
-    color: "blue",
-  },
-  {
-    id: LOCAL_DOCUMENTS_FOLDER_ID,
-    name: "Documents",
-    parentId: LOCAL_ROOT_FOLDER_ID,
-    color: "violet",
-  },
-  {
-    id: LOCAL_WORKING_SET_FOLDER_ID,
-    name: "Working set",
-    parentId: LOCAL_RECENT_FOLDER_ID,
-    color: "blue",
-  },
-  {
-    id: LOCAL_RESEARCH_NOTES_FOLDER_ID,
-    name: "Research notes",
-    parentId: LOCAL_RECENT_FOLDER_ID,
-    color: "emerald",
-  },
-  {
-    id: LOCAL_PLANNING_FOLDER_ID,
-    name: "Planning",
-    parentId: LOCAL_DOCUMENTS_FOLDER_ID,
-    color: "amber",
-  },
-  {
-    id: LOCAL_NOTES_FOLDER_ID,
-    name: "Notes",
-    parentId: LOCAL_DOCUMENTS_FOLDER_ID,
-    color: "rose",
-  },
-];
-
-const INITIAL_CLOUD_FOLDERS: DocumentFolder[] = [
-  {
-    id: CLOUD_ROOT_FOLDER_ID,
-    name: "Cloud",
-    parentId: null,
-    color: "primary",
-  },
-];
-
-const INITIAL_LOCAL_DOCUMENT_ORGANIZATION: Record<
-  string,
-  DocumentOrganization
-> = {
-  "project-research": { folderId: LOCAL_WORKING_SET_FOLDER_ID },
-  "product-proposal": { folderId: LOCAL_WORKING_SET_FOLDER_ID },
-  "cash-basis-tax-view": { folderId: LOCAL_WORKING_SET_FOLDER_ID },
-  "research-notes": { folderId: LOCAL_RESEARCH_NOTES_FOLDER_ID },
-  "meeting-notes": { folderId: LOCAL_NOTES_FOLDER_ID },
-  architecture: { folderId: LOCAL_PLANNING_FOLDER_ID },
-  roadmap: { folderId: LOCAL_PLANNING_FOLDER_ID },
-  ideas: { folderId: LOCAL_NOTES_FOLDER_ID },
+const CLOUD_ROOT_FOLDER: DocumentFolder = {
+  id: CLOUD_ROOT_FOLDER_ID,
+  name: "Cloud",
+  parentId: null,
+  path: `/${CLOUD_ROOT_FOLDER_ID}`,
+  color: "primary",
 };
+
+const CLOUD_SYSTEM_FOLDERS: DocumentFolder[] = [CLOUD_ROOT_FOLDER];
 
 type DocumentOrganizationStoreState = {
   activeSource: DocumentSource;
@@ -108,6 +46,7 @@ type DocumentOrganizationStoreState = {
     name: string,
     color: DocumentFolderColor,
   ) => void;
+  deleteFolder: (source: DocumentSource, folderId: string) => boolean;
   renameDocument: (
     source: DocumentSource,
     documentId: string,
@@ -166,15 +105,33 @@ function createFolderId(source: DocumentSource) {
   return `${source}-folder-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function getFolderPath(folders: DocumentFolder[], folderId: string | null) {
+  if (!folderId) {
+    return "";
+  }
+
+  return (
+    folders.find((folder) => folder.id === folderId)?.path ?? `/${folderId}`
+  );
+}
+
+function getDocumentPath(
+  folders: DocumentFolder[],
+  documentId: string,
+  folderId: string | null,
+) {
+  return `${getFolderPath(folders, folderId)}/${documentId}`;
+}
+
 export const useDocumentOrganizationStore =
   create<DocumentOrganizationStoreState>((set, get) => ({
     activeSource: "local",
-    localFolders: INITIAL_LOCAL_FOLDERS,
-    cloudFolders: INITIAL_CLOUD_FOLDERS,
+    localFolders: LOCAL_WORKSPACE_DATA.folders,
+    cloudFolders: [...CLOUD_SYSTEM_FOLDERS, ...CLOUD_WORKSPACE_DATA.folders],
     localCollapsedFolderIds: [],
     cloudCollapsedFolderIds: [],
-    localDocuments: INITIAL_LOCAL_DOCUMENT_ORGANIZATION,
-    cloudDocuments: {},
+    localDocuments: LOCAL_WORKSPACE_DATA.organization,
+    cloudDocuments: CLOUD_WORKSPACE_DATA.organization,
 
     setActiveSource: (activeSource) => set({ activeSource }),
 
@@ -213,7 +170,13 @@ export const useDocumentOrganizationStore =
       }
 
       const id = createFolderId(source);
-      const folder = { id, name, parentId, color };
+      const folder = {
+        id,
+        name,
+        parentId,
+        path: `${getFolderPath(folders, parentId)}/${id}`,
+        color,
+      };
 
       set(
         source === "local"
@@ -243,6 +206,60 @@ export const useDocumentOrganizationStore =
       );
     },
 
+    deleteFolder: (source, folderId) => {
+      const folders = getFolders(get(), source);
+      const folder = folders.find((item) => item.id === folderId);
+
+      if (!folder || folder.parentId === null) {
+        return false;
+      }
+
+      const folderIdsToDelete = new Set<string>();
+      const collectFolderIds = (currentId: string) => {
+        folderIdsToDelete.add(currentId);
+        folders
+          .filter((item) => item.parentId === currentId)
+          .forEach((childFolder) => collectFolderIds(childFolder.id));
+      };
+
+      collectFolderIds(folderId);
+
+      const documents = getDocuments(get(), source);
+      const nextDocuments = Object.fromEntries(
+        Object.entries(documents).map(([documentId, organization]) =>
+          organization.folderId && folderIdsToDelete.has(organization.folderId)
+            ? [documentId, { ...organization, deleted: true }]
+            : [documentId, organization],
+        ),
+      );
+      const collapsedFolderIds =
+        source === "local"
+          ? get().localCollapsedFolderIds
+          : get().cloudCollapsedFolderIds;
+      const nextCollapsedFolderIds = collapsedFolderIds.filter(
+        (id) => !folderIdsToDelete.has(id),
+      );
+      const nextFolders = folders.filter(
+        (item) => !folderIdsToDelete.has(item.id),
+      );
+
+      set(
+        source === "local"
+          ? {
+              localFolders: nextFolders,
+              localDocuments: nextDocuments,
+              localCollapsedFolderIds: nextCollapsedFolderIds,
+            }
+          : {
+              cloudFolders: nextFolders,
+              cloudDocuments: nextDocuments,
+              cloudCollapsedFolderIds: nextCollapsedFolderIds,
+            },
+      );
+
+      return true;
+    },
+
     renameDocument: (source, documentId, rawTitle) => {
       const displayTitle = rawTitle.trim();
 
@@ -251,7 +268,10 @@ export const useDocumentOrganizationStore =
       }
 
       const documents = getDocuments(get(), source);
-      const current = documents[documentId] ?? { folderId: null };
+      const current = documents[documentId] ?? {
+        folderId: null,
+        path: getDocumentPath(getFolders(get(), source), documentId, null),
+      };
 
       set(
         source === "local"
@@ -282,20 +302,31 @@ export const useDocumentOrganizationStore =
       }
 
       const documents = getDocuments(get(), source);
-      const current = documents[documentId] ?? { folderId: null };
+      const current = documents[documentId] ?? {
+        folderId: null,
+        path: getDocumentPath(folders, documentId, null),
+      };
 
       set(
         source === "local"
           ? {
               localDocuments: {
                 ...documents,
-                [documentId]: { ...current, folderId },
+                [documentId]: {
+                  ...current,
+                  folderId,
+                  path: getDocumentPath(folders, documentId, folderId),
+                },
               },
             }
           : {
               cloudDocuments: {
                 ...documents,
-                [documentId]: { ...current, folderId },
+                [documentId]: {
+                  ...current,
+                  folderId,
+                  path: getDocumentPath(folders, documentId, folderId),
+                },
               },
             },
       );
@@ -303,7 +334,10 @@ export const useDocumentOrganizationStore =
 
     toggleFavorite: (source, documentId) => {
       const documents = getDocuments(get(), source);
-      const current = documents[documentId] ?? { folderId: null };
+      const current = documents[documentId] ?? {
+        folderId: null,
+        path: getDocumentPath(getFolders(get(), source), documentId, null),
+      };
 
       set(
         source === "local"
@@ -324,7 +358,10 @@ export const useDocumentOrganizationStore =
 
     deleteDocument: (source, documentId) => {
       const documents = getDocuments(get(), source);
-      const current = documents[documentId] ?? { folderId: null };
+      const current = documents[documentId] ?? {
+        folderId: null,
+        path: getDocumentPath(getFolders(get(), source), documentId, null),
+      };
 
       set(
         source === "local"

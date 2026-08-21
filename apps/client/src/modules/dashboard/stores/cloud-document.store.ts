@@ -1,11 +1,15 @@
 import { create } from "zustand";
 
+import { CLOUD_WORKSPACE_DATA } from "@/modules/dashboard/constants/document-workspaces";
 import type { MockDocument } from "@/modules/dashboard/document/model/document.types";
-import { UNTITLED_DOCUMENT_TITLE } from "./document.store";
+import {
+  createInitialMarkdown,
+  UNTITLED_DOCUMENT_TITLE,
+} from "./document.store";
 
 type CloudDocumentStoreState = {
   documents: MockDocument[];
-  createDocument: () => string;
+  createDocument: (title?: string) => string;
   setDocuments: (documents: MockDocument[]) => void;
 };
 
@@ -19,15 +23,16 @@ function createDocumentId() {
 
 // Cloud documents will be populated when the synchronization layer is ready.
 export const useCloudDocumentStore = create<CloudDocumentStoreState>((set) => ({
-  documents: [],
-  createDocument: () => {
+  documents: CLOUD_WORKSPACE_DATA.documents,
+  createDocument: (title) => {
     const id = createDocumentId();
+    const trimmedTitle = title?.trim();
     const document: MockDocument = {
       id,
-      title: UNTITLED_DOCUMENT_TITLE,
+      title: trimmedTitle || UNTITLED_DOCUMENT_TITLE,
       group: "documents",
       updatedAt: "Edited just now",
-      content: `# ${UNTITLED_DOCUMENT_TITLE}\n\n`,
+      content: createInitialMarkdown(trimmedTitle),
     };
 
     set((state) => ({

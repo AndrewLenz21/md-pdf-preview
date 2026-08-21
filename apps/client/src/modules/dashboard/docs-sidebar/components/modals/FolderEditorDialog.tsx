@@ -1,10 +1,12 @@
-import { ModalShell } from "@/modules/navigation/components/ModalShell";
+import { ModalShell } from "@/shared/components/ModalShell";
+import { DialogFormFooter } from "@/shared/components/DialogFormFooter";
+import { DialogTextField } from "@/shared/components/DialogTextField";
 import type { DocumentFolderColor } from "@/modules/dashboard/document/model/document.types";
 
 import {
   FOLDER_COLOR_OPTIONS,
   FOLDER_SWATCH_COLOR_CLASSES,
-} from "./folderColors";
+} from "../folderColors";
 
 export function FolderEditorDialog({
   open,
@@ -40,19 +42,14 @@ export function FolderEditorDialog({
           onSubmit();
         }}
       >
-        <label className="block space-y-2">
-          <span className="text-xs font-semibold text-foreground">
-            Folder name
-          </span>
-          <input
-            autoFocus
-            value={name}
-            maxLength={80}
-            onChange={(event) => onNameChange(event.target.value)}
-            className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
-            placeholder="New folder"
-          />
-        </label>
+        <DialogTextField
+          label="Folder name"
+          value={name}
+          maxLength={80}
+          onChange={onNameChange}
+          placeholder="New folder"
+          autoFocus
+        />
 
         <fieldset className="space-y-2">
           <legend className="text-xs font-semibold text-foreground">
@@ -81,22 +78,11 @@ export function FolderEditorDialog({
           </div>
         </fieldset>
 
-        <div className="flex justify-end gap-2 border-t border-border/70 pt-4">
-          <button
-            type="button"
-            className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            onClick={onClose}
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={!name.trim()}
-            className="rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50"
-          >
-            Save folder
-          </button>
-        </div>
+        <DialogFormFooter
+          submitLabel="Save folder"
+          disabled={!name.trim()}
+          onCancel={onClose}
+        />
       </form>
     </ModalShell>
   );

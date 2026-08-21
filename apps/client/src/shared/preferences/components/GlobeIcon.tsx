@@ -1,3 +1,6 @@
+/**
+ * Renders the shared globe icon used by language preference triggers.
+ */
 export function GlobeIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden="true">

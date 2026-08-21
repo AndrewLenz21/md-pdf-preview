@@ -26,6 +26,7 @@
     "signUp": "Registrarse",
     "signOut": "Cerrar sesión"
   },
+  "guest": "Invitado",
   "settings": {
     "label": "Configuración",
     "open": "Abrir configuración",

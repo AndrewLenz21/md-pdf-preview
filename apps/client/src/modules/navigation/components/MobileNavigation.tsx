@@ -2,16 +2,15 @@
 
 import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useState } from "react";
 
-import { LanguageDialog } from "./LanguageDialog";
+import { useIsMounted } from "@/shared/hooks/useIsMounted";
+import {
+  PreferencesDialogHost,
+  usePreferencesDialog,
+} from "@/shared/preferences";
+
 import { MobileDrawer } from "./MobileDrawer";
-import { SettingsDialog } from "./SettingsDialog";
-import { ThemeDialog } from "./ThemeDialog";
-
-const subscribeToMount = () => () => {};
-const getClientMountSnapshot = () => true;
-const getServerMountSnapshot = () => false;
 
 function MenuIcon({ close }: { close: boolean }) {
   return close ? (
@@ -37,14 +36,8 @@ function MenuIcon({ close }: { close: boolean }) {
 
 export function MobileNavigation() {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [modal, setModal] = useState<
-    "language" | "settings" | "theme" | null
-  >(null);
-  const mounted = useSyncExternalStore(
-    subscribeToMount,
-    getClientMountSnapshot,
-    getServerMountSnapshot,
-  );
+  const { activeDialog, openDialog, closeDialog } = usePreferencesDialog();
+  const mounted = useIsMounted();
   const t = useTranslations("Navigation");
   const openMenuLabel = t.has("aria.mobileMenu")
     ? t("aria.mobileMenu")
@@ -54,12 +47,12 @@ export function MobileNavigation() {
     : "Close navigation menu";
 
   useEffect(() => {
-    if (!drawerOpen && !modal) return;
+    if (!drawerOpen && !activeDialog) return;
 
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
-      if (modal) {
-        setModal(null);
+      if (activeDialog) {
+        closeDialog();
       } else {
         setDrawerOpen(false);
       }
@@ -73,15 +66,15 @@ export function MobileNavigation() {
       document.body.style.overflow = originalOverflow;
       document.removeEventListener("keydown", closeOnEscape);
     };
-  }, [drawerOpen, modal]);
+  }, [activeDialog, closeDialog, drawerOpen]);
 
   const closeDrawer = () => {
-    setModal(null);
+    closeDialog();
     setDrawerOpen(false);
   };
 
   const openSettings = () => {
-    setModal("settings");
+    openDialog("settings");
   };
 
   const overlay = (
@@ -119,19 +112,11 @@ export function MobileNavigation() {
                 onClose={closeDrawer}
                 onOpenSettings={openSettings}
               />
-              <SettingsDialog
-                open={modal === "settings"}
-                onClose={() => setModal(null)}
-                onOpenLanguage={() => setModal("language")}
-                onOpenTheme={() => setModal("theme")}
-              />
-              <LanguageDialog
-                open={modal === "language"}
-                onClose={() => setModal(null)}
-              />
-              <ThemeDialog
-                open={modal === "theme"}
-                onClose={() => setModal(null)}
+              <PreferencesDialogHost
+                activeDialog={activeDialog}
+                onChange={(dialog) =>
+                  dialog ? openDialog(dialog) : closeDialog()
+                }
               />
             </>,
             document.body,

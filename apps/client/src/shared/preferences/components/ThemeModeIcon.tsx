@@ -1,3 +1,6 @@
+/**
+ * Displays a compact sun or moon icon for the active theme mode.
+ */
 export function ThemeModeIcon({ dark }: { dark: boolean }) {
   if (dark) {
     return (

@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
 
+import { useDismissableLayer } from "@/shared/hooks/useDismissableLayer";
 import { PAPER_SIZE_OPTIONS } from "./paper-sizes";
 import { useWorkspaceStore } from "@/modules/dashboard/stores";
 
@@ -17,22 +18,11 @@ export function PaperSizeSelect() {
   );
   const selectedOption = PAPER_SIZE_OPTIONS[selectedIndex];
 
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-
-    const closeOnOutsidePointer = (event: PointerEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    };
-
-    document.addEventListener("pointerdown", closeOnOutsidePointer);
-
-    return () =>
-      document.removeEventListener("pointerdown", closeOnOutsidePointer);
-  }, [open]);
+  useDismissableLayer({
+    enabled: open,
+    refs: [rootRef],
+    onDismiss: () => setOpen(false),
+  });
 
   const selectOption = (index: number) => {
     setPaperSize(PAPER_SIZE_OPTIONS[index].value);
@@ -78,7 +68,8 @@ export function PaperSizeSelect() {
       event.preventDefault();
 
       if (open) {
-        const nextIndex = event.key === "Home" ? 0 : PAPER_SIZE_OPTIONS.length - 1;
+        const nextIndex =
+          event.key === "Home" ? 0 : PAPER_SIZE_OPTIONS.length - 1;
         selectOption(nextIndex);
       }
     }

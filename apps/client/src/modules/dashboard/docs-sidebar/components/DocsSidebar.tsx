@@ -5,9 +5,11 @@ import { useLocale } from "next-intl";
 import { useState } from "react";
 
 import { Link } from "@/core/i18n";
+import { authClient } from "@/lib/auth-client";
 import type {
   DocumentFolder,
   DocumentFolderColor,
+  DocumentSource,
   MockDocument,
 } from "@/modules/dashboard/document/model/document.types";
 import {
@@ -18,8 +20,13 @@ import {
 import { AuthActions } from "@/modules/navigation/components/AuthActions";
 
 import { DocumentSourceToggle } from "./DocumentSourceToggle";
-import { FolderEditorDialog } from "./FolderEditorDialog";
 import { FolderTree } from "./FolderTree";
+import {
+  DeleteFolderDialog,
+  FolderActionsDialog,
+  FolderEditorDialog,
+  MarkdownNameDialog,
+} from "./modals";
 
 type FolderDialogState = {
   mode: "create" | "edit";
@@ -28,6 +35,23 @@ type FolderDialogState = {
   parentId: string | null;
   name: string;
   color: DocumentFolderColor;
+};
+
+type FolderActionsState = {
+  source: DocumentSource;
+  folder: DocumentFolder;
+};
+
+type MarkdownDialogState = {
+  source: DocumentSource;
+  parentId: string;
+  parentName: string;
+  name: string;
+};
+
+type DeleteFolderDialogState = {
+  source: DocumentSource;
+  folder: DocumentFolder;
 };
 
 export function DocsSidebar({
@@ -46,9 +70,17 @@ export function DocsSidebar({
   mobile?: boolean;
 }) {
   const locale = useLocale();
+  const { data: session, isPending: sessionPending } = authClient.useSession();
   const [folderDialog, setFolderDialog] = useState<FolderDialogState | null>(
     null,
   );
+  const [folderActions, setFolderActions] = useState<FolderActionsState | null>(
+    null,
+  );
+  const [markdownDialog, setMarkdownDialog] =
+    useState<MarkdownDialogState | null>(null);
+  const [deleteFolderDialog, setDeleteFolderDialog] =
+    useState<DeleteFolderDialogState | null>(null);
   const activeSource = useDocumentOrganizationStore(
     (state) => state.activeSource,
   );
@@ -82,6 +114,9 @@ export function DocsSidebar({
   const renameFolder = useDocumentOrganizationStore(
     (state) => state.renameFolder,
   );
+  const deleteFolder = useDocumentOrganizationStore(
+    (state) => state.deleteFolder,
+  );
   const renameDocument = useDocumentOrganizationStore(
     (state) => state.renameDocument,
   );
@@ -99,8 +134,25 @@ export function DocsSidebar({
     (state) => state.createDocument,
   );
   const cloudDocuments = useCloudDocumentStore((state) => state.documents);
-  const sourceDocuments = activeSource === "local" ? documents : cloudDocuments;
-  const sourceFolders = activeSource === "local" ? localFolders : cloudFolders;
+  const isCloudUnauthenticated =
+    activeSource === "cloud" && !sessionPending && !session?.user;
+  const cloudRootFolder = cloudFolders.find(
+    (folder) => folder.parentId === null,
+  );
+  const sourceDocuments =
+    activeSource === "local"
+      ? documents
+      : isCloudUnauthenticated
+        ? []
+        : cloudDocuments;
+  const sourceFolders =
+    activeSource === "local"
+      ? localFolders
+      : isCloudUnauthenticated
+        ? cloudRootFolder
+          ? [cloudRootFolder]
+          : []
+        : cloudFolders;
   const collapsedFolderIds =
     activeSource === "local"
       ? localCollapsedFolderIds
@@ -128,13 +180,23 @@ export function DocsSidebar({
     (folder) => folder.parentId === null,
   )?.id;
 
-  const handleCreateDocument = (folderId: string) => {
+  const handleCreateDocument = (
+    folderId: string,
+    title?: string,
+    source: DocumentSource = activeSource,
+  ) => {
     const id =
-      activeSource === "local" ? createLocalDocument() : createCloudDocument();
+      source === "local"
+        ? createLocalDocument(title)
+        : createCloudDocument(title);
 
-    moveDocument(activeSource, id, folderId);
+    moveDocument(source, id, folderId);
 
-    if (activeSource === "local") {
+    if (title?.trim()) {
+      renameDocument(source, id, title);
+    }
+
+    if (source === "local") {
       onSelect(id);
     }
   };
@@ -145,14 +207,107 @@ export function DocsSidebar({
     }
   };
 
-  const handleCreateFolder = (parentId: string) => {
+  const handleCreateFolder = (
+    parentId: string,
+    source: DocumentSource = activeSource,
+  ) => {
     setFolderDialog({
       mode: "create",
-      source: activeSource,
+      source,
       parentId,
       name: "",
       color: "primary",
     });
+  };
+
+  const handleOpenFolderActions = (folder: DocumentFolder) => {
+    setFolderActions({ source: activeSource, folder });
+  };
+
+  const handleNewFolderFromActions = () => {
+    if (!folderActions) {
+      return;
+    }
+
+    const { folder, source } = folderActions;
+    setFolderActions(null);
+    handleCreateFolder(folder.id, source);
+  };
+
+  const handleNewMarkdownFromActions = () => {
+    if (!folderActions) {
+      return;
+    }
+
+    const { folder, source } = folderActions;
+    setFolderActions(null);
+    setMarkdownDialog({
+      source,
+      parentId: folder.id,
+      parentName: folder.name,
+      name: "",
+    });
+  };
+
+  const handleRenameFromActions = () => {
+    if (!folderActions) {
+      return;
+    }
+
+    const { folder, source } = folderActions;
+    setFolderActions(null);
+    setFolderDialog({
+      mode: "edit",
+      source,
+      folderId: folder.id,
+      parentId: folder.parentId,
+      name: folder.name,
+      color: folder.color,
+    });
+  };
+
+  const handleDeleteFromActions = () => {
+    if (!folderActions) {
+      return;
+    }
+
+    setDeleteFolderDialog(folderActions);
+    setFolderActions(null);
+  };
+
+  const handleSaveMarkdown = () => {
+    if (!markdownDialog?.name.trim()) {
+      return;
+    }
+
+    handleCreateDocument(
+      markdownDialog.parentId,
+      markdownDialog.name,
+      markdownDialog.source,
+    );
+    setMarkdownDialog(null);
+  };
+
+  const handleDeleteFolder = () => {
+    if (!deleteFolderDialog) {
+      return;
+    }
+
+    const deleted = deleteFolder(
+      deleteFolderDialog.source,
+      deleteFolderDialog.folder.id,
+    );
+
+    if (
+      deleted &&
+      deleteFolderDialog.source === "local" &&
+      useDocumentOrganizationStore.getState().localDocuments[selectedId]
+        ?.deleted
+    ) {
+      onDelete?.(selectedId);
+    }
+
+    setDeleteFolderDialog(null);
   };
 
   const handleEditFolder = (folder: DocumentFolder) => {
@@ -219,7 +374,8 @@ export function DocsSidebar({
           <button
             type="button"
             aria-label="Create new document"
-            className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            disabled={isCloudUnauthenticated}
+            className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
             onClick={handleCreateRootDocument}
           >
             <FilePlus2 className="h-4 w-4" strokeWidth={1.7} />
@@ -267,6 +423,9 @@ export function DocsSidebar({
           onToggleFolder={(folderId) =>
             toggleFolderExpanded(activeSource, folderId)
           }
+          cloudUnauthenticated={isCloudUnauthenticated}
+          mobile={mobile}
+          onOpenFolderActions={handleOpenFolderActions}
         />
       </div>
 
@@ -294,6 +453,34 @@ export function DocsSidebar({
         }
         onClose={() => setFolderDialog(null)}
         onSubmit={handleSaveFolder}
+      />
+      <FolderActionsDialog
+        open={folderActions !== null}
+        folderName={folderActions?.folder.name ?? "Workspace"}
+        canRenameDelete={folderActions?.folder.parentId !== null}
+        onClose={() => setFolderActions(null)}
+        onNewFolder={handleNewFolderFromActions}
+        onNewMarkdown={handleNewMarkdownFromActions}
+        onRename={handleRenameFromActions}
+        onDelete={handleDeleteFromActions}
+      />
+      <MarkdownNameDialog
+        open={markdownDialog !== null}
+        parentName={markdownDialog?.parentName ?? "Workspace"}
+        name={markdownDialog?.name ?? ""}
+        onNameChange={(name) =>
+          setMarkdownDialog((current) =>
+            current ? { ...current, name } : current,
+          )
+        }
+        onClose={() => setMarkdownDialog(null)}
+        onSubmit={handleSaveMarkdown}
+      />
+      <DeleteFolderDialog
+        open={deleteFolderDialog !== null}
+        folderName={deleteFolderDialog?.folder.name ?? ""}
+        onClose={() => setDeleteFolderDialog(null)}
+        onConfirm={handleDeleteFolder}
       />
     </div>
   );

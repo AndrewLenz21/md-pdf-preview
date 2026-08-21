@@ -1,19 +1,20 @@
 "use client";
 
-import { useLocale } from "next-intl";
 import { useTranslations } from "next-intl";
-import { useTheme } from "next-themes";
 
-import { type Locale } from "@/core/i18n";
+import type { Locale } from "@/core/i18n";
 
-import { NAVIGATION_LANGUAGES } from "../constants/navigation.constants";
-import { isAppTheme, useThemeStore } from "../stores/themeStore";
+import { useAppTheme } from "../hooks/useAppTheme";
+import { useLocaleSelection } from "../hooks/useLocaleSelection";
 import { FlagIcon } from "./FlagIcon";
 import { GlobeIcon } from "./GlobeIcon";
-import { ModalShell } from "./ModalShell";
+import { ModalShell } from "@/shared/components/ModalShell";
 import { ThemeModeIcon } from "./ThemeModeIcon";
 import { ThemePreview } from "./ThemePreview";
 
+/**
+ * Provides the shared preference entry points for language and theme dialogs.
+ */
 function ChevronRightIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden="true">
@@ -39,18 +40,9 @@ export function SettingsDialog({
   onOpenLanguage: () => void;
   onOpenTheme: () => void;
 }) {
-  const locale = useLocale() as Locale;
-  const { theme: nextTheme, resolvedTheme } = useTheme();
-  const storedTheme = useThemeStore((state) => state.theme);
+  const { currentLanguage } = useLocaleSelection();
+  const { currentTheme, isDarkTheme } = useAppTheme();
   const t = useTranslations("Navigation");
-  const currentTheme = isAppTheme(nextTheme) ? nextTheme : storedTheme;
-  const isDarkTheme =
-    currentTheme === "dark" ||
-    currentTheme === "atom" ||
-    (currentTheme === "system" && resolvedTheme === "dark");
-  const currentLanguage =
-    NAVIGATION_LANGUAGES.find((language) => language.code === locale) ??
-    NAVIGATION_LANGUAGES[0];
   const settingsTitle = t.has("settings.dialogTitle")
     ? t("settings.dialogTitle")
     : t("settings.label");

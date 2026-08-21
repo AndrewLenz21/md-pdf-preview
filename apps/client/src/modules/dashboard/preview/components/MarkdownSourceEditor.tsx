@@ -2,7 +2,10 @@
 
 import { useLayoutEffect, useState, type RefObject } from "react";
 
-import { MAX_MARKDOWN_CHARACTERS } from "@/modules/dashboard/stores";
+import {
+  MAX_MARKDOWN_CHARACTERS,
+  useDocumentOrganizationStore,
+} from "@/modules/dashboard/stores";
 
 function resizeTextarea(textarea: HTMLTextAreaElement | null) {
   if (!textarea) {
@@ -29,7 +32,10 @@ function resizeTextarea(textarea: HTMLTextAreaElement | null) {
     canvas.scrollTop = canvasScroll.top;
   }
 
-  if (window.scrollX !== windowScroll.left || window.scrollY !== windowScroll.top) {
+  if (
+    window.scrollX !== windowScroll.left ||
+    window.scrollY !== windowScroll.top
+  ) {
     window.scrollTo({
       left: windowScroll.left,
       top: windowScroll.top,
@@ -52,6 +58,10 @@ export function MarkdownSourceEditor({
   onMarkdownChange: (markdown: string) => void;
 }) {
   const zoomFactor = zoom / 100;
+  const activeSource = useDocumentOrganizationStore(
+    (state) => state.activeSource,
+  );
+  const hasCharacterLimit = activeSource === "cloud";
   const [draftState, setDraftState] = useState({
     source: markdown,
     value: markdown,
@@ -80,13 +90,16 @@ export function MarkdownSourceEditor({
   };
 
   return (
-    <div className="markdown-workspace" aria-label={`${documentTitle} Markdown source`}>
+    <div
+      className="markdown-workspace"
+      aria-label={`${documentTitle} Markdown source`}
+    >
       <div className="markdown-editor-column">
         <textarea
           ref={textareaRef}
           value={draftMarkdown}
           rows={1}
-          maxLength={MAX_MARKDOWN_CHARACTERS}
+          maxLength={hasCharacterLimit ? MAX_MARKDOWN_CHARACTERS : undefined}
           onChange={(event) => {
             const nextMarkdown = event.currentTarget.value;
 
@@ -98,9 +111,11 @@ export function MarkdownSourceEditor({
           aria-label={`${documentTitle} Markdown source`}
           spellCheck={false}
           wrap="soft"
-          style={{
-            "--markdown-editor-font-size": `${15 * zoomFactor}px`,
-          } as React.CSSProperties}
+          style={
+            {
+              "--markdown-editor-font-size": `${15 * zoomFactor}px`,
+            } as React.CSSProperties
+          }
           className="markdown-source-editor"
         />
       </div>

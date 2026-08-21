@@ -1,5 +1,9 @@
 import { create } from "zustand";
 
+/**
+ * Stores the application theme independently from next-themes so shared
+ * preference surfaces can read the same validated theme state.
+ */
 export const APP_THEME_NAMES = [
   "light",
   "dark",

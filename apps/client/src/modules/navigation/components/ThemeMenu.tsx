@@ -1,18 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { useTheme } from "next-themes";
 
-import { startThemeTransition } from "@/core/theme";
-
-import {
-  APP_THEME_NAMES,
-  isAppTheme,
-  useThemeStore,
-} from "../stores/themeStore";
-import { ThemePreview } from "./ThemePreview";
-import { ThemeModeIcon } from "./ThemeModeIcon";
+import { useDismissableLayer } from "@/shared/hooks/useDismissableLayer";
+import { ThemeModeIcon } from "@/shared/preferences/components/ThemeModeIcon";
+import { ThemeOptionList, useAppTheme } from "@/shared/preferences";
 
 function ChevronDownIcon() {
   return (
@@ -33,10 +26,6 @@ function ChevronDownIcon() {
   );
 }
 
-const subscribeToMount = () => () => {};
-const getClientMountSnapshot = () => true;
-const getServerMountSnapshot = () => false;
-
 export function ThemeMenu({
   showLabel = false,
   inline = false,
@@ -46,37 +35,14 @@ export function ThemeMenu({
 }) {
   const menuRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
-  const mounted = useSyncExternalStore(
-    subscribeToMount,
-    getClientMountSnapshot,
-    getServerMountSnapshot,
-  );
-  const {
-    theme: nextTheme,
-    resolvedTheme,
-    setTheme: setNextTheme,
-  } = useTheme();
-  const storedTheme = useThemeStore((state) => state.theme);
-  const setStoredTheme = useThemeStore((state) => state.setTheme);
+  const { currentTheme, isDarkTheme, selectTheme } = useAppTheme();
   const t = useTranslations("Navigation");
 
-  useEffect(() => {
-    const closeMenu = (event: MouseEvent) => {
-      if (!menuRef.current?.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", closeMenu);
-    return () => document.removeEventListener("mousedown", closeMenu);
-  }, []);
-
-  const currentTheme =
-    mounted && isAppTheme(nextTheme) ? nextTheme : storedTheme;
-  const isDarkTheme =
-    currentTheme === "dark" ||
-    currentTheme === "atom" ||
-    (currentTheme === "system" && resolvedTheme === "dark");
+  useDismissableLayer({
+    enabled: open,
+    refs: [menuRef],
+    onDismiss: () => setOpen(false),
+  });
 
   return (
     <div ref={menuRef} className="relative">
@@ -110,46 +76,11 @@ export function ThemeMenu({
           <p className="px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
             {t("theme.label")}
           </p>
-          {APP_THEME_NAMES.map((theme) => {
-            const isSelected = theme === currentTheme;
-
-            return (
-              <button
-                key={theme}
-                type="button"
-                role="menuitemradio"
-                aria-checked={isSelected}
-                className={`grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors ${
-                  isSelected
-                    ? "bg-accent font-semibold text-foreground"
-                    : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"
-                }`}
-                onClick={() => {
-                  startThemeTransition();
-                  setNextTheme(theme);
-                  setStoredTheme(theme);
-                }}
-              >
-                <ThemePreview theme={theme} />
-                <span className="min-w-0">
-                  <span className="block text-xs font-semibold text-foreground">
-                    {t(`theme.options.${theme}`)}
-                  </span>
-                  <span className="mt-0.5 block text-[11px] text-muted-foreground">
-                    {t.has(`theme.descriptions.${theme}`)
-                      ? t(`theme.descriptions.${theme}`)
-                      : t(`theme.options.${theme}`)}
-                  </span>
-                </span>
-                <span
-                  aria-hidden="true"
-                  className={`flex h-5 w-5 items-center justify-center text-primary transition-[transform,opacity] duration-200 ${isSelected ? "scale-100 opacity-100" : "scale-75 opacity-0"}`}
-                >
-                  ✓
-                </span>
-              </button>
-            );
-          })}
+          <ThemeOptionList
+            variant="menu"
+            currentTheme={currentTheme}
+            onSelect={selectTheme}
+          />
         </div>
       ) : null}
     </div>

@@ -2,6 +2,7 @@ export {
   DOCUMENT_CONTENT_DEBOUNCE_MS,
   MAX_MARKDOWN_CHARACTERS,
   normalizeMarkdownDocument,
+  SESSION_MARKDOWN_CHARACTER_LIMIT,
   UNTITLED_DOCUMENT_TITLE,
   useDocumentStore,
 } from "./document.store";

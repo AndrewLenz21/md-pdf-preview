@@ -11,6 +11,7 @@ import {
   normalizeMarkdownDocument,
   useDocumentStore,
 } from "./document.store";
+import { useDocumentOrganizationStore } from "./document-organization.store";
 
 function getContent(documentId = SELECTED_DOCUMENT_ID) {
   return useDocumentStore
@@ -26,6 +27,7 @@ function getTitle(documentId = SELECTED_DOCUMENT_ID) {
 
 function resetStore() {
   useDocumentStore.getState().flushAllPendingContent();
+  useDocumentOrganizationStore.setState({ activeSource: "local" });
   useDocumentStore.setState({
     documents: MOCK_DOCUMENTS,
     pendingContentByDocumentId: {},
@@ -103,7 +105,38 @@ describe("document store", () => {
     expect(getContent(SELECTED_DOCUMENT_ID)).toBe(expectedContent);
   });
 
-  it("limits Markdown to 20000 characters and still allows deleting", () => {
+  it("keeps Session Markdown unlimited and still allows deleting", () => {
+    const titlePrefix = "# Untitled\n\n";
+    const atLimit = `${titlePrefix}${"a".repeat(
+      MAX_MARKDOWN_CHARACTERS - titlePrefix.length,
+    )}`;
+    const overLimit = `${atLimit}b`;
+
+    useDocumentStore
+      .getState()
+      .scheduleContentUpdate(SELECTED_DOCUMENT_ID, overLimit);
+
+    expect(
+      useDocumentStore.getState().pendingContentByDocumentId[
+        SELECTED_DOCUMENT_ID
+      ],
+    ).toBe(overLimit);
+
+    useDocumentStore.getState().flushPendingContent(SELECTED_DOCUMENT_ID);
+    expect(getContent()).toBe(overLimit);
+
+    const afterDelete = overLimit.slice(0, -1);
+    useDocumentStore
+      .getState()
+      .scheduleContentUpdate(SELECTED_DOCUMENT_ID, afterDelete);
+    useDocumentStore.getState().flushPendingContent(SELECTED_DOCUMENT_ID);
+
+    expect(getContent()).toBe(afterDelete);
+  });
+
+  it("keeps Cloud Markdown limited to 20000 characters", () => {
+    useDocumentOrganizationStore.getState().setActiveSource("cloud");
+
     const titlePrefix = "# Untitled\n\n";
     const atLimit = `${titlePrefix}${"a".repeat(
       MAX_MARKDOWN_CHARACTERS - titlePrefix.length,
@@ -118,17 +151,6 @@ describe("document store", () => {
         SELECTED_DOCUMENT_ID
       ],
     ).toBe(atLimit);
-
-    useDocumentStore.getState().flushPendingContent(SELECTED_DOCUMENT_ID);
-    expect(getContent()).toBe(atLimit);
-
-    const afterDelete = atLimit.slice(0, -1);
-    useDocumentStore
-      .getState()
-      .scheduleContentUpdate(SELECTED_DOCUMENT_ID, afterDelete);
-    useDocumentStore.getState().flushPendingContent(SELECTED_DOCUMENT_ID);
-
-    expect(getContent()).toBe(afterDelete);
   });
 
   it("uses the first H1 as the document title", () => {
@@ -151,8 +173,22 @@ describe("document store", () => {
 
     expect(document).toMatchObject({
       title: "Untitled",
-      content: "# Untitled\n\n",
+      content: "#\n\n",
       updatedAt: "Edited just now",
+    });
+  });
+
+  it("uses a named file as its first Markdown heading", () => {
+    const documentId = useDocumentStore
+      .getState()
+      .createDocument("Project plan");
+    const document = useDocumentStore
+      .getState()
+      .documents.find((item) => item.id === documentId);
+
+    expect(document).toMatchObject({
+      title: "Project plan",
+      content: "# Project plan\n\n",
     });
   });
 

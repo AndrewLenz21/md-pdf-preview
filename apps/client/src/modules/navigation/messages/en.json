@@ -26,6 +26,7 @@
     "signUp": "Sign up",
     "signOut": "Sign out"
   },
+  "guest": "Guest",
   "settings": {
     "label": "Settings",
     "open": "Open settings",

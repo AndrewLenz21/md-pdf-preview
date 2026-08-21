@@ -19,9 +19,11 @@ import {
 } from "react";
 
 import { Link } from "@/core/i18n";
-
-import { LanguageDialog } from "./LanguageDialog";
-import { ThemeDialog } from "./ThemeDialog";
+import { useDismissableLayer } from "@/shared/hooks/useDismissableLayer";
+import {
+  PreferencesDialogHost,
+  usePreferencesDialog,
+} from "@/shared/preferences";
 
 type PopoverPosition = {
   left: number;
@@ -43,9 +45,7 @@ export function SettingsMenu({
   const [open, setOpen] = useState(false);
   const [menuRendered, setMenuRendered] = useState(false);
   const [menuClosing, setMenuClosing] = useState(false);
-  const [activeDialog, setActiveDialog] = useState<"language" | "theme" | null>(
-    null,
-  );
+  const { activeDialog, openDialog, closeDialog } = usePreferencesDialog();
   const [position, setPosition] = useState<PopoverPosition | null>(null);
   const t = useTranslations("Navigation");
   const settingsLabel = t.has("settings.label")
@@ -92,39 +92,11 @@ export function SettingsMenu({
     setOpen(true);
   };
 
-  useEffect(() => {
-    const closeMenu = (event: MouseEvent) => {
-      if (activeDialog) {
-        return;
-      }
-
-      const target = event.target as Node;
-
-      if (
-        !triggerRef.current?.contains(target) &&
-        !popoverRef.current?.contains(target)
-      ) {
-        requestCloseMenu();
-      }
-    };
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (activeDialog) {
-        return;
-      }
-
-      if (event.key === "Escape") {
-        requestCloseMenu();
-      }
-    };
-
-    document.addEventListener("mousedown", closeMenu);
-    document.addEventListener("keydown", closeOnEscape);
-
-    return () => {
-      document.removeEventListener("mousedown", closeMenu);
-      document.removeEventListener("keydown", closeOnEscape);
-    };
-  }, [activeDialog, requestCloseMenu]);
+  useDismissableLayer({
+    enabled: menuRendered && !activeDialog,
+    refs: [triggerRef, popoverRef],
+    onDismiss: requestCloseMenu,
+  });
 
   useEffect(() => {
     return () => clearCloseMenuTimer();
@@ -244,7 +216,7 @@ export function SettingsMenu({
                   role="menuitem"
                   aria-haspopup="dialog"
                   className="flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-foreground transition-colors hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  onClick={() => setActiveDialog("theme")}
+                  onClick={() => openDialog("theme")}
                 >
                   <Palette
                     className="h-4 w-4 text-muted-foreground"
@@ -261,7 +233,7 @@ export function SettingsMenu({
                   role="menuitem"
                   aria-haspopup="dialog"
                   className="flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-foreground transition-colors hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  onClick={() => setActiveDialog("language")}
+                  onClick={() => openDialog("language")}
                 >
                   <Languages
                     className="h-4 w-4 text-muted-foreground"
@@ -309,13 +281,9 @@ export function SettingsMenu({
             document.body,
           )
         : null}
-      <ThemeDialog
-        open={activeDialog === "theme"}
-        onClose={() => setActiveDialog(null)}
-      />
-      <LanguageDialog
-        open={activeDialog === "language"}
-        onClose={() => setActiveDialog(null)}
+      <PreferencesDialogHost
+        activeDialog={activeDialog}
+        onChange={(dialog) => (dialog ? openDialog(dialog) : closeDialog())}
       />
     </div>
   );

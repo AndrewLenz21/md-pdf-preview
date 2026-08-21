@@ -26,6 +26,7 @@
     "signUp": "Registrati",
     "signOut": "Esci"
   },
+  "guest": "Ospite",
   "settings": {
     "label": "Impostazioni",
     "open": "Apri impostazioni",

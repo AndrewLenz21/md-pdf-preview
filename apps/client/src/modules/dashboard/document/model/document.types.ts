@@ -9,11 +9,13 @@ export type DocumentFolder = {
   id: string;
   name: string;
   parentId: string | null;
+  path: string;
   color: DocumentFolderColor;
 };
 
 export type DocumentOrganization = {
   folderId: string | null;
+  path: string;
   displayTitle?: string;
   deleted?: boolean;
   favorite?: boolean;

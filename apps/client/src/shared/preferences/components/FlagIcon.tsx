@@ -1,5 +1,8 @@
 import type { Locale } from "@/core/i18n";
 
+/**
+ * Renders the small flag illustration used by language selectors and dialogs.
+ */
 export function FlagIcon({ country }: { country: Locale }) {
   if (country === "en") {
     return (

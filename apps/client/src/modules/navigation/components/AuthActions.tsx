@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Settings2 } from "lucide-react";
+import { Settings2, UserRound } from "lucide-react";
 
 import { Link } from "@/core/i18n";
 import { authClient } from "@/lib/auth-client";
@@ -52,6 +52,7 @@ export function AuthActions({
   const settingsLabel = t.has("settings.open")
     ? t("settings.open")
     : "Open settings";
+  const guestLabel = t.has("guest") ? t("guest") : "Guest";
   const mobileProfileSurface =
     settingsMode === "menu" ? "bg-sidebar-accent" : "bg-card/60";
 
@@ -69,6 +70,40 @@ export function AuthActions({
   }
 
   if (!user) {
+    if (mobile) {
+      return (
+        <div
+          className={`flex items-center justify-between rounded-lg border border-border p-3 ${mobileProfileSurface}`}
+        >
+          <div className="flex min-w-0 items-center gap-3">
+            <span
+              aria-hidden="true"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground"
+            >
+              <UserRound className="h-4 w-4" strokeWidth={1.7} />
+            </span>
+            <span className="text-sm font-medium text-muted-foreground">
+              {guestLabel}
+            </span>
+          </div>
+          {settingsMode === "menu" ? (
+            <SettingsMenu placement="sidebar" />
+          ) : (
+            <button
+              type="button"
+              aria-label={settingsLabel}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              onClick={() => {
+                onOpenSettings?.();
+              }}
+            >
+              <Settings2 className="h-4 w-4" strokeWidth={1.7} />
+            </button>
+          )}
+        </div>
+      );
+    }
+
     return (
       <div
         className={

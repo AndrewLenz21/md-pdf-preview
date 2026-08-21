@@ -1,12 +1,9 @@
 "use client";
 
 import { useEffect, useId, useLayoutEffect, useRef } from "react";
-import { useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 
-const subscribeToMount = () => () => {};
-const getClientMountSnapshot = () => true;
-const getServerMountSnapshot = () => false;
+import { useIsMounted } from "@/shared/hooks/useIsMounted";
 
 function CloseIcon() {
   return (
@@ -21,6 +18,10 @@ function CloseIcon() {
   );
 }
 
+/**
+ * Provides the shared accessible portal, animation, focus, and dismissal shell
+ * used by feature-specific dialogs throughout the application.
+ */
 export function ModalShell({
   open,
   onClose,
@@ -29,6 +30,9 @@ export function ModalShell({
   closeLabel,
   children,
   maxWidth = "max-w-md",
+  className,
+  backdropClassName,
+  contentClassName,
 }: {
   open: boolean;
   onClose: () => void;
@@ -37,16 +41,15 @@ export function ModalShell({
   closeLabel: string;
   children: React.ReactNode;
   maxWidth?: string;
+  className?: string;
+  backdropClassName?: string;
+  contentClassName?: string;
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
   const shellRef = useRef<HTMLDivElement>(null);
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
   const titleId = useId();
-  const mounted = useSyncExternalStore(
-    subscribeToMount,
-    getClientMountSnapshot,
-    getServerMountSnapshot,
-  );
+  const mounted = useIsMounted();
 
   useLayoutEffect(() => {
     if (open) {
@@ -86,19 +89,19 @@ export function ModalShell({
     <div
       ref={shellRef}
       inert={!open}
-      className={`modal-shell ${open ? "modal-shell-open" : "modal-shell-closed"} fixed inset-0 z-[300] flex items-center justify-center p-4`}
+      className={`modal-shell ${open ? "modal-shell-open" : "modal-shell-closed"} fixed inset-0 z-[300] flex items-center justify-center p-4 ${className ?? ""}`}
     >
       <button
         type="button"
         aria-label={closeLabel}
-        className="modal-shell-backdrop absolute inset-0 bg-foreground/30 backdrop-blur-sm"
+        className={`modal-shell-backdrop absolute inset-0 bg-foreground/30 backdrop-blur-sm ${backdropClassName ?? ""}`}
         onClick={onClose}
       />
       <section
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className={`modal-shell-content relative max-h-[calc(100dvh-2rem)] w-full ${maxWidth} overflow-y-auto rounded-2xl border border-border bg-popover p-5 shadow-2xl sm:p-6`}
+        className={`modal-shell-content relative max-h-[calc(100dvh-2rem)] w-full ${maxWidth} overflow-y-auto rounded-2xl border border-border bg-popover p-5 shadow-2xl sm:p-6 ${contentClassName ?? ""}`}
       >
         <header className="mb-5 flex items-start justify-between gap-4">
           <div>

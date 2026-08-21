@@ -1,14 +1,18 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
   ChevronRight,
+  Cloud,
   FilePlus2,
+  Files,
   Folder,
   FolderOpen,
   FolderPlus,
-  MoreHorizontal,
   Pencil,
+  Plus,
 } from "lucide-react";
 
+import { Link } from "@/core/i18n";
+import { useDismissableLayer } from "@/shared/hooks/useDismissableLayer";
 import type {
   DocumentFolder,
   DocumentOrganization,
@@ -45,6 +49,50 @@ function flattenFolders(
   ]);
 }
 
+function EmptyWorkspaceState({
+  cloudUnauthenticated,
+}: {
+  cloudUnauthenticated: boolean;
+}) {
+  return (
+    <div className="flex min-h-64 flex-col items-center justify-center px-6 py-16 text-center">
+      <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-border/70 bg-accent/50 text-primary shadow-sm">
+        {cloudUnauthenticated ? (
+          <Cloud className="h-5 w-5" strokeWidth={1.7} />
+        ) : (
+          <Files className="h-5 w-5" strokeWidth={1.7} />
+        )}
+      </span>
+      <p className="text-sm font-semibold text-foreground">
+        {cloudUnauthenticated
+          ? "Sync your workspace"
+          : "Your workspace is empty"}
+      </p>
+      <p className="mt-1 max-w-[220px] text-xs leading-5 text-muted-foreground">
+        {cloudUnauthenticated
+          ? "Sign in to sync your Markdown files across devices."
+          : "Create your first folder or Markdown file to get started."}
+      </p>
+      {cloudUnauthenticated ? (
+        <div className="mt-5 flex items-center gap-2">
+          <Link
+            href="/auth/sign-in"
+            className="rounded-lg border border-border px-3 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-accent"
+          >
+            Sign In
+          </Link>
+          <Link
+            href="/auth/sign-up"
+            className="rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            Sign Up
+          </Link>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function FolderTree({
   documents,
   folders,
@@ -60,6 +108,9 @@ export function FolderTree({
   onEditFolder,
   collapsedFolderIds,
   onToggleFolder,
+  cloudUnauthenticated,
+  mobile,
+  onOpenFolderActions,
 }: {
   documents: MockDocument[];
   folders: DocumentFolder[];
@@ -70,11 +121,14 @@ export function FolderTree({
   onDelete: (id: string) => void;
   onMove: (id: string, folderId: string | null) => void;
   onToggleFavorite: (id: string) => void;
-  onCreateDocument: (folderId: string) => void;
+  onCreateDocument: (folderId: string, title?: string) => void;
   onCreateFolder: (parentId: string) => void;
   onEditFolder: (folder: DocumentFolder) => void;
   collapsedFolderIds: string[];
   onToggleFolder: (folderId: string) => void;
+  cloudUnauthenticated: boolean;
+  mobile: boolean;
+  onOpenFolderActions: (folder: DocumentFolder) => void;
 }) {
   const rootFolders = getChildFolders(folders, null);
   const folderOptions: DocumentFolderOption[] = rootFolders.flatMap(
@@ -92,14 +146,7 @@ export function FolderTree({
     null,
   );
   if (!visibleDocuments.length && !folders.length) {
-    return (
-      <div className="rounded-xl border border-dashed border-border/80 px-4 py-8 text-center">
-        <p className="text-sm font-medium text-foreground">No files here yet</p>
-        <p className="mt-1 text-xs leading-5 text-muted-foreground">
-          New files will appear here when they are added to the workspace.
-        </p>
-      </div>
-    );
+    return <EmptyWorkspaceState cloudUnauthenticated={cloudUnauthenticated} />;
   }
 
   return (
@@ -119,6 +166,7 @@ export function FolderTree({
           onToggleFavorite={() => onToggleFavorite(document.id)}
           folderId={null}
           folderOptions={folderOptions}
+          mobile={mobile}
         />
       ))}
       {rootFolders.map((folder) => (
@@ -141,6 +189,9 @@ export function FolderTree({
           onEditFolder={onEditFolder}
           collapsedFolderIds={collapsedFolderIds}
           onToggleFolder={onToggleFolder}
+          cloudUnauthenticated={cloudUnauthenticated}
+          mobile={mobile}
+          onOpenFolderActions={onOpenFolderActions}
         />
       ))}
     </div>
@@ -165,6 +216,9 @@ function FolderNode({
   onEditFolder,
   collapsedFolderIds,
   onToggleFolder,
+  cloudUnauthenticated,
+  mobile,
+  onOpenFolderActions,
 }: {
   folder: DocumentFolder;
   depth: number;
@@ -178,11 +232,14 @@ function FolderNode({
   onDelete: (id: string) => void;
   onMove: (id: string, folderId: string | null) => void;
   onToggleFavorite: (id: string) => void;
-  onCreateDocument: (folderId: string) => void;
+  onCreateDocument: (folderId: string, title?: string) => void;
   onCreateFolder: (parentId: string) => void;
   onEditFolder: (folder: DocumentFolder) => void;
   collapsedFolderIds: string[];
   onToggleFolder: (folderId: string) => void;
+  cloudUnauthenticated: boolean;
+  mobile: boolean;
+  onOpenFolderActions: (folder: DocumentFolder) => void;
 }) {
   const folderItemRef = useRef<HTMLDivElement>(null);
   const [folderMenuOpen, setFolderMenuOpen] = useState(false);
@@ -195,30 +252,11 @@ function FolderNode({
   );
   const hasChildren = childFolders.length > 0 || childDocuments.length > 0;
 
-  useEffect(() => {
-    if (!folderMenuOpen) {
-      return;
-    }
-
-    const closeMenu = (event: MouseEvent) => {
-      if (!folderItemRef.current?.contains(event.target as Node)) {
-        setFolderMenuOpen(false);
-      }
-    };
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setFolderMenuOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", closeMenu);
-    document.addEventListener("keydown", closeOnEscape);
-
-    return () => {
-      document.removeEventListener("mousedown", closeMenu);
-      document.removeEventListener("keydown", closeOnEscape);
-    };
-  }, [folderMenuOpen]);
+  useDismissableLayer({
+    enabled: folderMenuOpen,
+    refs: [folderItemRef],
+    onDismiss: () => setFolderMenuOpen(false),
+  });
 
   return (
     <div
@@ -270,16 +308,29 @@ function FolderNode({
             {childDocuments.length || childFolders.length}
           </span>
         </button>
-        <button
-          type="button"
-          aria-label={`More options for ${folder.name}`}
-          aria-expanded={folderMenuOpen}
-          aria-haspopup="menu"
-          className="mr-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground opacity-70 transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:opacity-0 sm:group-hover/folder:opacity-100 sm:group-focus-within/folder:opacity-100"
-          onClick={() => setFolderMenuOpen((value) => !value)}
-        >
-          <MoreHorizontal className="h-4 w-4" strokeWidth={1.8} />
-        </button>
+        {!cloudUnauthenticated ? (
+          <button
+            type="button"
+            aria-label={
+              mobile
+                ? `Create in ${folder.name}`
+                : `Folder actions for ${folder.name}`
+            }
+            aria-expanded={mobile ? undefined : folderMenuOpen}
+            aria-haspopup={mobile ? "dialog" : "menu"}
+            className="mr-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground opacity-70 transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:opacity-0 sm:group-hover/folder:opacity-100 sm:group-focus-within/folder:opacity-100"
+            onClick={() => {
+              if (mobile) {
+                onOpenFolderActions(folder);
+                return;
+              }
+
+              setFolderMenuOpen((value) => !value);
+            }}
+          >
+            <Plus className="h-4 w-4" strokeWidth={1.8} />
+          </button>
+        ) : null}
       </div>
       {folderMenuOpen ? (
         <div
@@ -311,69 +362,81 @@ function FolderNode({
             <FolderPlus className="h-3.5 w-3.5 text-muted-foreground" />
             New folder
           </button>
-          <div className="my-1 border-t border-border/70" />
-          <button
-            type="button"
-            role="menuitem"
-            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-foreground transition-colors hover:bg-accent"
-            onClick={() => {
-              onEditFolder(folder);
-              setFolderMenuOpen(false);
-            }}
-          >
-            <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
-            Edit folder
-          </button>
+          {depth > 0 ? (
+            <>
+              <div className="my-1 border-t border-border/70" />
+              <button
+                type="button"
+                role="menuitem"
+                className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-foreground transition-colors hover:bg-accent"
+                onClick={() => {
+                  onEditFolder(folder);
+                  setFolderMenuOpen(false);
+                }}
+              >
+                <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                Edit folder
+              </button>
+            </>
+          ) : null}
         </div>
       ) : null}
       {expanded ? (
-        <div className="relative">
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-y-1 border-l border-border/60"
-            style={{ left: `${8 + depth * TREE_INDENT}px` }}
-          />
-          {childDocuments.map((document) => (
-            <DocumentItem
-              key={document.id}
-              displayTitle={
-                organization[document.id]?.displayTitle ?? document.title
-              }
-              favorite={organization[document.id]?.favorite === true}
-              selected={document.id === selectedId}
-              onSelect={() => onSelect(document.id)}
-              onRename={(title) => onRename(document.id, title)}
-              onDelete={() => onDelete(document.id)}
-              onMove={(folderId) => onMove(document.id, folderId)}
-              onToggleFavorite={() => onToggleFavorite(document.id)}
-              folderId={folder.id}
-              folderOptions={folderOptions}
-              depth={depth + 1}
+        !hasChildren && depth === 0 ? (
+          <EmptyWorkspaceState cloudUnauthenticated={cloudUnauthenticated} />
+        ) : (
+          <div className="relative">
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-y-1 border-l border-border/60"
+              style={{ left: `${8 + depth * TREE_INDENT}px` }}
             />
-          ))}
-          {childFolders.map((childFolder) => (
-            <FolderNode
-              key={childFolder.id}
-              folder={childFolder}
-              depth={depth + 1}
-              folders={folders}
-              documents={documents}
-              organization={organization}
-              selectedId={selectedId}
-              folderOptions={folderOptions}
-              onSelect={onSelect}
-              onRename={onRename}
-              onDelete={onDelete}
-              onMove={onMove}
-              onToggleFavorite={onToggleFavorite}
-              onCreateDocument={onCreateDocument}
-              onCreateFolder={onCreateFolder}
-              onEditFolder={onEditFolder}
-              collapsedFolderIds={collapsedFolderIds}
-              onToggleFolder={onToggleFolder}
-            />
-          ))}
-        </div>
+            {childDocuments.map((document) => (
+              <DocumentItem
+                key={document.id}
+                displayTitle={
+                  organization[document.id]?.displayTitle ?? document.title
+                }
+                favorite={organization[document.id]?.favorite === true}
+                selected={document.id === selectedId}
+                onSelect={() => onSelect(document.id)}
+                onRename={(title) => onRename(document.id, title)}
+                onDelete={() => onDelete(document.id)}
+                onMove={(folderId) => onMove(document.id, folderId)}
+                onToggleFavorite={() => onToggleFavorite(document.id)}
+                folderId={folder.id}
+                folderOptions={folderOptions}
+                depth={depth + 1}
+                mobile={mobile}
+              />
+            ))}
+            {childFolders.map((childFolder) => (
+              <FolderNode
+                key={childFolder.id}
+                folder={childFolder}
+                depth={depth + 1}
+                folders={folders}
+                documents={documents}
+                organization={organization}
+                selectedId={selectedId}
+                folderOptions={folderOptions}
+                onSelect={onSelect}
+                onRename={onRename}
+                onDelete={onDelete}
+                onMove={onMove}
+                onToggleFavorite={onToggleFavorite}
+                onCreateDocument={onCreateDocument}
+                onCreateFolder={onCreateFolder}
+                onEditFolder={onEditFolder}
+                collapsedFolderIds={collapsedFolderIds}
+                onToggleFolder={onToggleFolder}
+                cloudUnauthenticated={cloudUnauthenticated}
+                mobile={mobile}
+                onOpenFolderActions={onOpenFolderActions}
+              />
+            ))}
+          </div>
+        )
       ) : null}
     </div>
   );

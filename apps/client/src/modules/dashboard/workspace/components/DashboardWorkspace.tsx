@@ -28,9 +28,10 @@ import {
 } from "@/modules/dashboard/preview";
 import type { EditingActions } from "@/modules/dashboard/preview/utils/editingActions";
 import type { DocumentEditorMode } from "@/modules/dashboard/types/editor.types";
-import { LanguageDialog } from "@/modules/navigation/components/LanguageDialog";
-import { SettingsDialog } from "@/modules/navigation/components/SettingsDialog";
-import { ThemeDialog } from "@/modules/navigation/components/ThemeDialog";
+import {
+  PreferencesDialogHost,
+  usePreferencesDialog,
+} from "@/shared/preferences";
 import { attachDocumentPageBreakMarkers } from "../utils/documentPageBreakMarkers";
 import { attachDocumentScrollSync } from "../utils/documentScrollSync";
 
@@ -60,9 +61,7 @@ export function DashboardWorkspace() {
   );
   const [mobileSection, setMobileSection] =
     useState<MobileDashboardSection>("preview");
-  const [docsSidebarModal, setDocsSidebarModal] = useState<
-    "language" | "settings" | "theme" | null
-  >(null);
+  const { activeDialog, openDialog, closeDialog } = usePreferencesDialog();
   const [mobileTransitionDirection, setMobileTransitionDirection] = useState<
     "forward" | "backward"
   >("forward");
@@ -304,7 +303,7 @@ export function DashboardWorkspace() {
     setMobileSection(section);
   };
 
-  const openDocsSidebarSettings = () => setDocsSidebarModal("settings");
+  const openDocsSidebarSettings = () => openDialog("settings");
 
   const startSidebarResize = (event: ReactPointerEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -489,19 +488,9 @@ export function DashboardWorkspace() {
         onChange={changeMobileSection}
       />
 
-      <SettingsDialog
-        open={docsSidebarModal === "settings"}
-        onClose={() => setDocsSidebarModal(null)}
-        onOpenLanguage={() => setDocsSidebarModal("language")}
-        onOpenTheme={() => setDocsSidebarModal("theme")}
-      />
-      <LanguageDialog
-        open={docsSidebarModal === "language"}
-        onClose={() => setDocsSidebarModal(null)}
-      />
-      <ThemeDialog
-        open={docsSidebarModal === "theme"}
-        onClose={() => setDocsSidebarModal(null)}
+      <PreferencesDialogHost
+        activeDialog={activeDialog}
+        onChange={(dialog) => (dialog ? openDialog(dialog) : closeDialog())}
       />
     </div>
   );

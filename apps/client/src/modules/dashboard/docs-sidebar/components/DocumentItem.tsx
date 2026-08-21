@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
   ChevronLeft,
   FileText,
@@ -8,6 +8,15 @@ import {
   Star,
   Trash2,
 } from "lucide-react";
+
+import { useDismissableLayer } from "@/shared/hooks/useDismissableLayer";
+
+import {
+  DeleteConfirmationDialog,
+  DocumentActionsDialog,
+  DocumentMoveDialog,
+  DocumentRenameDialog,
+} from "./modals";
 
 const TREE_INDENT = 22;
 
@@ -29,6 +38,7 @@ export function DocumentItem({
   folderId,
   folderOptions,
   depth = 0,
+  mobile = false,
 }: {
   displayTitle: string;
   favorite: boolean;
@@ -41,44 +51,28 @@ export function DocumentItem({
   folderId: string | null;
   folderOptions: DocumentFolderOption[];
   depth?: number;
+  mobile?: boolean;
 }) {
   const itemRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuView, setMenuView] = useState<"actions" | "move">("actions");
   const [renaming, setRenaming] = useState(false);
   const [draftTitle, setDraftTitle] = useState(displayTitle);
-
-  useEffect(() => {
-    if (!menuOpen) {
-      return;
-    }
-
-    const closeMenu = (event: MouseEvent) => {
-      if (!itemRef.current?.contains(event.target as Node)) {
-        setMenuOpen(false);
-        setMenuView("actions");
-      }
-    };
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setMenuOpen(false);
-        setMenuView("actions");
-      }
-    };
-
-    globalThis.document.addEventListener("mousedown", closeMenu);
-    globalThis.document.addEventListener("keydown", closeOnEscape);
-
-    return () => {
-      globalThis.document.removeEventListener("mousedown", closeMenu);
-      globalThis.document.removeEventListener("keydown", closeOnEscape);
-    };
-  }, [menuOpen]);
+  const [mobileActionsOpen, setMobileActionsOpen] = useState(false);
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [moveDialogOpen, setMoveDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const closeMenu = () => {
     setMenuOpen(false);
     setMenuView("actions");
   };
+
+  useDismissableLayer({
+    enabled: menuOpen,
+    refs: [itemRef],
+    onDismiss: closeMenu,
+  });
 
   const commitRename = () => {
     const nextTitle = draftTitle.trim();
@@ -91,8 +85,45 @@ export function DocumentItem({
   };
 
   const openMenu = () => {
+    if (mobile) {
+      setMobileActionsOpen(true);
+      return;
+    }
+
     setMenuView("actions");
     setMenuOpen((value) => !value);
+  };
+
+  const openRenameDialog = () => {
+    setDraftTitle(displayTitle);
+    setMobileActionsOpen(false);
+    setRenameDialogOpen(true);
+  };
+
+  const commitDialogRename = () => {
+    const nextTitle = draftTitle.trim();
+
+    if (nextTitle && nextTitle !== displayTitle) {
+      onRename(nextTitle);
+    }
+
+    setRenameDialogOpen(false);
+  };
+
+  const openMoveDialog = () => {
+    setMobileActionsOpen(false);
+    setMoveDialogOpen(true);
+  };
+
+  const openDeleteDialog = () => {
+    closeMenu();
+    setMobileActionsOpen(false);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    onDelete();
+    setDeleteDialogOpen(false);
   };
 
   return (
@@ -100,8 +131,7 @@ export function DocumentItem({
       ref={itemRef}
       className={`group/document relative flex min-w-0 items-center rounded-lg border-l-2 transition-colors ${selected ? "border-primary bg-accent text-accent-foreground shadow-sm" : "border-transparent text-muted-foreground hover:bg-accent/60 hover:text-foreground"}`}
       style={{
-        paddingLeft:
-          depth === 0 ? "8px" : `${7 + (depth - 1) * TREE_INDENT}px`,
+        paddingLeft: depth === 0 ? "8px" : `${7 + (depth - 1) * TREE_INDENT}px`,
       }}
     >
       {renaming ? (
@@ -149,8 +179,8 @@ export function DocumentItem({
       <button
         type="button"
         aria-label={`More options for ${displayTitle}`}
-        aria-expanded={menuOpen}
-        aria-haspopup="menu"
+        aria-expanded={mobile ? mobileActionsOpen : menuOpen}
+        aria-haspopup={mobile ? "dialog" : "menu"}
         className="mr-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground opacity-70 transition-colors hover:bg-background/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:opacity-0 sm:group-hover/document:opacity-100 sm:group-focus-within/document:opacity-100"
         onClick={(event) => {
           event.stopPropagation();
@@ -211,13 +241,7 @@ export function DocumentItem({
                 role="menuitem"
                 className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-destructive transition-colors hover:bg-destructive/10"
                 onClick={() => {
-                  if (
-                    typeof window === "undefined" ||
-                    window.confirm(`Delete ${displayTitle}?`)
-                  ) {
-                    onDelete();
-                    closeMenu();
-                  }
+                  openDeleteDialog();
                 }}
               >
                 <Trash2 className="h-3.5 w-3.5" />
@@ -263,6 +287,42 @@ export function DocumentItem({
           )}
         </div>
       ) : null}
+      <DocumentActionsDialog
+        open={mobileActionsOpen}
+        displayTitle={displayTitle}
+        favorite={favorite}
+        onClose={() => setMobileActionsOpen(false)}
+        onToggleFavorite={() => {
+          onToggleFavorite();
+          setMobileActionsOpen(false);
+        }}
+        onRename={openRenameDialog}
+        onMove={openMoveDialog}
+        onDelete={openDeleteDialog}
+      />
+      <DocumentRenameDialog
+        open={renameDialogOpen}
+        displayTitle={displayTitle}
+        draftTitle={draftTitle}
+        onDraftTitleChange={setDraftTitle}
+        onClose={() => setRenameDialogOpen(false)}
+        onSubmit={commitDialogRename}
+      />
+      <DocumentMoveDialog
+        open={moveDialogOpen}
+        displayTitle={displayTitle}
+        folderId={folderId}
+        folderOptions={folderOptions}
+        onClose={() => setMoveDialogOpen(false)}
+        onMove={onMove}
+      />
+      <DeleteConfirmationDialog
+        open={deleteDialogOpen}
+        itemName={displayTitle}
+        itemType="file"
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }
