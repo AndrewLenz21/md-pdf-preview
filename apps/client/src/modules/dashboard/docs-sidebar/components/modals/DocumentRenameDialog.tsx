@@ -35,7 +35,7 @@ export function DocumentRenameDialog({
         <DialogTextField
           label="File name"
           value={draftTitle}
-          maxLength={120}
+          maxLength={500}
           onChange={onDraftTitleChange}
           autoFocus
         />

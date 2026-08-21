@@ -28,6 +28,7 @@ import {
 } from "@/modules/dashboard/preview";
 import type { EditingActions } from "@/modules/dashboard/preview/utils/editingActions";
 import type { DocumentEditorMode } from "@/modules/dashboard/types/editor.types";
+import { useMediaQuery } from "@/shared/hooks/useMediaQuery";
 import {
   PreferencesDialogHost,
   usePreferencesDialog,
@@ -62,6 +63,7 @@ export function DashboardWorkspace() {
   const [mobileSection, setMobileSection] =
     useState<MobileDashboardSection>("preview");
   const { activeDialog, openDialog, closeDialog } = usePreferencesDialog();
+  const isDesktopViewport = useMediaQuery("(min-width: 1024px)");
   const [mobileTransitionDirection, setMobileTransitionDirection] = useState<
     "forward" | "backward"
   >("forward");
@@ -334,37 +336,41 @@ export function DashboardWorkspace() {
   return (
     <div
       ref={desktopWorkspaceRef}
-      className={`dashboard-workspace min-h-screen bg-muted/30 text-foreground lg:flex ${isDesktopSplit ? "overflow-x-hidden lg:h-screen lg:overflow-hidden" : isMobileFilesSection ? "overflow-hidden lg:h-auto lg:overflow-visible" : "overflow-visible lg:h-auto"}`}
+      className={`dashboard-workspace min-h-screen bg-muted/30 text-foreground lg:flex ${isDesktopSplit ? "lg:h-screen lg:overflow-hidden" : isMobileFilesSection ? "overflow-hidden lg:h-auto lg:overflow-visible" : "overflow-visible lg:h-auto"}`}
     >
-      <aside
-        style={{ width: desktopSidebarWidth }}
-        className="hidden h-screen min-w-0 shrink-0 overflow-hidden bg-sidebar lg:sticky lg:top-0 lg:flex"
-      >
-        <DocsSidebar
-          documents={documents}
-          selectedId={selectedDocument.id}
-          onSelect={selectDocument}
-          onDelete={handleDocumentDeleted}
-          onOpenSettings={openDocsSidebarSettings}
-        />
-      </aside>
-      <div
-        role="separator"
-        aria-label="Resize sidebar"
-        aria-orientation="vertical"
-        aria-valuemin={DESKTOP_SIDEBAR_MIN_WIDTH}
-        aria-valuemax={DESKTOP_SIDEBAR_MAX_WIDTH}
-        aria-valuenow={Math.round(desktopSidebarWidth)}
-        tabIndex={0}
-        className="group relative hidden w-2 shrink-0 cursor-col-resize touch-none items-center justify-center border-r border-border/80 bg-background/30 transition-colors hover:bg-primary/10 focus-visible:bg-primary/10 lg:flex"
-        onPointerDown={startSidebarResize}
-        onKeyDown={resizeSidebarWithKeyboard}
-      >
-        <span className="pointer-events-none h-10 w-0.5 rounded-full bg-border/70 transition-colors group-hover:bg-primary group-focus-visible:bg-primary" />
-      </div>
+      {isDesktopViewport ? (
+        <>
+          <aside
+            style={{ width: desktopSidebarWidth }}
+            className="h-screen min-w-0 shrink-0 overflow-hidden bg-sidebar"
+          >
+            <DocsSidebar
+              documents={documents}
+              selectedId={selectedDocument.id}
+              onSelect={selectDocument}
+              onDelete={handleDocumentDeleted}
+              onOpenSettings={openDocsSidebarSettings}
+            />
+          </aside>
+          <div
+            role="separator"
+            aria-label="Resize sidebar"
+            aria-orientation="vertical"
+            aria-valuemin={DESKTOP_SIDEBAR_MIN_WIDTH}
+            aria-valuemax={DESKTOP_SIDEBAR_MAX_WIDTH}
+            aria-valuenow={Math.round(desktopSidebarWidth)}
+            tabIndex={0}
+            className="group relative flex w-2 shrink-0 cursor-col-resize touch-none items-center justify-center border-r border-border/80 bg-background/30 transition-colors hover:bg-primary/10 focus-visible:bg-primary/10"
+            onPointerDown={startSidebarResize}
+            onKeyDown={resizeSidebarWithKeyboard}
+          >
+            <span className="pointer-events-none h-10 w-0.5 rounded-full bg-border/70 transition-colors group-hover:bg-primary group-focus-visible:bg-primary" />
+          </div>
+        </>
+      ) : null}
 
       <main
-        className={`min-w-0 flex-1 ${isMobileFilesSection ? "h-[calc(100dvh-var(--mobile-dashboard-nav-height))] overflow-hidden pb-0 lg:h-auto lg:overflow-visible" : "pb-20"} lg:pb-0 ${isDesktopSplit ? "lg:h-screen lg:min-h-0" : "lg:h-auto lg:min-h-screen"}`}
+        className={`min-w-0 flex-1 ${isMobileFilesSection ? "h-[calc(100dvh-var(--mobile-dashboard-nav-height))] overflow-hidden pb-0 lg:h-auto lg:overflow-visible" : isPreviewMode ? "pb-0" : "pb-20"} lg:pb-0 ${isDesktopSplit ? "lg:h-screen lg:min-h-0" : "lg:h-auto lg:min-h-screen"}`}
       >
         <div
           className={`hidden ${isDesktopSplit ? "lg:flex h-full min-h-0 flex-col" : "lg:block"}`}
@@ -431,22 +437,24 @@ export function DashboardWorkspace() {
             ) : null}
           </div>
         </div>
-        <div
-          className={`relative h-full min-h-0 lg:hidden ${isPreviewMode || isMobileFilesSection ? "overflow-hidden" : ""}`}
-        >
+        {isDesktopViewport === false ? (
           <div
-            key={mobileSection}
-            className={`dashboard-mobile-section dashboard-mobile-section-${mobileTransitionDirection}`}
+            className={`relative min-h-0 lg:hidden ${isMobileFilesSection ? "h-full overflow-hidden" : ""}`}
           >
             {mobileSection === "files" ? (
-              <DocsSidebar
-                documents={documents}
-                selectedId={selectedDocument.id}
-                onSelect={selectDocument}
-                onDelete={handleDocumentDeleted}
-                onOpenSettings={openDocsSidebarSettings}
-                mobile
-              />
+              <div
+                key={mobileSection}
+                className={`dashboard-mobile-section dashboard-mobile-section-${mobileTransitionDirection}`}
+              >
+                <DocsSidebar
+                  documents={documents}
+                  selectedId={selectedDocument.id}
+                  onSelect={selectDocument}
+                  onDelete={handleDocumentDeleted}
+                  onOpenSettings={openDocsSidebarSettings}
+                  mobile
+                />
+              </div>
             ) : (
               <DocumentPreview
                 document={selectedDocument}
@@ -462,7 +470,7 @@ export function DashboardWorkspace() {
               />
             )}
           </div>
-        </div>
+        ) : null}
         {mobileSection === "preview" ? (
           <div className="lg:hidden">
             <PreviewZoomControl mode={editorMode} isMobile />

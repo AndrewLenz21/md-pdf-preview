@@ -20,7 +20,9 @@ describe("DocumentPreview page-break overlay", () => {
       callback(0);
       return 1;
     });
-    vi.spyOn(window, "cancelAnimationFrame").mockImplementation(() => undefined);
+    vi.spyOn(window, "cancelAnimationFrame").mockImplementation(
+      () => undefined,
+    );
     vi.spyOn(window, "scrollTo").mockImplementation(() => undefined);
     vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
       function (this: HTMLElement) {
@@ -39,13 +41,11 @@ describe("DocumentPreview page-break overlay", () => {
         };
       },
     );
-    vi.spyOn(HTMLElement.prototype, "getClientRects").mockReturnValue(
-      [{} as DOMRect] as unknown as DOMRectList,
-    );
+    vi.spyOn(HTMLElement.prototype, "getClientRects").mockReturnValue([
+      {} as DOMRect,
+    ] as unknown as DOMRectList);
     vi.spyOn(document, "createRange").mockReturnValue({
-      getClientRects: () => [
-        { bottom: 20, height: 20, top: 0 } as DOMRect,
-      ],
+      getClientRects: () => [{ bottom: 20, height: 20, top: 0 } as DOMRect],
       getBoundingClientRect: () => ({ bottom: 20, top: 0 }) as DOMRect,
       setEnd: () => undefined,
       setStart: () => undefined,
@@ -76,10 +76,53 @@ describe("DocumentPreview page-break overlay", () => {
       ".document-page-break-marker",
     );
 
-    expect(container.querySelector('[data-document-mode="document"]')).toBeTruthy();
+    expect(
+      container.querySelector('[data-document-mode="document"]'),
+    ).toBeTruthy();
     expect(marker).toBeTruthy();
     expect(marker?.style.top).toBe("240px");
     expect(marker?.textContent).toContain("Possible page break");
   });
 
+  it("uses the window scroll for the non-embedded preview view", () => {
+    const document = MOCK_DOCUMENTS[0];
+
+    const { container } = render(
+      <DocumentPreview
+        document={document}
+        mode="preview"
+        scrollScope="mobile"
+        showToolbar={false}
+        onModeChange={() => undefined}
+        onContentChange={() => undefined}
+      />,
+    );
+
+    const root = container.querySelector('[data-document-mode="preview"]');
+    const canvas = root?.querySelector(".document-preview-canvas");
+
+    expect(root?.className).not.toContain("overflow-hidden");
+    expect(canvas?.className).not.toContain("overflow-auto");
+  });
+
+  it("keeps the mobile toolbar outside the preview canvas", () => {
+    const document = MOCK_DOCUMENTS[0];
+
+    const { container } = render(
+      <DocumentPreview
+        document={document}
+        mode="preview"
+        scrollScope="mobile"
+        onModeChange={() => undefined}
+        onContentChange={() => undefined}
+      />,
+    );
+
+    const root = container.querySelector('[data-document-mode="preview"]');
+    const toolbar = root?.querySelector(".mobile-preview-toolbar");
+    const canvas = root?.querySelector(".document-preview-canvas");
+
+    expect(toolbar?.parentElement).toBe(root);
+    expect(canvas?.contains(toolbar ?? null)).toBe(false);
+  });
 });

@@ -22,8 +22,10 @@ import type { EditingActions } from "../utils/editingActions";
 
 function EditingActionButtons({
   editingActions,
+  visible = true,
 }: {
   editingActions?: EditingActions | null;
+  visible?: boolean;
 }) {
   const disabled = !editingActions;
   const runAsyncAction = (action: () => Promise<void>) => {
@@ -31,7 +33,10 @@ function EditingActionButtons({
   };
 
   return (
-    <div className="mobile-preview-toolbar-editing-actions mobile-preview-toolbar-select-actions flex items-center gap-1">
+    <div
+      aria-hidden={!visible}
+      className={`mobile-preview-toolbar-editing-actions mobile-preview-toolbar-select-actions flex items-center gap-1 ${visible ? "mobile-preview-toolbar-action-visible" : "mobile-preview-toolbar-action-hidden"}`}
+    >
       <button
         type="button"
         title="Select all"
@@ -39,7 +44,7 @@ function EditingActionButtons({
         disabled={disabled}
         onPointerDown={(event) => event.preventDefault()}
         onClick={() => editingActions?.selectAll()}
-        className="h-8 shrink-0 whitespace-nowrap rounded-md px-2 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40"
+        className="h-8 shrink-0 whitespace-nowrap rounded-md px-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40 lg:text-[11px]"
       >
         Select all
       </button>
@@ -56,7 +61,7 @@ function EditingActionButtons({
         }}
         className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40"
       >
-        <Copy className="h-3.5 w-3.5" strokeWidth={1.7} />
+        <Copy className="h-4 w-4 lg:h-3.5 lg:w-3.5" strokeWidth={1.7} />
       </button>
       <button
         type="button"
@@ -71,7 +76,10 @@ function EditingActionButtons({
         }}
         className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40"
       >
-        <ClipboardPaste className="h-3.5 w-3.5" strokeWidth={1.7} />
+        <ClipboardPaste
+          className="h-4 w-4 lg:h-3.5 lg:w-3.5"
+          strokeWidth={1.7}
+        />
       </button>
     </div>
   );
@@ -80,15 +88,18 @@ function EditingActionButtons({
 export function PreviewActionButtons({
   editingActions,
   hideOnDesktop = false,
+  visible = true,
 }: {
   editingActions?: EditingActions | null;
   hideOnDesktop?: boolean;
+  visible?: boolean;
 }) {
   const disabled = !editingActions;
 
   return (
     <div
-      className={`mobile-preview-toolbar-editing-actions flex items-center gap-1 ${hideOnDesktop ? "mobile-preview-toolbar-print-action" : ""}`}
+      aria-hidden={!visible}
+      className={`mobile-preview-toolbar-editing-actions flex items-center gap-1 ${hideOnDesktop ? "mobile-preview-toolbar-print-action" : ""} ${visible ? "mobile-preview-toolbar-action-visible" : "mobile-preview-toolbar-action-hidden"}`}
     >
       <button
         type="button"
@@ -96,9 +107,9 @@ export function PreviewActionButtons({
         aria-label="Print document"
         disabled={disabled}
         onClick={() => editingActions?.print()}
-        className="flex h-8 items-center gap-1.5 rounded-md px-2 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40"
+        className="flex h-8 items-center gap-1.5 rounded-md px-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40 lg:text-[11px]"
       >
-        <Printer className="h-3.5 w-3.5" strokeWidth={1.7} />
+        <Printer className="h-4 w-4 lg:h-3.5 lg:w-3.5" strokeWidth={1.7} />
         <span className="hidden sm:inline">Print</span>
       </button>
     </div>
@@ -176,7 +187,7 @@ export function PreviewToolbar({
       </div>
 
       <div
-        className="mobile-preview-toolbar-mode flex items-center gap-0.5 rounded-md border border-border/80 bg-card/80 p-0.5"
+        className="mobile-preview-toolbar-mode flex items-center gap-0.5 rounded-md border border-border/80 bg-card/80 p-0 lg:p-0.5"
         role="group"
         aria-label="View mode"
       >
@@ -225,22 +236,20 @@ export function PreviewToolbar({
         </div>
 
         {isPreviewMode ? (
-          <>
-            <span
-              className="mobile-preview-toolbar-separator hidden h-5 w-px bg-border lg:block"
-              aria-hidden="true"
-            />
-            {splitMode ? (
-              <EditingActionButtons editingActions={editingActions} />
-            ) : null}
-            <PreviewActionButtons
-              editingActions={editingActions}
-              hideOnDesktop
-            />
-          </>
-        ) : (
-          <EditingActionButtons editingActions={editingActions} />
-        )}
+          <span
+            className="mobile-preview-toolbar-separator hidden h-5 w-px bg-border lg:block"
+            aria-hidden="true"
+          />
+        ) : null}
+        <EditingActionButtons
+          editingActions={editingActions}
+          visible={!isPreviewMode || splitMode}
+        />
+        <PreviewActionButtons
+          editingActions={editingActions}
+          hideOnDesktop
+          visible={isPreviewMode}
+        />
       </div>
     </header>
   );

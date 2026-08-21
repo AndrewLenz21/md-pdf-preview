@@ -138,7 +138,7 @@ export function DocumentItem({
         <input
           autoFocus
           value={draftTitle}
-          maxLength={120}
+          maxLength={500}
           aria-label={`Rename ${displayTitle}`}
           className="min-w-0 flex-1 rounded-md border border-ring/60 bg-background px-2 py-1.5 text-sm font-medium text-foreground outline-none ring-2 ring-ring/20"
           onChange={(event) => setDraftTitle(event.target.value)}

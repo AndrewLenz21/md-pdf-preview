@@ -10,7 +10,10 @@ import {
 } from "react";
 import type { Editor } from "@tiptap/core";
 
-import { useDocumentStore, useWorkspaceStore } from "@/modules/dashboard/stores";
+import {
+  useDocumentStore,
+  useWorkspaceStore,
+} from "@/modules/dashboard/stores";
 import type { MockDocument } from "@/modules/dashboard/document/model/document.types";
 import type { DocumentEditorMode } from "@/modules/dashboard/types/editor.types";
 
@@ -108,31 +111,35 @@ function getPaperDimensions(
   }
 }
 
-function getRootClassName(mode: DocumentEditorMode, embedded: boolean) {
+function getRootClassName(mode: DocumentEditorMode, contained: boolean) {
   switch (mode) {
     case "preview":
-      return "document-preview-root document-preview-paper-root relative flex h-[calc(100dvh-5rem)] min-h-0 flex-col overflow-hidden lg:h-full";
+      return contained
+        ? "document-preview-root document-preview-paper-root relative flex h-[calc(100dvh-5rem)] min-h-0 flex-col overflow-hidden lg:h-full"
+        : "document-preview-root document-preview-paper-root relative min-h-[calc(100dvh-5rem)] overflow-visible";
     case "markdown":
-      return embedded
+      return contained
         ? "document-preview-root document-markdown-root relative flex h-full min-h-0 flex-col overflow-hidden"
         : "document-preview-root document-markdown-root relative min-h-[calc(100dvh-5rem)]";
     case "document":
-      return embedded
+      return contained
         ? "document-preview-root document-editor-root relative flex h-full min-h-0 flex-col overflow-hidden"
         : "document-preview-root document-editor-root relative min-h-[calc(100dvh-5rem)]";
   }
 }
 
-function getCanvasClassName(mode: DocumentEditorMode, embedded: boolean) {
+function getCanvasClassName(mode: DocumentEditorMode, contained: boolean) {
   switch (mode) {
     case "preview":
-      return "document-preview-canvas min-h-0 flex-1 overflow-auto bg-muted/40";
+      return contained
+        ? "document-preview-canvas min-h-0 flex-1 overflow-auto bg-muted/40"
+        : "document-preview-canvas overflow-visible bg-muted/40";
     case "markdown":
-      return embedded
+      return contained
         ? "document-preview-canvas document-continuous-canvas min-h-0 flex-1 overflow-auto"
         : "document-preview-canvas document-continuous-canvas";
     case "document":
-      return embedded
+      return contained
         ? "document-preview-canvas document-continuous-canvas relative min-h-0 flex-1 overflow-auto"
         : "document-preview-canvas document-continuous-canvas relative";
   }
@@ -268,14 +275,16 @@ export function DocumentPreview({
   const markdownEditorRef = useRef<HTMLTextAreaElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
-  const previousEmbeddedRef = useRef(embedded);
+  const usesCanvasScroll = embedded || disableScrollSync;
+  const usesFixedMobileToolbar =
+    showToolbar && mode === "preview" && !usesCanvasScroll;
+  const previousCanvasScrollRef = useRef(usesCanvasScroll);
   const modeRef = useRef(mode);
   const markdownRef = useRef(markdown);
   const onContentChangeRef = useRef(onContentChange);
-  const [editingActions, setEditingActions] =
-    useState<EditingActions | null>(null);
-  const usesCanvasScroll = mode === "preview" || embedded;
-
+  const [editingActions, setEditingActions] = useState<EditingActions | null>(
+    null,
+  );
   const handleContentChange = (nextMarkdown: string) => {
     onContentChange(nextMarkdown);
   };
@@ -308,12 +317,12 @@ export function DocumentPreview({
 
     const key = `${scrollScope}:${document.id}:${mode}`;
     const canvas = canvasRef.current;
-    const previousEmbedded = previousEmbeddedRef.current;
-    previousEmbeddedRef.current = embedded;
+    const previousUsesCanvasScroll = previousCanvasScrollRef.current;
+    previousCanvasScrollRef.current = usesCanvasScroll;
     let firstFrame: number | null = null;
     let secondFrame: number | null = null;
 
-    if (previousEmbedded && !embedded) {
+    if (previousUsesCanvasScroll && !usesCanvasScroll) {
       const scrollTop = canvas?.scrollTop ?? window.scrollY;
 
       window.scrollTo({ top: scrollTop, behavior: "auto" });
@@ -321,7 +330,7 @@ export function DocumentPreview({
         windowTop: scrollTop,
         canvasTop: scrollTop,
       });
-    } else if (!previousEmbedded && embedded && canvas) {
+    } else if (!previousUsesCanvasScroll && usesCanvasScroll && canvas) {
       const scrollTop = window.scrollY;
 
       canvas.scrollTop = scrollTop;
@@ -345,7 +354,6 @@ export function DocumentPreview({
       } else {
         window.scrollTo({ top: savedPosition.windowTop, behavior: "auto" });
       }
-
     };
 
     const save = () => {
@@ -405,11 +413,19 @@ export function DocumentPreview({
   return (
     <div
       ref={previewRootRef}
-      className={getRootClassName(mode, embedded)}
+      className={`${getRootClassName(mode, usesCanvasScroll)} ${usesFixedMobileToolbar ? "document-preview-mobile-toolbar-fixed" : ""}`}
       data-document-mode={mode}
       style={getRootStyle(mode, paperDimensions)}
     >
       <style media="print">{getPrintPageRule(mode, paperDimensions)}</style>
+      {showToolbar ? (
+        <PreviewToolbar
+          document={document}
+          mode={mode}
+          onModeChange={onModeChange}
+          editingActions={editingActions}
+        />
+      ) : null}
       <div
         ref={(element) => {
           canvasRef.current = element;
@@ -418,16 +434,8 @@ export function DocumentPreview({
             scrollContainerRef.current = element;
           }
         }}
-        className={getCanvasClassName(mode, embedded)}
+        className={getCanvasClassName(mode, usesCanvasScroll)}
       >
-        {showToolbar ? (
-          <PreviewToolbar
-            document={document}
-            mode={mode}
-            onModeChange={onModeChange}
-            editingActions={editingActions}
-          />
-        ) : null}
         {mode === "document" && pageBreakMarkers ? (
           <DocumentPageBreakOverlay positions={pageBreakMarkers} />
         ) : null}

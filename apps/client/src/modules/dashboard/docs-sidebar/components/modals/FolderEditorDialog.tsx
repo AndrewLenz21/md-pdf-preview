@@ -45,7 +45,7 @@ export function FolderEditorDialog({
         <DialogTextField
           label="Folder name"
           value={name}
-          maxLength={80}
+          maxLength={200}
           onChange={onNameChange}
           placeholder="New folder"
           autoFocus

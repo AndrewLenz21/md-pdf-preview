@@ -35,7 +35,7 @@ export function MarkdownNameDialog({
         <DialogTextField
           label="File name"
           value={name}
-          maxLength={120}
+          maxLength={500}
           onChange={onNameChange}
           placeholder="Untitled"
           autoFocus

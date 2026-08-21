@@ -11,8 +11,6 @@ import type {
   DocumentFolderColor,
 } from "@/modules/dashboard/document/model/document.types";
 
-export const MAX_FOLDER_DEPTH = 20;
-
 const CLOUD_ROOT_FOLDER_ID = "cloud-folder-root";
 const CLOUD_ROOT_FOLDER: DocumentFolder = {
   id: CLOUD_ROOT_FOLDER_ID,
@@ -75,32 +73,6 @@ function getDocuments(
   return source === "local" ? state.localDocuments : state.cloudDocuments;
 }
 
-function getFolderDepth(
-  folders: DocumentFolder[],
-  folderId: string | null,
-): number {
-  if (!folderId) {
-    return 0;
-  }
-
-  const folderById = new Map(folders.map((folder) => [folder.id, folder]));
-  let depth = 0;
-  let currentId: string | null = folderId;
-
-  while (currentId) {
-    const folder = folderById.get(currentId);
-
-    if (!folder) {
-      return MAX_FOLDER_DEPTH + 1;
-    }
-
-    depth += 1;
-    currentId = folder.parentId;
-  }
-
-  return depth;
-}
-
 function createFolderId(source: DocumentSource) {
   return `${source}-folder-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -161,11 +133,7 @@ export const useDocumentOrganizationStore =
 
       const folders = getFolders(get(), source);
 
-      if (
-        parentId &&
-        (!folders.some((folder) => folder.id === parentId) ||
-          getFolderDepth(folders, parentId) >= MAX_FOLDER_DEPTH)
-      ) {
+      if (parentId && !folders.some((folder) => folder.id === parentId)) {
         return null;
       }
 
@@ -293,11 +261,7 @@ export const useDocumentOrganizationStore =
     moveDocument: (source, documentId, folderId) => {
       const folders = getFolders(get(), source);
 
-      if (
-        folderId &&
-        (!folders.some((folder) => folder.id === folderId) ||
-          getFolderDepth(folders, folderId) > MAX_FOLDER_DEPTH)
-      ) {
+      if (folderId && !folders.some((folder) => folder.id === folderId)) {
         return;
       }
 
@@ -380,10 +344,3 @@ export const useDocumentOrganizationStore =
       );
     },
   }));
-
-export function getFolderDepthForDisplay(
-  folders: DocumentFolder[],
-  folderId: string | null,
-) {
-  return getFolderDepth(folders, folderId);
-}

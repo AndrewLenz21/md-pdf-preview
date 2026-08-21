@@ -85,7 +85,7 @@ export function PaperSizeSelect() {
         aria-controls={menuId}
         aria-expanded={open}
         aria-haspopup="listbox"
-        className="flex h-10 min-w-20 items-center justify-between gap-3 rounded-md border border-border/80 bg-card/80 px-3 text-sm font-semibold text-foreground transition-[border-color,background-color,outline-color] duration-200 ease-out hover:border-primary/35 hover:bg-card focus-visible:border-primary/70 focus-visible:bg-background focus-visible:outline focus-visible:outline-1 focus-visible:outline-primary/30 focus-visible:outline-offset-1 focus-visible:shadow-none"
+        className="paper-size-trigger flex h-10 min-w-20 items-center justify-between gap-3 rounded-md border border-border/80 bg-card/80 px-3 text-sm font-semibold text-foreground transition-[border-color,background-color,outline-color] duration-200 ease-out hover:border-primary/35 hover:bg-card focus-visible:border-primary/70 focus-visible:bg-background focus-visible:outline focus-visible:outline-1 focus-visible:outline-primary/30 focus-visible:outline-offset-1 focus-visible:shadow-none"
       >
         <span>{selectedOption.label}</span>
         <ChevronDown
