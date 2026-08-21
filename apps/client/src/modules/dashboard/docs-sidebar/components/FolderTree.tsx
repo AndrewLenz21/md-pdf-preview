@@ -34,7 +34,7 @@ function getDocumentsInFolder(
   folderId: string | null,
 ) {
   return documents.filter(
-    (document) => (organization[document.id]?.folderId ?? null) === folderId,
+    (document) => (organization[document.id]?.parentId ?? null) === folderId,
   );
 }
 

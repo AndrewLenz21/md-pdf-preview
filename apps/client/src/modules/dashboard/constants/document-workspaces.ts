@@ -19,13 +19,13 @@ const LOCAL_RESEARCH_NOTES_FOLDER_ID = "local-folder-research-notes";
 const LOCAL_PLANNING_FOLDER_ID = "local-folder-planning";
 const LOCAL_NOTES_FOLDER_ID = "local-folder-notes";
 
-const LOCAL_ROOT_PATH = `/${LOCAL_ROOT_FOLDER_ID}`;
-const LOCAL_RECENT_PATH = `${LOCAL_ROOT_PATH}/${LOCAL_RECENT_FOLDER_ID}`;
-const LOCAL_DOCUMENTS_PATH = `${LOCAL_ROOT_PATH}/${LOCAL_DOCUMENTS_FOLDER_ID}`;
-const LOCAL_WORKING_SET_PATH = `${LOCAL_RECENT_PATH}/${LOCAL_WORKING_SET_FOLDER_ID}`;
-const LOCAL_RESEARCH_NOTES_PATH = `${LOCAL_RECENT_PATH}/${LOCAL_RESEARCH_NOTES_FOLDER_ID}`;
-const LOCAL_PLANNING_PATH = `${LOCAL_DOCUMENTS_PATH}/${LOCAL_PLANNING_FOLDER_ID}`;
-const LOCAL_NOTES_PATH = `${LOCAL_DOCUMENTS_PATH}/${LOCAL_NOTES_FOLDER_ID}`;
+const LOCAL_ROOT_ROUTE = `/${LOCAL_ROOT_FOLDER_ID}`;
+const LOCAL_RECENT_ROUTE = `${LOCAL_ROOT_ROUTE}/${LOCAL_RECENT_FOLDER_ID}`;
+const LOCAL_DOCUMENTS_ROUTE = `${LOCAL_ROOT_ROUTE}/${LOCAL_DOCUMENTS_FOLDER_ID}`;
+const LOCAL_WORKING_SET_ROUTE = `${LOCAL_RECENT_ROUTE}/${LOCAL_WORKING_SET_FOLDER_ID}`;
+const LOCAL_RESEARCH_NOTES_ROUTE = `${LOCAL_RECENT_ROUTE}/${LOCAL_RESEARCH_NOTES_FOLDER_ID}`;
+const LOCAL_PLANNING_ROUTE = `${LOCAL_DOCUMENTS_ROUTE}/${LOCAL_PLANNING_FOLDER_ID}`;
+const LOCAL_NOTES_ROUTE = `${LOCAL_DOCUMENTS_ROUTE}/${LOCAL_NOTES_FOLDER_ID}`;
 
 export const LOCAL_WORKSPACE_DATA: DocumentWorkspaceData = {
   documents: MOCK_DOCUMENTS,
@@ -34,84 +34,84 @@ export const LOCAL_WORKSPACE_DATA: DocumentWorkspaceData = {
       id: LOCAL_ROOT_FOLDER_ID,
       name: "Workspace",
       parentId: null,
-      path: LOCAL_ROOT_PATH,
+      route: LOCAL_ROOT_ROUTE,
       color: "primary",
     },
     {
       id: LOCAL_RECENT_FOLDER_ID,
       name: "Recents",
       parentId: LOCAL_ROOT_FOLDER_ID,
-      path: LOCAL_RECENT_PATH,
+      route: LOCAL_RECENT_ROUTE,
       color: "blue",
     },
     {
       id: LOCAL_DOCUMENTS_FOLDER_ID,
       name: "Documents",
       parentId: LOCAL_ROOT_FOLDER_ID,
-      path: LOCAL_DOCUMENTS_PATH,
+      route: LOCAL_DOCUMENTS_ROUTE,
       color: "violet",
     },
     {
       id: LOCAL_WORKING_SET_FOLDER_ID,
       name: "Working set",
       parentId: LOCAL_RECENT_FOLDER_ID,
-      path: LOCAL_WORKING_SET_PATH,
+      route: LOCAL_WORKING_SET_ROUTE,
       color: "blue",
     },
     {
       id: LOCAL_RESEARCH_NOTES_FOLDER_ID,
       name: "Research notes",
       parentId: LOCAL_RECENT_FOLDER_ID,
-      path: LOCAL_RESEARCH_NOTES_PATH,
+      route: LOCAL_RESEARCH_NOTES_ROUTE,
       color: "emerald",
     },
     {
       id: LOCAL_PLANNING_FOLDER_ID,
       name: "Planning",
       parentId: LOCAL_DOCUMENTS_FOLDER_ID,
-      path: LOCAL_PLANNING_PATH,
+      route: LOCAL_PLANNING_ROUTE,
       color: "amber",
     },
     {
       id: LOCAL_NOTES_FOLDER_ID,
       name: "Notes",
       parentId: LOCAL_DOCUMENTS_FOLDER_ID,
-      path: LOCAL_NOTES_PATH,
+      route: LOCAL_NOTES_ROUTE,
       color: "rose",
     },
   ],
   organization: {
     "project-research": {
-      folderId: LOCAL_WORKING_SET_FOLDER_ID,
-      path: `${LOCAL_WORKING_SET_PATH}/project-research`,
+      parentId: LOCAL_WORKING_SET_FOLDER_ID,
+      route: `${LOCAL_WORKING_SET_ROUTE}/project-research`,
     },
     "product-proposal": {
-      folderId: LOCAL_WORKING_SET_FOLDER_ID,
-      path: `${LOCAL_WORKING_SET_PATH}/product-proposal`,
+      parentId: LOCAL_WORKING_SET_FOLDER_ID,
+      route: `${LOCAL_WORKING_SET_ROUTE}/product-proposal`,
     },
     "cash-basis-tax-view": {
-      folderId: LOCAL_WORKING_SET_FOLDER_ID,
-      path: `${LOCAL_WORKING_SET_PATH}/cash-basis-tax-view`,
+      parentId: LOCAL_WORKING_SET_FOLDER_ID,
+      route: `${LOCAL_WORKING_SET_ROUTE}/cash-basis-tax-view`,
     },
     "research-notes": {
-      folderId: LOCAL_RESEARCH_NOTES_FOLDER_ID,
-      path: `${LOCAL_RESEARCH_NOTES_PATH}/research-notes`,
+      parentId: LOCAL_RESEARCH_NOTES_FOLDER_ID,
+      route: `${LOCAL_RESEARCH_NOTES_ROUTE}/research-notes`,
     },
     "meeting-notes": {
-      folderId: LOCAL_NOTES_FOLDER_ID,
-      path: `${LOCAL_NOTES_PATH}/meeting-notes`,
+      parentId: LOCAL_NOTES_FOLDER_ID,
+      route: `${LOCAL_NOTES_ROUTE}/meeting-notes`,
     },
     architecture: {
-      folderId: LOCAL_PLANNING_FOLDER_ID,
-      path: `${LOCAL_PLANNING_PATH}/architecture`,
+      parentId: LOCAL_PLANNING_FOLDER_ID,
+      route: `${LOCAL_PLANNING_ROUTE}/architecture`,
     },
     roadmap: {
-      folderId: LOCAL_PLANNING_FOLDER_ID,
-      path: `${LOCAL_PLANNING_PATH}/roadmap`,
+      parentId: LOCAL_PLANNING_FOLDER_ID,
+      route: `${LOCAL_PLANNING_ROUTE}/roadmap`,
     },
     ideas: {
-      folderId: LOCAL_NOTES_FOLDER_ID,
-      path: `${LOCAL_NOTES_PATH}/ideas`,
+      parentId: LOCAL_NOTES_FOLDER_ID,
+      route: `${LOCAL_NOTES_ROUTE}/ideas`,
     },
   },
 };

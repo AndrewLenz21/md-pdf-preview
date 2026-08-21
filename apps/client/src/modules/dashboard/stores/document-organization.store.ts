@@ -16,7 +16,7 @@ const CLOUD_ROOT_FOLDER: DocumentFolder = {
   id: CLOUD_ROOT_FOLDER_ID,
   name: "Cloud",
   parentId: null,
-  path: `/${CLOUD_ROOT_FOLDER_ID}`,
+  route: `/${CLOUD_ROOT_FOLDER_ID}`,
   color: "primary",
 };
 
@@ -77,22 +77,22 @@ function createFolderId(source: DocumentSource) {
   return `${source}-folder-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-function getFolderPath(folders: DocumentFolder[], folderId: string | null) {
+function getFolderRoute(folders: DocumentFolder[], folderId: string | null) {
   if (!folderId) {
     return "";
   }
 
   return (
-    folders.find((folder) => folder.id === folderId)?.path ?? `/${folderId}`
+    folders.find((folder) => folder.id === folderId)?.route ?? `/${folderId}`
   );
 }
 
-function getDocumentPath(
+function getDocumentRoute(
   folders: DocumentFolder[],
   documentId: string,
   folderId: string | null,
 ) {
-  return `${getFolderPath(folders, folderId)}/${documentId}`;
+  return `${getFolderRoute(folders, folderId)}/${documentId}`;
 }
 
 export const useDocumentOrganizationStore =
@@ -142,7 +142,7 @@ export const useDocumentOrganizationStore =
         id,
         name,
         parentId,
-        path: `${getFolderPath(folders, parentId)}/${id}`,
+        route: `${getFolderRoute(folders, parentId)}/${id}`,
         color,
       };
 
@@ -195,7 +195,7 @@ export const useDocumentOrganizationStore =
       const documents = getDocuments(get(), source);
       const nextDocuments = Object.fromEntries(
         Object.entries(documents).map(([documentId, organization]) =>
-          organization.folderId && folderIdsToDelete.has(organization.folderId)
+          organization.parentId && folderIdsToDelete.has(organization.parentId)
             ? [documentId, { ...organization, deleted: true }]
             : [documentId, organization],
         ),
@@ -237,8 +237,8 @@ export const useDocumentOrganizationStore =
 
       const documents = getDocuments(get(), source);
       const current = documents[documentId] ?? {
-        folderId: null,
-        path: getDocumentPath(getFolders(get(), source), documentId, null),
+        parentId: null,
+        route: getDocumentRoute(getFolders(get(), source), documentId, null),
       };
 
       set(
@@ -267,8 +267,8 @@ export const useDocumentOrganizationStore =
 
       const documents = getDocuments(get(), source);
       const current = documents[documentId] ?? {
-        folderId: null,
-        path: getDocumentPath(folders, documentId, null),
+        parentId: null,
+        route: getDocumentRoute(folders, documentId, null),
       };
 
       set(
@@ -278,8 +278,8 @@ export const useDocumentOrganizationStore =
                 ...documents,
                 [documentId]: {
                   ...current,
-                  folderId,
-                  path: getDocumentPath(folders, documentId, folderId),
+                  parentId: folderId,
+                  route: getDocumentRoute(folders, documentId, folderId),
                 },
               },
             }
@@ -288,8 +288,8 @@ export const useDocumentOrganizationStore =
                 ...documents,
                 [documentId]: {
                   ...current,
-                  folderId,
-                  path: getDocumentPath(folders, documentId, folderId),
+                  parentId: folderId,
+                  route: getDocumentRoute(folders, documentId, folderId),
                 },
               },
             },
@@ -299,8 +299,8 @@ export const useDocumentOrganizationStore =
     toggleFavorite: (source, documentId) => {
       const documents = getDocuments(get(), source);
       const current = documents[documentId] ?? {
-        folderId: null,
-        path: getDocumentPath(getFolders(get(), source), documentId, null),
+        parentId: null,
+        route: getDocumentRoute(getFolders(get(), source), documentId, null),
       };
 
       set(
@@ -323,8 +323,8 @@ export const useDocumentOrganizationStore =
     deleteDocument: (source, documentId) => {
       const documents = getDocuments(get(), source);
       const current = documents[documentId] ?? {
-        folderId: null,
-        path: getDocumentPath(getFolders(get(), source), documentId, null),
+        parentId: null,
+        route: getDocumentRoute(getFolders(get(), source), documentId, null),
       };
 
       set(
