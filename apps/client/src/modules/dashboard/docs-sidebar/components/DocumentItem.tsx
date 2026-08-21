@@ -1,4 +1,9 @@
-import { useRef, useState } from "react";
+import {
+  useRef,
+  useState,
+  type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import {
   ChevronLeft,
   FileText,
@@ -39,6 +44,9 @@ export function DocumentItem({
   folderOptions,
   depth = 0,
   mobile = false,
+  dragging = false,
+  onDragPointerDown,
+  onDragClickCapture,
 }: {
   displayTitle: string;
   favorite: boolean;
@@ -52,6 +60,9 @@ export function DocumentItem({
   folderOptions: DocumentFolderOption[];
   depth?: number;
   mobile?: boolean;
+  dragging?: boolean;
+  onDragPointerDown?: (event: ReactPointerEvent<HTMLDivElement>) => void;
+  onDragClickCapture?: (event: ReactMouseEvent<HTMLDivElement>) => void;
 }) {
   const itemRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -129,10 +140,14 @@ export function DocumentItem({
   return (
     <div
       ref={itemRef}
+      data-dnd-dragging={dragging ? "true" : undefined}
+      data-dnd-item="document"
       className={`group/document relative flex min-w-0 items-center rounded-lg border-l-2 transition-colors ${selected ? "border-primary bg-accent text-accent-foreground shadow-sm" : "border-transparent text-muted-foreground hover:bg-accent/60 hover:text-foreground"}`}
       style={{
         paddingLeft: depth === 0 ? "8px" : `${7 + (depth - 1) * TREE_INDENT}px`,
       }}
+      onPointerDown={onDragPointerDown}
+      onClickCapture={onDragClickCapture}
     >
       {renaming ? (
         <input
@@ -168,7 +183,7 @@ export function DocumentItem({
           />
           <span className="flex min-w-0 flex-1 items-center gap-2">
             <span
-              className={`min-w-0 flex-1 truncate text-sm ${selected ? "font-medium" : "font-normal"}`}
+              className={`docs-sidebar-dnd-label min-w-0 flex-1 truncate text-sm ${selected ? "font-medium" : "font-normal"}`}
             >
               {displayTitle}
             </span>
@@ -178,6 +193,7 @@ export function DocumentItem({
 
       <button
         type="button"
+        data-dnd-ignore="true"
         aria-label={`More options for ${displayTitle}`}
         aria-expanded={mobile ? mobileActionsOpen : menuOpen}
         aria-haspopup={mobile ? "dialog" : "menu"}

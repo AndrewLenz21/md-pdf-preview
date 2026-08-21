@@ -1,6 +1,6 @@
 "use client";
 
-import { FilePlus2, LibraryBig } from "lucide-react";
+import { FilePlus2, FileText, Folder, LibraryBig } from "lucide-react";
 import { useLocale } from "next-intl";
 import { useState } from "react";
 
@@ -21,6 +21,12 @@ import { AuthActions } from "@/modules/navigation/components/AuthActions";
 
 import { DocumentSourceToggle } from "./DocumentSourceToggle";
 import { FolderTree } from "./FolderTree";
+import {
+  useLongPressDrag,
+  type LongPressDragItem,
+  type LongPressDragPosition,
+  type LongPressDragPreviewPhase,
+} from "./longPressDrag";
 import {
   DeleteFolderDialog,
   FolderActionsDialog,
@@ -53,6 +59,38 @@ type DeleteFolderDialogState = {
   source: DocumentSource;
   folder: DocumentFolder;
 };
+
+function DragPreview({
+  item,
+  label,
+  position,
+  phase,
+}: {
+  item: LongPressDragItem;
+  label: string;
+  position: LongPressDragPosition;
+  phase: LongPressDragPreviewPhase;
+}) {
+  const Icon = item.kind === "folder" ? Folder : FileText;
+
+  return (
+    <div
+      aria-hidden="true"
+      className="docs-sidebar-dnd-preview-anchor pointer-events-none fixed z-[100] w-max max-w-60"
+      style={{
+        left: `${position.x}px`,
+        top: `${position.y}px`,
+      }}
+    >
+      <div
+        className={`docs-sidebar-dnd-preview docs-sidebar-dnd-preview-${phase} flex max-w-60 items-center gap-2 rounded-lg border border-primary/30 bg-background/85 px-3 py-2 text-sm text-foreground shadow-lg backdrop-blur-sm`}
+      >
+        <Icon className="h-4 w-4 shrink-0 text-primary" strokeWidth={1.7} />
+        <span className="min-w-0 truncate">{label}</span>
+      </div>
+    </div>
+  );
+}
 
 export function DocsSidebar({
   documents,
@@ -123,6 +161,7 @@ export function DocsSidebar({
   const moveDocument = useDocumentOrganizationStore(
     (state) => state.moveDocument,
   );
+  const moveFolder = useDocumentOrganizationStore((state) => state.moveFolder);
   const toggleFavorite = useDocumentOrganizationStore(
     (state) => state.toggleFavorite,
   );
@@ -159,6 +198,33 @@ export function DocsSidebar({
       : cloudCollapsedFolderIds;
   const sourceOrganization =
     activeSource === "local" ? localOrganization : cloudOrganization;
+  const rootFolderId = sourceFolders.find(
+    (folder) => folder.parentId === null,
+  )?.id;
+  const {
+    draggingItem,
+    dragPosition,
+    dragPreviewItem,
+    dragPreviewPhase,
+    dropTargetFolderId,
+    startLongPress,
+    suppressClick,
+  } = useLongPressDrag({
+    onDrop: (item, targetFolderId) => {
+      const destinationFolderId = targetFolderId ?? rootFolderId;
+
+      if (!destinationFolderId) {
+        return;
+      }
+
+      if (item.kind === "folder") {
+        moveFolder(activeSource, item.id, destinationFolderId);
+        return;
+      }
+
+      moveDocument(activeSource, item.id, destinationFolderId);
+    },
+  });
 
   const handleDelete = (id: string) => {
     if (
@@ -175,10 +241,6 @@ export function DocsSidebar({
       onDelete?.(id);
     }
   };
-
-  const rootFolderId = sourceFolders.find(
-    (folder) => folder.parentId === null,
-  )?.id;
 
   const handleCreateDocument = (
     folderId: string,
@@ -426,8 +488,34 @@ export function DocsSidebar({
           cloudUnauthenticated={isCloudUnauthenticated}
           mobile={mobile}
           onOpenFolderActions={handleOpenFolderActions}
+          draggingItem={draggingItem}
+          dropTargetFolderId={dropTargetFolderId}
+          onDragPointerDown={startLongPress}
+          onDragClickCapture={suppressClick}
         />
       </div>
+      {dragPreviewItem && dragPosition && dragPreviewPhase ? (
+        <DragPreview
+          item={dragPreviewItem}
+          label={
+            dragPreviewItem.kind === "folder"
+              ? (sourceFolders.find(
+                  (folder) => folder.id === dragPreviewItem.id,
+                )?.name ?? "Folder")
+              : (() => {
+                  const document = sourceDocuments.find(
+                    (item) => item.id === dragPreviewItem.id,
+                  );
+                  return document
+                    ? (sourceOrganization[document.id]?.displayTitle ??
+                        document.title)
+                    : "Document";
+                })()
+          }
+          position={dragPosition}
+          phase={dragPreviewPhase}
+        />
+      ) : null}
 
       <div className="shrink-0 border-t border-border/80 p-3">
         <AuthActions

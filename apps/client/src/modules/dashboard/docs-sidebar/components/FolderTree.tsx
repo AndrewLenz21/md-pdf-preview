@@ -1,4 +1,10 @@
-import { useRef, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import {
   ChevronRight,
   Cloud,
@@ -21,6 +27,7 @@ import type {
 
 import { DocumentItem, type DocumentFolderOption } from "./DocumentItem";
 import { FOLDER_ICON_COLOR_CLASSES } from "./folderColors";
+import type { LongPressDragItem } from "./longPressDrag";
 
 const TREE_INDENT = 22;
 
@@ -93,6 +100,43 @@ function EmptyWorkspaceState({
   );
 }
 
+function FolderDropLabel({
+  isDropTarget,
+  folderName,
+  count,
+  className,
+}: {
+  isDropTarget: boolean;
+  folderName: string;
+  count: number;
+  className: string;
+}) {
+  const label = isDropTarget ? `Move to ${folderName}` : String(count);
+  const [visibleLabel, setVisibleLabel] = useState(label);
+  const [phase, setPhase] = useState<"visible" | "enter">("visible");
+
+  useEffect(() => {
+    if (label === visibleLabel) {
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      setVisibleLabel(label);
+      setPhase("enter");
+    }, 80);
+
+    return () => clearTimeout(timeoutId);
+  }, [label, visibleLabel]);
+
+  return (
+    <span
+      className={`docs-sidebar-dnd-drop-label ${label === visibleLabel ? phase : "exit"} ${className}`}
+    >
+      {visibleLabel}
+    </span>
+  );
+}
+
 export function FolderTree({
   documents,
   folders,
@@ -111,6 +155,10 @@ export function FolderTree({
   cloudUnauthenticated,
   mobile,
   onOpenFolderActions,
+  draggingItem,
+  dropTargetFolderId,
+  onDragPointerDown,
+  onDragClickCapture,
 }: {
   documents: MockDocument[];
   folders: DocumentFolder[];
@@ -129,6 +177,13 @@ export function FolderTree({
   cloudUnauthenticated: boolean;
   mobile: boolean;
   onOpenFolderActions: (folder: DocumentFolder) => void;
+  draggingItem: LongPressDragItem | null;
+  dropTargetFolderId: string | null;
+  onDragPointerDown: (
+    item: LongPressDragItem,
+    event: ReactPointerEvent<HTMLDivElement>,
+  ) => void;
+  onDragClickCapture: (event: ReactMouseEvent<HTMLDivElement>) => void;
 }) {
   const rootFolders = getChildFolders(folders, null);
   const folderOptions: DocumentFolderOption[] = rootFolders.flatMap(
@@ -150,7 +205,7 @@ export function FolderTree({
   }
 
   return (
-    <div className="space-y-0.5">
+    <div className="space-y-0.5" data-dnd-root-drop="true">
       {rootDocuments.map((document) => (
         <DocumentItem
           key={document.id}
@@ -167,6 +222,13 @@ export function FolderTree({
           folderId={null}
           folderOptions={folderOptions}
           mobile={mobile}
+          dragging={
+            draggingItem?.kind === "document" && draggingItem.id === document.id
+          }
+          onDragPointerDown={(event) =>
+            onDragPointerDown({ kind: "document", id: document.id }, event)
+          }
+          onDragClickCapture={onDragClickCapture}
         />
       ))}
       {rootFolders.map((folder) => (
@@ -192,6 +254,10 @@ export function FolderTree({
           cloudUnauthenticated={cloudUnauthenticated}
           mobile={mobile}
           onOpenFolderActions={onOpenFolderActions}
+          draggingItem={draggingItem}
+          dropTargetFolderId={dropTargetFolderId}
+          onDragPointerDown={onDragPointerDown}
+          onDragClickCapture={onDragClickCapture}
         />
       ))}
     </div>
@@ -219,6 +285,10 @@ function FolderNode({
   cloudUnauthenticated,
   mobile,
   onOpenFolderActions,
+  draggingItem,
+  dropTargetFolderId,
+  onDragPointerDown,
+  onDragClickCapture,
 }: {
   folder: DocumentFolder;
   depth: number;
@@ -240,6 +310,13 @@ function FolderNode({
   cloudUnauthenticated: boolean;
   mobile: boolean;
   onOpenFolderActions: (folder: DocumentFolder) => void;
+  draggingItem: LongPressDragItem | null;
+  dropTargetFolderId: string | null;
+  onDragPointerDown: (
+    item: LongPressDragItem,
+    event: ReactPointerEvent<HTMLDivElement>,
+  ) => void;
+  onDragClickCapture: (event: ReactMouseEvent<HTMLDivElement>) => void;
 }) {
   const folderItemRef = useRef<HTMLDivElement>(null);
   const [folderMenuOpen, setFolderMenuOpen] = useState(false);
@@ -261,14 +338,28 @@ function FolderNode({
   return (
     <div
       ref={folderItemRef}
+      data-dnd-folder-id={folder.id}
+      data-dnd-dragging={
+        draggingItem?.kind === "folder" && draggingItem.id === folder.id
+          ? "true"
+          : undefined
+      }
       className={`relative ${depth === 0 ? "mt-4 first:mt-0" : ""}`}
+      onClickCapture={onDragClickCapture}
     >
       <div
+        data-dnd-item="folder"
+        data-dnd-drop-target={
+          dropTargetFolderId === folder.id ? "true" : undefined
+        }
         className="group/folder flex w-full items-center"
         style={
           depth === 0
             ? undefined
             : { paddingLeft: `${(depth - 1) * TREE_INDENT}px` }
+        }
+        onPointerDown={(event) =>
+          onDragPointerDown({ kind: "folder", id: folder.id }, event)
         }
       >
         <button
@@ -298,15 +389,18 @@ function FolderNode({
             />
           </span>
           <span
-            className={`min-w-0 flex-1 truncate text-sm ${depth === 0 ? "font-semibold" : "font-medium"}`}
+            className={`docs-sidebar-dnd-label min-w-0 flex-1 truncate text-sm ${depth === 0 ? "font-semibold" : "font-medium"}`}
           >
             {folder.name}
           </span>
-          <span
+          <FolderDropLabel
+            isDropTarget={
+              dropTargetFolderId === folder.id && draggingItem !== null
+            }
+            folderName={folder.name}
+            count={childDocuments.length || childFolders.length}
             className={`text-[11px] tabular-nums ${depth === 0 ? "text-muted-foreground" : "text-muted-foreground/70"}`}
-          >
-            {childDocuments.length || childFolders.length}
-          </span>
+          />
         </button>
         {!cloudUnauthenticated ? (
           <button
@@ -318,6 +412,7 @@ function FolderNode({
             }
             aria-expanded={mobile ? undefined : folderMenuOpen}
             aria-haspopup={mobile ? "dialog" : "menu"}
+            data-dnd-ignore="true"
             className="mr-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground opacity-70 transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:opacity-0 sm:group-hover/folder:opacity-100 sm:group-focus-within/folder:opacity-100"
             onClick={() => {
               if (mobile) {
@@ -408,6 +503,17 @@ function FolderNode({
                 folderOptions={folderOptions}
                 depth={depth + 1}
                 mobile={mobile}
+                dragging={
+                  draggingItem?.kind === "document" &&
+                  draggingItem.id === document.id
+                }
+                onDragPointerDown={(event) =>
+                  onDragPointerDown(
+                    { kind: "document", id: document.id },
+                    event,
+                  )
+                }
+                onDragClickCapture={onDragClickCapture}
               />
             ))}
             {childFolders.map((childFolder) => (
@@ -433,6 +539,10 @@ function FolderNode({
                 cloudUnauthenticated={cloudUnauthenticated}
                 mobile={mobile}
                 onOpenFolderActions={onOpenFolderActions}
+                draggingItem={draggingItem}
+                dropTargetFolderId={dropTargetFolderId}
+                onDragPointerDown={onDragPointerDown}
+                onDragClickCapture={onDragClickCapture}
               />
             ))}
           </div>

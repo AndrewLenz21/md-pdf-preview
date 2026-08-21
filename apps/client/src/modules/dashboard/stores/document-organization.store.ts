@@ -55,6 +55,11 @@ type DocumentOrganizationStoreState = {
     documentId: string,
     folderId: string | null,
   ) => void;
+  moveFolder: (
+    source: DocumentSource,
+    folderId: string,
+    parentId: string | null,
+  ) => boolean;
   toggleFavorite: (source: DocumentSource, documentId: string) => void;
   deleteDocument: (source: DocumentSource, documentId: string) => void;
 };
@@ -93,6 +98,45 @@ function getDocumentRoute(
   folderId: string | null,
 ) {
   return `${getFolderRoute(folders, folderId)}/${documentId}`;
+}
+
+function getDescendantFolderIds(folders: DocumentFolder[], folderId: string) {
+  const descendantIds = new Set<string>();
+  const collect = (currentId: string) => {
+    descendantIds.add(currentId);
+    folders
+      .filter((folder) => folder.parentId === currentId)
+      .forEach((folder) => collect(folder.id));
+  };
+
+  collect(folderId);
+  return descendantIds;
+}
+
+function getFolderRoutes(folders: DocumentFolder[]) {
+  const folderById = new Map(folders.map((folder) => [folder.id, folder]));
+  const routes = new Map<string, string>();
+
+  const resolveRoute = (folderId: string): string => {
+    const cachedRoute = routes.get(folderId);
+    if (cachedRoute) {
+      return cachedRoute;
+    }
+
+    const folder = folderById.get(folderId);
+    if (!folder) {
+      return `/${folderId}`;
+    }
+
+    const route = folder.parentId
+      ? `${resolveRoute(folder.parentId)}/${folder.id}`
+      : `/${folder.id}`;
+    routes.set(folderId, route);
+    return route;
+  };
+
+  folders.forEach((folder) => resolveRoute(folder.id));
+  return routes;
 }
 
 export const useDocumentOrganizationStore =
@@ -182,15 +226,7 @@ export const useDocumentOrganizationStore =
         return false;
       }
 
-      const folderIdsToDelete = new Set<string>();
-      const collectFolderIds = (currentId: string) => {
-        folderIdsToDelete.add(currentId);
-        folders
-          .filter((item) => item.parentId === currentId)
-          .forEach((childFolder) => collectFolderIds(childFolder.id));
-      };
-
-      collectFolderIds(folderId);
+      const folderIdsToDelete = getDescendantFolderIds(folders, folderId);
 
       const documents = getDocuments(get(), source);
       const nextDocuments = Object.fromEntries(
@@ -294,6 +330,71 @@ export const useDocumentOrganizationStore =
               },
             },
       );
+    },
+
+    moveFolder: (source, folderId, parentId) => {
+      const folders = getFolders(get(), source);
+      const folder = folders.find((item) => item.id === folderId);
+
+      if (!folder || folder.parentId === null) {
+        return false;
+      }
+
+      if (!parentId || !folders.some((item) => item.id === parentId)) {
+        return false;
+      }
+
+      const movedFolderIds = getDescendantFolderIds(folders, folderId);
+      if (parentId && movedFolderIds.has(parentId)) {
+        return false;
+      }
+
+      if (folder.parentId === parentId) {
+        return false;
+      }
+
+      const nextFolders = folders.map((item) =>
+        item.id === folderId ? { ...item, parentId } : item,
+      );
+      const routes = getFolderRoutes(nextFolders);
+      const nextFoldersWithRoutes = nextFolders.map((item) => ({
+        ...item,
+        route: routes.get(item.id) ?? item.route,
+      }));
+      const documents = getDocuments(get(), source);
+      const nextDocuments = Object.fromEntries(
+        Object.entries(documents).map(([documentId, organization]) => {
+          if (
+            !organization.parentId ||
+            !movedFolderIds.has(organization.parentId)
+          ) {
+            return [documentId, organization];
+          }
+
+          const parentRoute = routes.get(organization.parentId) ?? "";
+          return [
+            documentId,
+            {
+              ...organization,
+              route: `${parentRoute}/${documentId}`,
+            },
+          ];
+        }),
+      );
+
+      set(
+        source === "local"
+          ? {
+              localFolders: nextFoldersWithRoutes,
+              localDocuments: nextDocuments,
+            }
+          : {
+              cloudFolders: nextFoldersWithRoutes,
+              cloudDocuments: nextDocuments,
+            },
+      );
+
+      return true;
     },
 
     toggleFavorite: (source, documentId) => {

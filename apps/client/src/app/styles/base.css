@@ -26,6 +26,120 @@
     scrollbar-gutter: stable;
   }
 
+  [data-dnd-item] {
+    touch-action: pan-y;
+    user-select: none;
+  }
+
+  .docs-sidebar-dnd-label {
+    line-height: 1.25rem;
+  }
+
+  .docs-sidebar-dnd-drop-label {
+    display: inline-block;
+    will-change: transform, opacity, filter;
+  }
+
+  .docs-sidebar-dnd-drop-label.enter {
+    animation: docs-sidebar-dnd-drop-label-enter 120ms
+      cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .docs-sidebar-dnd-drop-label.exit {
+    animation: docs-sidebar-dnd-drop-label-exit 80ms ease-in both;
+  }
+
+  @keyframes docs-sidebar-dnd-drop-label-enter {
+    from {
+      opacity: 0;
+      filter: blur(2px);
+      transform: translate3d(0, 0.15rem, 0) scale(0.96);
+    }
+
+    to {
+      opacity: 1;
+      filter: blur(0);
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+  }
+
+  @keyframes docs-sidebar-dnd-drop-label-exit {
+    from {
+      opacity: 1;
+      filter: blur(0);
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+
+    to {
+      opacity: 0;
+      filter: blur(2px);
+      transform: translate3d(0, -0.1rem, 0) scale(0.98);
+    }
+  }
+
+  .docs-sidebar-dnd-preview-anchor {
+    transform: translate3d(-50%, calc(-100% - 0.75rem), 0);
+  }
+
+  .docs-sidebar-dnd-preview {
+    transform-origin: center bottom;
+    will-change: transform, opacity, filter;
+  }
+
+  .docs-sidebar-dnd-preview-enter {
+    animation: docs-sidebar-dnd-preview-enter 220ms
+      cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .docs-sidebar-dnd-preview-exit {
+    animation: docs-sidebar-dnd-preview-exit 180ms cubic-bezier(0.4, 0, 1, 1)
+      both;
+  }
+
+  @keyframes docs-sidebar-dnd-preview-enter {
+    from {
+      opacity: 0;
+      filter: blur(5px);
+      transform: translate3d(0, 0.5rem, 0) scale(0.94);
+    }
+
+    to {
+      opacity: 0.8;
+      filter: blur(0);
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+  }
+
+  @keyframes docs-sidebar-dnd-preview-exit {
+    from {
+      opacity: 0.8;
+      filter: blur(0);
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+
+    to {
+      opacity: 0;
+      filter: blur(4px);
+      transform: translate3d(0, -0.25rem, 0) scale(0.94);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .docs-sidebar-dnd-drop-label.enter,
+    .docs-sidebar-dnd-drop-label.exit,
+    .docs-sidebar-dnd-preview-enter,
+    .docs-sidebar-dnd-preview-exit {
+      animation-duration: 1ms;
+    }
+  }
+
+  [data-dnd-drop-target="true"] {
+    border-radius: 0.5rem;
+    background: color-mix(in oklab, var(--accent) 82%, transparent);
+    box-shadow: inset 0 0 0 1px
+      color-mix(in oklab, var(--primary) 38%, transparent);
+  }
+
   html {
     scrollbar-gutter: stable;
   }
