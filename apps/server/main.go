@@ -7,6 +7,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/andrew/md-pdf-preview/server/src/config/cloudflare"
 	"github.com/andrew/md-pdf-preview/server/src/config/environment"
 	"github.com/andrew/md-pdf-preview/server/src/config/postgres"
 	"github.com/andrew/md-pdf-preview/server/src/config/server"
@@ -19,6 +20,8 @@ func main() {
 	if err := environment.Load(".env"); err != nil {
 		fmt.Printf("[environment] failed to load .env: %v\n", err)
 	}
+
+	cloudflare.InitR2()
 
 	// PostgreSQL starts independently so a database outage never blocks Echo.
 	go postgres.CreateConnectionPool()
@@ -41,7 +44,6 @@ func listenForShutdown() {
 	<-shutdownSignal
 	fmt.Println("[shutdown] shutdown signal received")
 
-	postgres.CloseConnectionPool()
-
 	server.StopServer(10 * time.Second)
+	postgres.CloseConnectionPool()
 }

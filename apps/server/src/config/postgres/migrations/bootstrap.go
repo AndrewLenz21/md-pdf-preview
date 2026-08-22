@@ -1,12 +1,15 @@
-package postgres
+package migrations
 
 import (
 	"context"
 	"fmt"
+	"regexp"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
+
+var schemaIdentifierPattern = regexp.MustCompile(`^[a-z_][a-z0-9_]*$`)
 
 func BootstrapSchema(ctx context.Context, pool *pgxpool.Pool, schema string) error {
 	if !schemaIdentifierPattern.MatchString(schema) {
@@ -34,9 +37,9 @@ func BootstrapSchema(ctx context.Context, pool *pgxpool.Pool, schema string) err
 		return fmt.Errorf("set search path to %s: %w", schema, err)
 	}
 
-	for _, statement := range betterAuthSchemaStatements {
+	for _, statement := range SchemaStatements() {
 		if _, err := tx.Exec(ctx, statement); err != nil {
-			return fmt.Errorf("apply Better Auth schema: %w", err)
+			return fmt.Errorf("apply database schema: %w", err)
 		}
 	}
 
@@ -45,6 +48,14 @@ func BootstrapSchema(ctx context.Context, pool *pgxpool.Pool, schema string) err
 	}
 
 	return nil
+}
+
+func SchemaStatements() []string {
+	statements := make([]string, 0, len(betterAuthSchemaStatements)+len(workspaceItemsSchemaStatements)+len(loggerSchemaStatements))
+	statements = append(statements, betterAuthSchemaStatements...)
+	statements = append(statements, workspaceItemsSchemaStatements...)
+	statements = append(statements, loggerSchemaStatements...)
+	return statements
 }
 
 // Generated from apps/server/database/better-auth-schema.sql for Better Auth 1.6.27.

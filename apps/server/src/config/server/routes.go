@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/andrew/md-pdf-preview/server/src/controllers/health"
+	"github.com/andrew/md-pdf-preview/server/src/controllers/workspace"
 )
 
 func StartRoutes() {
@@ -14,4 +15,5 @@ func StartRoutes() {
 	}
 
 	health.RegisterRoutes(applicationServer)
+	workspace.RegisterRoutes(applicationServer)
 }

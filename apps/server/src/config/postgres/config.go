@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/andrew/md-pdf-preview/server/src/config/postgres/migrations"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -49,7 +50,7 @@ func CreateConnectionPool() {
 		return
 	}
 
-	if err := BootstrapSchema(ctx, databasePool, databaseConfig.DatabaseSchema); err != nil {
+	if err := migrations.BootstrapSchema(ctx, databasePool, databaseConfig.DatabaseSchema); err != nil {
 		databasePool.Close()
 		fmt.Printf("❌ [postgres] startup failed: database bootstrap failed: %v\n", err)
 		return
