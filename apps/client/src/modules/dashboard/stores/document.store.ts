@@ -1,7 +1,7 @@
 import { create } from "zustand";
 
 import { SELECTED_DOCUMENT_ID } from "@/modules/dashboard/constants/mock-documents";
-import { LOCAL_WORKSPACE_DATA } from "@/modules/dashboard/constants/document-workspaces";
+import { getLocalWorkspaceDocuments } from "@/modules/dashboard/constants/document-workspaces";
 import type { MockDocument } from "@/modules/dashboard/document/model/document.types";
 import { useDocumentOrganizationStore } from "./document-organization.store";
 
@@ -18,9 +18,10 @@ type PendingContentUpdate = {
 export type DocumentStoreState = {
   documents: MockDocument[];
   pendingContentByDocumentId: Record<string, string>;
-  selectedDocumentId: string;
+  selectedDocumentId: string | null;
   createDocument: (title?: string) => string;
   selectDocument: (documentId: string) => void;
+  clearSelection: () => void;
   scheduleContentUpdate: (documentId: string, content: string) => void;
   flushPendingContent: (documentId: string) => void;
   flushAllPendingContent: () => void;
@@ -180,7 +181,7 @@ export function createInitialMarkdown(title?: string) {
 }
 
 export const useDocumentStore = create<DocumentStoreState>((set, get) => ({
-  documents: LOCAL_WORKSPACE_DATA.documents.map(normalizeDocument),
+  documents: getLocalWorkspaceDocuments().map(normalizeDocument),
   pendingContentByDocumentId: {},
   selectedDocumentId: SELECTED_DOCUMENT_ID,
 
@@ -212,8 +213,20 @@ export const useDocumentStore = create<DocumentStoreState>((set, get) => ({
       return;
     }
 
-    get().flushPendingContent(currentDocumentId);
+    if (currentDocumentId) {
+      get().flushPendingContent(currentDocumentId);
+    }
     set({ selectedDocumentId: documentId });
+  },
+
+  clearSelection: () => {
+    const currentDocumentId = get().selectedDocumentId;
+
+    if (currentDocumentId) {
+      get().flushPendingContent(currentDocumentId);
+    }
+
+    set({ selectedDocumentId: null });
   },
 
   scheduleContentUpdate: (documentId, content) => {

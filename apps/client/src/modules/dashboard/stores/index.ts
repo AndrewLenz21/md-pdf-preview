@@ -7,6 +7,7 @@ export {
   useDocumentStore,
 } from "./document.store";
 export { useDocumentOrganizationStore } from "./document-organization.store";
+export { useDocumentDndStore } from "./document-dnd.store";
 export { useCloudDocumentStore } from "./cloud-document.store";
 export { useWorkspaceStore, WORKSPACE_ZOOM } from "./workspace.store";
 export { useDocumentEditorStore } from "./document-editor.store";

@@ -1,9 +1,11 @@
 import {
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
+  type RefObject,
 } from "react";
 import {
   ChevronRight,
@@ -30,6 +32,116 @@ import { FOLDER_ICON_COLOR_CLASSES } from "./folderColors";
 import type { LongPressDragItem } from "./longPressDrag";
 
 const TREE_INDENT = 22;
+const TREE_LAYOUT_ITEM_SELECTOR = "[data-tree-layout-id]";
+const TREE_LAYOUT_EASING = "cubic-bezier(0.22, 1, 0.36, 1)";
+
+type TreeItemPosition = {
+  left: number;
+  top: number;
+};
+
+function useTreeLayoutAnimation(
+  treeRef: RefObject<HTMLDivElement | null>,
+  layoutKey: string,
+) {
+  const previousPositionsRef = useRef<Map<string, TreeItemPosition>>(new Map());
+  const initializedRef = useRef(false);
+  const animationsRef = useRef<Map<string, Animation>>(new Map());
+
+  useLayoutEffect(() => {
+    const tree = treeRef.current;
+
+    if (!tree) {
+      return;
+    }
+
+    const items = Array.from(
+      tree.querySelectorAll<HTMLElement>(TREE_LAYOUT_ITEM_SELECTOR),
+    );
+    const positions = new Map(
+      items.map((item) => {
+        const rect = item.getBoundingClientRect();
+        return [
+          item.dataset.treeLayoutId ?? "",
+          { left: rect.left, top: rect.top },
+        ];
+      }),
+    );
+
+    const prefersReducedMotion =
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+
+    if (initializedRef.current && !prefersReducedMotion) {
+      items.forEach((item) => {
+        const id = item.dataset.treeLayoutId;
+
+        if (!id || typeof item.animate !== "function") {
+          return;
+        }
+
+        const previousPosition = previousPositionsRef.current.get(id);
+        const nextPosition = positions.get(id);
+        const animation = animationsRef.current.get(id);
+
+        animation?.cancel();
+
+        const keyframes =
+          previousPosition && nextPosition
+            ? (() => {
+                const x = previousPosition.left - nextPosition.left;
+                const y = previousPosition.top - nextPosition.top;
+
+                if (Math.abs(x) < 1 && Math.abs(y) < 1) {
+                  return null;
+                }
+
+                return [
+                  { transform: `translate3d(${x}px, ${y}px, 0)` },
+                  { transform: "translate3d(0, 0, 0)" },
+                ];
+              })()
+            : [
+                {
+                  opacity: 0,
+                  transform: "translate3d(0, 0.4rem, 0) scale(0.97)",
+                },
+                { opacity: 1, transform: "translate3d(0, 0, 0) scale(1)" },
+              ];
+
+        if (!keyframes) {
+          return;
+        }
+
+        const nextAnimation = item.animate(keyframes, {
+          duration: previousPosition ? 260 : 160,
+          easing: TREE_LAYOUT_EASING,
+        });
+
+        animationsRef.current.set(id, nextAnimation);
+        nextAnimation.onfinish = () => {
+          if (animationsRef.current.get(id) === nextAnimation) {
+            animationsRef.current.delete(id);
+          }
+        };
+        nextAnimation.oncancel = () => {
+          if (animationsRef.current.get(id) === nextAnimation) {
+            animationsRef.current.delete(id);
+          }
+        };
+      });
+    }
+
+    previousPositionsRef.current = positions;
+    initializedRef.current = true;
+  }, [layoutKey, treeRef]);
+
+  useEffect(
+    () => () => {
+      animationsRef.current.forEach((animation) => animation.cancel());
+    },
+    [],
+  );
+}
 
 function getChildFolders(folders: DocumentFolder[], parentId: string | null) {
   return folders.filter((folder) => folder.parentId === parentId);
@@ -163,7 +275,7 @@ export function FolderTree({
   documents: MockDocument[];
   folders: DocumentFolder[];
   organization: Record<string, DocumentOrganization>;
-  selectedId: string;
+  selectedId: string | null;
   onSelect: (id: string) => void;
   onRename: (id: string, title: string) => void;
   onDelete: (id: string) => void;
@@ -185,6 +297,7 @@ export function FolderTree({
   ) => void;
   onDragClickCapture: (event: ReactMouseEvent<HTMLDivElement>) => void;
 }) {
+  const treeRef = useRef<HTMLDivElement>(null);
   const rootFolders = getChildFolders(folders, null);
   const folderOptions: DocumentFolderOption[] = rootFolders.flatMap(
     (folder) => [
@@ -200,15 +313,27 @@ export function FolderTree({
     organization,
     null,
   );
+  const layoutKey = [
+    ...folders.map((folder) => `folder:${folder.id}:${folder.parentId ?? ""}`),
+    ...visibleDocuments.map(
+      (document) =>
+        `document:${document.id}:${organization[document.id]?.parentId ?? ""}`,
+    ),
+    ...collapsedFolderIds,
+  ].join("|");
+
+  useTreeLayoutAnimation(treeRef, layoutKey);
+
   if (!visibleDocuments.length && !folders.length) {
     return <EmptyWorkspaceState cloudUnauthenticated={cloudUnauthenticated} />;
   }
 
   return (
-    <div className="space-y-0.5" data-dnd-root-drop="true">
+    <div ref={treeRef} className="space-y-0.5" data-dnd-root-drop="true">
       {rootDocuments.map((document) => (
         <DocumentItem
           key={document.id}
+          documentId={document.id}
           displayTitle={
             organization[document.id]?.displayTitle ?? document.title
           }
@@ -295,7 +420,7 @@ function FolderNode({
   folders: DocumentFolder[];
   documents: MockDocument[];
   organization: Record<string, DocumentOrganization>;
-  selectedId: string;
+  selectedId: string | null;
   folderOptions: DocumentFolderOption[];
   onSelect: (id: string) => void;
   onRename: (id: string, title: string) => void;
@@ -349,6 +474,7 @@ function FolderNode({
     >
       <div
         data-dnd-item="folder"
+        data-tree-layout-id={`folder:${folder.id}`}
         data-dnd-drop-target={
           dropTargetFolderId === folder.id ? "true" : undefined
         }
@@ -489,6 +615,7 @@ function FolderNode({
             {childDocuments.map((document) => (
               <DocumentItem
                 key={document.id}
+                documentId={document.id}
                 displayTitle={
                   organization[document.id]?.displayTitle ?? document.title
                 }

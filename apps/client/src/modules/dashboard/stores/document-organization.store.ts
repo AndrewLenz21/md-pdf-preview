@@ -2,7 +2,8 @@ import { create } from "zustand";
 
 import {
   CLOUD_WORKSPACE_DATA,
-  LOCAL_WORKSPACE_DATA,
+  getLocalWorkspaceFolders,
+  getLocalWorkspaceOrganization,
 } from "@/modules/dashboard/constants/document-workspaces";
 import type {
   DocumentFolder,
@@ -142,11 +143,11 @@ function getFolderRoutes(folders: DocumentFolder[]) {
 export const useDocumentOrganizationStore =
   create<DocumentOrganizationStoreState>((set, get) => ({
     activeSource: "local",
-    localFolders: LOCAL_WORKSPACE_DATA.folders,
+    localFolders: getLocalWorkspaceFolders(),
     cloudFolders: [...CLOUD_SYSTEM_FOLDERS, ...CLOUD_WORKSPACE_DATA.folders],
     localCollapsedFolderIds: [],
     cloudCollapsedFolderIds: [],
-    localDocuments: LOCAL_WORKSPACE_DATA.organization,
+    localDocuments: getLocalWorkspaceOrganization(),
     cloudDocuments: CLOUD_WORKSPACE_DATA.organization,
 
     setActiveSource: (activeSource) => set({ activeSource }),

@@ -68,6 +68,7 @@
     .settings-menu-popover-enter,
     .settings-menu-popover-exit,
     .paper-size-control,
+    .mobile-preview-toolbar-clear-action,
     .mobile-preview-toolbar-select-actions,
     .mobile-preview-toolbar-print-action {
       animation: none;

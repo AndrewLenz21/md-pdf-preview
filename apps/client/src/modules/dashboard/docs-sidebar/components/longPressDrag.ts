@@ -5,6 +5,8 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 
+import { useDocumentDndStore } from "@/modules/dashboard/stores";
+
 export type LongPressDragItem = {
   kind: "document" | "folder";
   id: string;
@@ -77,6 +79,7 @@ export function useLongPressDrag({
         setDragPreviewItem(null);
         setDragPreviewPhase(null);
         setDragPosition(null);
+        useDocumentDndStore.getState().setDragging(false);
         previewExitTimeoutRef.current = null;
       }, 180);
     };
@@ -210,6 +213,7 @@ export function useLongPressDrag({
       if (previewExitTimeoutRef.current) {
         clearTimeout(previewExitTimeoutRef.current);
       }
+      useDocumentDndStore.getState().setDragging(false);
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
       window.removeEventListener("pointercancel", handlePointerCancel);
@@ -240,6 +244,7 @@ export function useLongPressDrag({
       setDragPreviewItem(null);
       setDragPreviewPhase(null);
       setDragPosition(null);
+      useDocumentDndStore.getState().setDragging(false);
     }
 
     const timeoutId = setTimeout(() => {
@@ -260,6 +265,7 @@ export function useLongPressDrag({
       setDragPreviewItem(pendingDrag.item);
       setDragPreviewPhase("enter");
       setDragPosition({ x: pendingDrag.startX, y: pendingDrag.startY });
+      useDocumentDndStore.getState().setDragging(true);
       dropTargetRef.current = null;
       setDropTargetFolderId(null);
     }, 500);

@@ -7,6 +7,7 @@ import {
   Eye,
   FileText,
   Printer,
+  X,
 } from "lucide-react";
 
 import type { MockDocument } from "@/modules/dashboard/document/model/document.types";
@@ -82,6 +83,23 @@ function EditingActionButtons({
         />
       </button>
     </div>
+  );
+}
+
+function ClearSelectionButton() {
+  const clearSelection = useDocumentStore((state) => state.clearSelection);
+
+  return (
+    <button
+      type="button"
+      title="Clear selection"
+      aria-label="Clear selection"
+      onClick={clearSelection}
+      className="mobile-preview-toolbar-clear-action mobile-preview-toolbar-action-visible flex h-8 items-center gap-1 rounded-md px-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40 lg:text-[11px]"
+    >
+      <X className="h-3.5 w-3.5" strokeWidth={1.8} />
+      <span>Clear</span>
+    </button>
   );
 }
 
@@ -221,6 +239,7 @@ export function PreviewToolbar({
       </div>
 
       <div className="mobile-preview-toolbar-right flex shrink-0 items-center gap-2 sm:gap-3">
+        {!isPreviewMode ? <ClearSelectionButton /> : null}
         <div
           className={`mobile-preview-toolbar-paper paper-size-control-slot ${isPreviewMode ? "mobile-preview-toolbar-paper-action" : ""}`}
         >
@@ -241,14 +260,14 @@ export function PreviewToolbar({
             aria-hidden="true"
           />
         ) : null}
-        <EditingActionButtons
-          editingActions={editingActions}
-          visible={!isPreviewMode || splitMode}
-        />
         <PreviewActionButtons
           editingActions={editingActions}
           hideOnDesktop
           visible={isPreviewMode}
+        />
+        <EditingActionButtons
+          editingActions={editingActions}
+          visible={!isPreviewMode || splitMode}
         />
       </div>
     </header>

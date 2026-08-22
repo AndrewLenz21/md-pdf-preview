@@ -132,8 +132,8 @@ function getCanvasClassName(mode: DocumentEditorMode, contained: boolean) {
   switch (mode) {
     case "preview":
       return contained
-        ? "document-preview-canvas min-h-0 flex-1 overflow-auto bg-muted/40"
-        : "document-preview-canvas overflow-visible bg-muted/40";
+        ? "document-preview-canvas min-h-0 flex-1 overflow-auto bg-muted/40 pt-5"
+        : "document-preview-canvas overflow-visible bg-muted/40 pt-5";
     case "markdown":
       return contained
         ? "document-preview-canvas document-continuous-canvas min-h-0 flex-1 overflow-auto"

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 import { useDismissableLayer } from "@/shared/hooks/useDismissableLayer";
+import { useDocumentDndStore } from "@/modules/dashboard/stores";
 
 import {
   DeleteConfirmationDialog,
@@ -32,6 +33,7 @@ export type DocumentFolderOption = {
 };
 
 export function DocumentItem({
+  documentId,
   displayTitle,
   favorite,
   selected,
@@ -48,6 +50,7 @@ export function DocumentItem({
   onDragPointerDown,
   onDragClickCapture,
 }: {
+  documentId: string;
   displayTitle: string;
   favorite: boolean;
   selected: boolean;
@@ -73,6 +76,7 @@ export function DocumentItem({
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const isDragActive = useDocumentDndStore((state) => state.isDragging);
 
   const closeMenu = () => {
     setMenuOpen(false);
@@ -142,7 +146,8 @@ export function DocumentItem({
       ref={itemRef}
       data-dnd-dragging={dragging ? "true" : undefined}
       data-dnd-item="document"
-      className={`group/document relative flex min-w-0 items-center rounded-lg border-l-2 transition-colors ${selected ? "border-primary bg-accent text-accent-foreground shadow-sm" : "border-transparent text-muted-foreground hover:bg-accent/60 hover:text-foreground"}`}
+      data-tree-layout-id={`document:${documentId}`}
+      className={`group/document relative flex min-w-0 items-center rounded-lg border-l-2 transition-colors ${selected ? "border-primary bg-accent text-accent-foreground shadow-sm" : `border-transparent text-muted-foreground ${isDragActive ? "" : "hover:bg-accent/60 hover:text-foreground"}`}`}
       style={{
         paddingLeft: depth === 0 ? "8px" : `${7 + (depth - 1) * TREE_INDENT}px`,
       }}
@@ -178,7 +183,7 @@ export function DocumentItem({
           className="flex min-w-0 flex-1 items-center gap-0.5 px-1 py-1.5 text-left"
         >
           <FileText
-            className={`h-4 w-4 shrink-0 ${selected ? "text-primary" : "text-muted-foreground/70 group-hover/document:text-foreground"}`}
+            className={`h-4 w-4 shrink-0 ${selected ? "text-primary" : `text-muted-foreground/70 ${isDragActive ? "" : "group-hover/document:text-foreground"}`}`}
             strokeWidth={1.7}
           />
           <span className="flex min-w-0 flex-1 items-center gap-2">

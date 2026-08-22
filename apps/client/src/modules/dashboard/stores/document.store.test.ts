@@ -105,6 +105,18 @@ describe("document store", () => {
     expect(getContent(SELECTED_DOCUMENT_ID)).toBe(expectedContent);
   });
 
+  it("clears the selection after flushing pending content", () => {
+    const expectedContent = normalizeMarkdownDocument("Cleared draft").content;
+
+    useDocumentStore
+      .getState()
+      .scheduleContentUpdate(SELECTED_DOCUMENT_ID, "Cleared draft");
+    useDocumentStore.getState().clearSelection();
+
+    expect(useDocumentStore.getState().selectedDocumentId).toBeNull();
+    expect(getContent(SELECTED_DOCUMENT_ID)).toBe(expectedContent);
+  });
+
   it("keeps Session Markdown unlimited and still allows deleting", () => {
     const titlePrefix = "# Untitled\n\n";
     const atLimit = `${titlePrefix}${"a".repeat(

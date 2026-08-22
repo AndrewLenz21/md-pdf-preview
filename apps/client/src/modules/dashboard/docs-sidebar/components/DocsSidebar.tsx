@@ -101,7 +101,7 @@ export function DocsSidebar({
   mobile = false,
 }: {
   documents: MockDocument[];
-  selectedId: string;
+  selectedId: string | null;
   onSelect: (id: string) => void;
   onDelete?: (id: string) => void;
   onOpenSettings?: () => void;
@@ -363,6 +363,7 @@ export function DocsSidebar({
     if (
       deleted &&
       deleteFolderDialog.source === "local" &&
+      selectedId &&
       useDocumentOrganizationStore.getState().localDocuments[selectedId]
         ?.deleted
     ) {

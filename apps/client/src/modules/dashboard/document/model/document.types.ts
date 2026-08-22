@@ -28,3 +28,16 @@ export type MockDocument = {
   updatedAt: string;
   content?: string;
 };
+
+export type LocalWorkspaceItem = {
+  id: string;
+  type: "folder" | "document";
+  parent_id: string | null;
+  route: string;
+  name: string;
+  created_at: string;
+  updated_at?: string;
+  content?: string;
+  group?: DocumentGroup;
+  color?: DocumentFolderColor;
+};

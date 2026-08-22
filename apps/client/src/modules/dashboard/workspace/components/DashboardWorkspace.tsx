@@ -40,6 +40,27 @@ const DESKTOP_SIDEBAR_DEFAULT_WIDTH = 270;
 const DESKTOP_SIDEBAR_MIN_WIDTH = 220;
 const DESKTOP_SIDEBAR_MAX_WIDTH = 600;
 
+function EmptyDocumentState() {
+  return (
+    <div className="flex h-full min-h-0 w-full flex-1 items-center justify-center px-6 text-center">
+      <div className="flex max-w-sm flex-col items-center">
+        <span
+          aria-hidden="true"
+          className="mb-5 flex h-16 w-16 items-center justify-center rounded-3xl border border-border/70 bg-accent/50 text-3xl shadow-sm"
+        >
+          📝
+        </span>
+        <p className="text-base font-semibold text-foreground">
+          Select or create a file to start
+        </p>
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">
+          Choose a file from your workspace or create a new one to begin.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export function DashboardWorkspace() {
   const documents = useDocumentStore((state) => state.documents);
   const selectedDocumentId = useDocumentStore(
@@ -47,6 +68,9 @@ export function DashboardWorkspace() {
   );
   const selectDocumentInStore = useDocumentStore(
     (state) => state.selectDocument,
+  );
+  const clearSelectionInStore = useDocumentStore(
+    (state) => state.clearSelection,
   );
   const scheduleContentUpdate = useDocumentStore(
     (state) => state.scheduleContentUpdate,
@@ -97,9 +121,9 @@ export function DashboardWorkspace() {
   >({ files: 0, preview: 0 });
   const isDesktopSplit = isPreviewMode || desktopPreviewVisible;
   const isMobileFilesSection = mobileSection === "files";
-  const selectedDocument =
-    documents.find((document) => document.id === selectedDocumentId) ??
-    documents[0];
+  const selectedDocument = selectedDocumentId
+    ? documents.find((document) => document.id === selectedDocumentId)
+    : undefined;
 
   useLayoutEffect(() => {
     const isSmallScreen =
@@ -196,7 +220,7 @@ export function DashboardWorkspace() {
   }, [desktopPreviewVisible, isPreviewMode]);
 
   useEffect(() => {
-    if (!isPreviewMode) {
+    if (!isPreviewMode || !selectedDocumentId) {
       return;
     }
 
@@ -204,25 +228,20 @@ export function DashboardWorkspace() {
       desktopDocumentScrollRef.current,
       desktopPreviewScrollRef.current,
     );
-  }, [
-    desktopPreviewVisible,
-    isPreviewMode,
-    mobileSection,
-    selectedDocument.id,
-  ]);
+  }, [desktopPreviewVisible, isPreviewMode, mobileSection, selectedDocumentId]);
 
   useEffect(() => {
-    if (pageBreakMarkerDocumentIdRef.current === selectedDocument.id) {
+    if (pageBreakMarkerDocumentIdRef.current === selectedDocument?.id) {
       return;
     }
 
-    pageBreakMarkerDocumentIdRef.current = selectedDocument.id;
+    pageBreakMarkerDocumentIdRef.current = selectedDocument?.id ?? null;
     setDocumentPageBreakMarkers([]);
     setMobilePageBreakMarkers([]);
-  }, [selectedDocument.id]);
+  }, [selectedDocument?.id]);
 
   useEffect(() => {
-    if (!desktopPreviewVisible) {
+    if (!desktopPreviewVisible || !selectedDocumentId) {
       return;
     }
 
@@ -231,15 +250,14 @@ export function DashboardWorkspace() {
       desktopPreviewScrollRef.current,
       setDocumentPageBreakMarkers,
     );
-  }, [
-    desktopPreviewVisible,
-    isPreviewMode,
-    mobileSection,
-    selectedDocument.id,
-  ]);
+  }, [desktopPreviewVisible, isPreviewMode, mobileSection, selectedDocumentId]);
 
   useEffect(() => {
-    if (mobileSection !== "preview" || editorMode !== "document") {
+    if (
+      mobileSection !== "preview" ||
+      editorMode !== "document" ||
+      !selectedDocumentId
+    ) {
       return;
     }
 
@@ -248,9 +266,9 @@ export function DashboardWorkspace() {
       mobilePageBreakPreviewRef.current,
       setMobilePageBreakMarkers,
     );
-  }, [editorMode, mobileSection, selectedDocument.id]);
+  }, [editorMode, mobileSection, selectedDocumentId]);
   const changeEditorMode = (nextMode: DocumentEditorMode) => {
-    if (nextMode === editorMode) {
+    if (nextMode === editorMode || !selectedDocument) {
       return;
     }
 
@@ -277,7 +295,7 @@ export function DashboardWorkspace() {
   };
 
   const handleDocumentDeleted = (id: string) => {
-    if (selectedDocument.id !== id) {
+    if (selectedDocument?.id !== id) {
       return;
     }
 
@@ -290,6 +308,8 @@ export function DashboardWorkspace() {
 
     if (nextDocument) {
       selectDocument(nextDocument.id);
+    } else {
+      clearSelectionInStore();
     }
   };
 
@@ -346,7 +366,7 @@ export function DashboardWorkspace() {
           >
             <DocsSidebar
               documents={documents}
-              selectedId={selectedDocument.id}
+              selectedId={selectedDocumentId}
               onSelect={selectDocument}
               onDelete={handleDocumentDeleted}
               onOpenSettings={openDocsSidebarSettings}
@@ -370,76 +390,84 @@ export function DashboardWorkspace() {
       ) : null}
 
       <main
-        className={`min-w-0 flex-1 ${isMobileFilesSection ? "h-[calc(100dvh-var(--mobile-dashboard-nav-height))] overflow-hidden pb-0 lg:h-auto lg:overflow-visible" : isPreviewMode ? "pb-0" : "pb-20"} lg:pb-0 ${isDesktopSplit ? "lg:h-screen lg:min-h-0" : "lg:h-auto lg:min-h-screen"}`}
+        className={`min-w-0 flex-1 ${!selectedDocument ? "h-[calc(100dvh-var(--mobile-dashboard-nav-height))] overflow-hidden pb-0 lg:h-auto lg:overflow-visible" : isMobileFilesSection ? "h-[calc(100dvh-var(--mobile-dashboard-nav-height))] overflow-hidden pb-0 lg:h-auto lg:overflow-visible" : isPreviewMode ? "pb-0" : "pb-20"} lg:pb-0 ${isDesktopSplit ? "lg:h-screen lg:min-h-0" : "lg:h-auto lg:min-h-screen"}`}
       >
         <div
-          className={`hidden ${isDesktopSplit ? "lg:flex h-full min-h-0 flex-col" : "lg:block"}`}
+          className={`hidden ${selectedDocument ? (isDesktopSplit ? "lg:flex h-full min-h-0 flex-col" : "lg:block") : "lg:flex h-full min-h-0 flex-col"}`}
         >
-          <PreviewToolbar
-            document={selectedDocument}
-            mode={editorMode}
-            onModeChange={changeEditorMode}
-            editingActions={desktopEditingActions}
-            splitMode={isPreviewMode}
-          />
-          <div
-            className={
-              isDesktopSplit ? "flex h-0 min-h-0 min-w-0 flex-1" : "min-w-0"
-            }
-          >
-            <section
-              className={`relative h-full min-h-0 min-w-0 transition-[width] duration-300 ease-out ${isDesktopSplit ? (isPreviewMode ? "w-1/2" : "w-full") : "w-full"}`}
-            >
-              <DocumentPreview
+          {selectedDocument ? (
+            <>
+              <PreviewToolbar
                 document={selectedDocument}
-                mode={isPreviewMode ? "document" : editorMode}
-                embedded={isDesktopSplit}
-                showToolbar={false}
-                scrollScope="desktop"
+                mode={editorMode}
                 onModeChange={changeEditorMode}
-                onContentChange={(content) =>
-                  scheduleContentUpdate(selectedDocument.id, content)
+                editingActions={desktopEditingActions}
+                splitMode={isPreviewMode}
+              />
+              <div
+                className={
+                  isDesktopSplit ? "flex h-0 min-h-0 min-w-0 flex-1" : "min-w-0"
                 }
-                onEditingActionsChange={setDesktopEditingActions}
-                scrollContainerRef={desktopDocumentScrollRef}
-                pageBreakMarkers={documentPageBreakMarkers}
-                modeTransitionDirection={modeTransitionDirection}
-              />
-              <PreviewZoomControl
-                mode={isPreviewMode ? "document" : editorMode}
-                embedded={isDesktopSplit}
-              />
-            </section>
-            {desktopPreviewVisible ? (
-              <section
-                aria-hidden={!isPreviewMode}
-                className={`relative flex h-full min-h-0 min-w-0 flex-col overflow-hidden transition-[width,opacity,transform] duration-300 ease-out ${isPreviewMode ? "dashboard-desktop-preview-enter w-1/2 translate-x-0 opacity-100" : "pointer-events-none w-0 translate-x-4 opacity-0"}`}
               >
-                <PreviewPaneToolbar editingActions={desktopEditingActions} />
-                <div className="min-h-0 min-w-0 flex-1">
+                <section
+                  className={`relative h-full min-h-0 min-w-0 transition-[width] duration-300 ease-out ${isDesktopSplit ? (isPreviewMode ? "w-1/2" : "w-full") : "w-full"}`}
+                >
                   <DocumentPreview
                     document={selectedDocument}
-                    mode="preview"
-                    embedded
+                    mode={isPreviewMode ? "document" : editorMode}
+                    embedded={isDesktopSplit}
                     showToolbar={false}
                     scrollScope="desktop"
                     onModeChange={changeEditorMode}
                     onContentChange={(content) =>
                       scheduleContentUpdate(selectedDocument.id, content)
                     }
-                    scrollContainerRef={desktopPreviewScrollRef}
+                    onEditingActionsChange={setDesktopEditingActions}
+                    scrollContainerRef={desktopDocumentScrollRef}
+                    pageBreakMarkers={documentPageBreakMarkers}
+                    modeTransitionDirection={modeTransitionDirection}
                   />
-                </div>
-                {isPreviewMode ? (
-                  <PreviewZoomControl mode="preview" embedded />
+                  <PreviewZoomControl
+                    mode={isPreviewMode ? "document" : editorMode}
+                    embedded={isDesktopSplit}
+                  />
+                </section>
+                {desktopPreviewVisible ? (
+                  <section
+                    aria-hidden={!isPreviewMode}
+                    className={`relative flex h-full min-h-0 min-w-0 flex-col overflow-hidden transition-[width,opacity,transform] duration-300 ease-out ${isPreviewMode ? "dashboard-desktop-preview-enter w-1/2 translate-x-0 opacity-100" : "pointer-events-none w-0 translate-x-4 opacity-0"}`}
+                  >
+                    <PreviewPaneToolbar
+                      editingActions={desktopEditingActions}
+                    />
+                    <div className="min-h-0 min-w-0 flex-1">
+                      <DocumentPreview
+                        document={selectedDocument}
+                        mode="preview"
+                        embedded
+                        showToolbar={false}
+                        scrollScope="desktop"
+                        onModeChange={changeEditorMode}
+                        onContentChange={(content) =>
+                          scheduleContentUpdate(selectedDocument.id, content)
+                        }
+                        scrollContainerRef={desktopPreviewScrollRef}
+                      />
+                    </div>
+                    {isPreviewMode ? (
+                      <PreviewZoomControl mode="preview" embedded />
+                    ) : null}
+                  </section>
                 ) : null}
-              </section>
-            ) : null}
-          </div>
+              </div>
+            </>
+          ) : (
+            <EmptyDocumentState />
+          )}
         </div>
         {isDesktopViewport === false ? (
           <div
-            className={`relative min-h-0 lg:hidden ${isMobileFilesSection ? "h-full overflow-hidden" : ""}`}
+            className={`relative min-h-0 lg:hidden ${isMobileFilesSection || !selectedDocument ? "h-full overflow-hidden" : ""}`}
           >
             {mobileSection === "files" ? (
               <div
@@ -448,14 +476,14 @@ export function DashboardWorkspace() {
               >
                 <DocsSidebar
                   documents={documents}
-                  selectedId={selectedDocument.id}
+                  selectedId={selectedDocumentId}
                   onSelect={selectDocument}
                   onDelete={handleDocumentDeleted}
                   onOpenSettings={openDocsSidebarSettings}
                   mobile
                 />
               </div>
-            ) : (
+            ) : selectedDocument ? (
               <DocumentPreview
                 document={selectedDocument}
                 mode={editorMode}
@@ -468,28 +496,32 @@ export function DashboardWorkspace() {
                 pageBreakMarkers={mobilePageBreakMarkers}
                 scrollContainerRef={mobileDocumentScrollRef}
               />
+            ) : (
+              <EmptyDocumentState />
             )}
           </div>
         ) : null}
-        {mobileSection === "preview" ? (
+        {mobileSection === "preview" && selectedDocument ? (
           <div className="lg:hidden">
             <PreviewZoomControl mode={editorMode} isMobile />
           </div>
         ) : null}
       </main>
 
-      <div aria-hidden="true" className="print-document-preview">
-        <DocumentPreview
-          document={selectedDocument}
-          mode="preview"
-          scrollScope="mobile"
-          disableScrollSync
-          showToolbar={false}
-          onModeChange={() => undefined}
-          onContentChange={() => undefined}
-          scrollContainerRef={mobilePageBreakPreviewRef}
-        />
-      </div>
+      {selectedDocument ? (
+        <div aria-hidden="true" className="print-document-preview">
+          <DocumentPreview
+            document={selectedDocument}
+            mode="preview"
+            scrollScope="mobile"
+            disableScrollSync
+            showToolbar={false}
+            onModeChange={() => undefined}
+            onContentChange={() => undefined}
+            scrollContainerRef={mobilePageBreakPreviewRef}
+          />
+        </div>
+      ) : null}
 
       <DashboardBottomNav
         activeSection={mobileSection}

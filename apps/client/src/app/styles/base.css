@@ -649,6 +649,17 @@
       justify-self: start;
     }
 
+    .mobile-preview-toolbar-clear-action {
+      grid-column: 1;
+      grid-row: 2;
+      justify-self: start;
+      transition:
+        opacity 420ms cubic-bezier(0.22, 1, 0.36, 1),
+        filter 420ms cubic-bezier(0.22, 1, 0.36, 1),
+        transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+      will-change: opacity, filter, transform;
+    }
+
     .mobile-preview-toolbar-select-actions {
       justify-self: end;
     }
