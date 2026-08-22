@@ -1,13 +1,12 @@
-import { create } from "zustand";
+import type { StateCreator } from "zustand";
 
 import {
-  CLOUD_WORKSPACE_ITEMS,
-  LOCAL_WORKSPACE_ITEMS,
-} from "@/modules/dashboard/constants/document-workspaces";
-import { SELECTED_DOCUMENT_ID } from "@/modules/dashboard/constants/mock-documents";
+  DEFAULT_DOCUMENT_FOLDER_COLOR,
+  DEFAULT_DOCUMENT_FOLDER_ICON,
+} from "@/modules/dashboard/document/model/document.types";
 import type {
   DocumentFolderColor,
-  DocumentSource,
+  DocumentFolderIcon,
   WorkspaceDocumentItem,
   WorkspaceFolderItem,
   WorkspaceItem,
@@ -23,59 +22,44 @@ type PendingContentUpdate = {
   timeoutId: ReturnType<typeof setTimeout>;
 };
 
-type WorkspaceItemsStoreState = {
-  activeSource: DocumentSource;
-  localItems: WorkspaceItem[];
-  cloudItems: WorkspaceItem[];
-  localCollapsedFolderIds: string[];
-  cloudCollapsedFolderIds: string[];
-  selectedDocumentId: string | null;
+export type WorkspaceItemsStoreState = {
+  items: WorkspaceItem[];
   pendingContentByDocumentId: Record<string, string>;
-  setActiveSource: (source: DocumentSource) => void;
-  toggleFolderExpanded: (source: DocumentSource, folderId: string) => void;
+  setItems: (items: WorkspaceItem[]) => void;
+  toggleFolderExpanded: (folderId: string) => void;
+  collapsedFolderIds: string[];
   createFolder: (
-    source: DocumentSource,
     name: string,
     parentId?: string | null,
     color?: DocumentFolderColor,
+    icon?: DocumentFolderIcon,
   ) => string | null;
   renameFolder: (
-    source: DocumentSource,
     folderId: string,
     name: string,
     color: DocumentFolderColor,
+    icon: DocumentFolderIcon,
   ) => void;
-  deleteFolder: (source: DocumentSource, folderId: string) => boolean;
-  createDocument: (
-    source: DocumentSource,
-    title?: string,
-    parentId?: string | null,
-  ) => string;
-  renameDocument: (
-    source: DocumentSource,
-    documentId: string,
-    title: string,
-  ) => void;
-  moveDocument: (
-    source: DocumentSource,
-    documentId: string,
-    folderId: string | null,
-  ) => void;
-  moveFolder: (
-    source: DocumentSource,
-    folderId: string,
-    parentId: string | null,
-  ) => boolean;
-  toggleFavorite: (source: DocumentSource, documentId: string) => void;
-  deleteDocument: (source: DocumentSource, documentId: string) => void;
-  selectDocument: (documentId: string) => void;
-  clearSelection: () => void;
+  deleteFolder: (folderId: string) => boolean;
+  createDocument: (title?: string, parentId?: string | null) => string;
+  renameDocument: (documentId: string, title: string) => void;
+  moveDocument: (documentId: string, folderId: string | null) => void;
+  moveFolder: (folderId: string, parentId: string | null) => boolean;
+  toggleFavorite: (documentId: string) => void;
+  deleteDocument: (documentId: string) => void;
   scheduleContentUpdate: (documentId: string, content: string) => void;
   flushPendingContent: (documentId: string) => void;
   flushAllPendingContent: () => void;
 };
 
-const pendingContentUpdates = new Map<string, PendingContentUpdate>();
+type WorkspaceItemsStoreOptions = {
+  initialItems: WorkspaceItem[];
+  maxMarkdownCharacters: number;
+  onItemsChanged?: (
+    previousItems: WorkspaceItem[],
+    nextItems: WorkspaceItem[],
+  ) => void | Promise<void>;
+};
 
 export function isWorkspaceDocument(
   item: WorkspaceItem,
@@ -89,11 +73,35 @@ export function isWorkspaceFolder(
   return item.type === "folder";
 }
 
-export function getWorkspaceItems(
-  state: Pick<WorkspaceItemsStoreState, "localItems" | "cloudItems">,
-  source: DocumentSource,
-) {
-  return source === "local" ? state.localItems : state.cloudItems;
+export function isDocumentFolderColor(
+  value: unknown,
+): value is DocumentFolderColor {
+  return ["primary", "blue", "violet", "amber", "rose", "emerald"].includes(
+    value as DocumentFolderColor,
+  );
+}
+
+export function isDocumentFolderIcon(
+  value: unknown,
+): value is DocumentFolderIcon {
+  return [
+    "folder",
+    "briefcase",
+    "book",
+    "code",
+    "lightbulb",
+    "archive",
+    "star",
+    "target",
+    "calendar",
+    "image",
+    "music",
+    "heart",
+    "users",
+    "map",
+    "key",
+    "wrench",
+  ].includes(value as DocumentFolderIcon);
 }
 
 export function getWorkspaceRoute(items: WorkspaceItem[], itemId: string) {
@@ -116,29 +124,6 @@ export function getWorkspaceRoute(items: WorkspaceItem[], itemId: string) {
   return `/${names.reverse().join("/")}`;
 }
 
-function setWorkspaceItems(
-  set: (
-    update:
-      | Partial<WorkspaceItemsStoreState>
-      | ((
-          state: WorkspaceItemsStoreState,
-        ) => Partial<WorkspaceItemsStoreState>),
-  ) => void,
-  source: DocumentSource,
-  items: WorkspaceItem[],
-) {
-  set(source === "local" ? { localItems: items } : { cloudItems: items });
-}
-
-function getCollapsedFolderIds(
-  state: WorkspaceItemsStoreState,
-  source: DocumentSource,
-) {
-  return source === "local"
-    ? state.localCollapsedFolderIds
-    : state.cloudCollapsedFolderIds;
-}
-
 function createItemId(prefix: string) {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return crypto.randomUUID();
@@ -149,26 +134,6 @@ function createItemId(prefix: string) {
 
 function now() {
   return new Date().toISOString();
-}
-
-function cancelPendingContentUpdate(documentId: string) {
-  const pendingUpdate = pendingContentUpdates.get(documentId);
-
-  if (!pendingUpdate) {
-    return;
-  }
-
-  clearTimeout(pendingUpdate.timeoutId);
-  pendingContentUpdates.delete(documentId);
-}
-
-function omitPendingContent(
-  pendingContentByDocumentId: Record<string, string>,
-  documentId: string,
-) {
-  const nextPendingContent = { ...pendingContentByDocumentId };
-  delete nextPendingContent[documentId];
-  return nextPendingContent;
 }
 
 function limitMarkdownContent(content: string, maxCharacters: number) {
@@ -207,9 +172,7 @@ function getFirstHeadingTitle(markdown: string) {
     return null;
   }
 
-  const title = (match[1] ?? "").replace(/[ \t]+#+[ \t]*$/, "").trim();
-
-  return title;
+  return (match[1] ?? "").replace(/[ \t]+#+[ \t]*$/, "").trim();
 }
 
 export function normalizeMarkdownDocument(
@@ -246,14 +209,22 @@ export function createInitialMarkdown(title?: string) {
   return trimmedTitle ? `# ${trimmedTitle}\n\n` : "#\n\n";
 }
 
-function normalizeWorkspaceItems(items: WorkspaceItem[]) {
+export function normalizeWorkspaceItems(items: WorkspaceItem[]) {
   return items.map((item) => {
-    if (!isWorkspaceDocument(item)) {
-      return item;
+    if (isWorkspaceFolder(item)) {
+      return {
+        ...item,
+        color: isDocumentFolderColor(item.color)
+          ? item.color
+          : DEFAULT_DOCUMENT_FOLDER_COLOR,
+        icon: isDocumentFolderIcon(item.icon)
+          ? item.icon
+          : DEFAULT_DOCUMENT_FOLDER_ICON,
+      };
     }
 
     const normalized = normalizeMarkdownDocument(
-      item.content ?? "",
+      item.content,
       SESSION_MARKDOWN_CHARACTER_LIMIT,
     );
 
@@ -278,452 +249,356 @@ function getDescendantFolderIds(items: WorkspaceItem[], folderId: string) {
   return descendantIds;
 }
 
-function getDocumentSource(
-  state: WorkspaceItemsStoreState,
+function omitPendingContent(
+  pendingContentByDocumentId: Record<string, string>,
   documentId: string,
-): DocumentSource | null {
-  if (
-    state.localItems.some(
-      (item) => isWorkspaceDocument(item) && item.id === documentId,
-    )
-  ) {
-    return "local";
-  }
-
-  if (
-    state.cloudItems.some(
-      (item) => isWorkspaceDocument(item) && item.id === documentId,
-    )
-  ) {
-    return "cloud";
-  }
-
-  return null;
-}
-
-function commitContent(
-  set: (
-    update:
-      | Partial<WorkspaceItemsStoreState>
-      | ((
-          state: WorkspaceItemsStoreState,
-        ) => Partial<WorkspaceItemsStoreState>),
-  ) => void,
-  documentId: string,
-  content: string,
 ) {
-  set((state) => {
-    const source = getDocumentSource(state, documentId);
-
-    if (!source) {
-      return {
-        pendingContentByDocumentId: omitPendingContent(
-          state.pendingContentByDocumentId,
-          documentId,
-        ),
-      };
-    }
-
-    const items = getWorkspaceItems(state, source);
-    const document = items.find(
-      (item): item is WorkspaceDocumentItem =>
-        isWorkspaceDocument(item) && item.id === documentId,
-    );
-    const title = getFirstHeadingTitle(content) || UNTITLED_DOCUMENT_TITLE;
-
-    if (
-      !document ||
-      (document.content === content && document.name === title)
-    ) {
-      return {
-        pendingContentByDocumentId: omitPendingContent(
-          state.pendingContentByDocumentId,
-          documentId,
-        ),
-      };
-    }
-
-    const nextItems = items.map((item) =>
-      isWorkspaceDocument(item) && item.id === documentId
-        ? { ...item, content, name: title, updated_at: now() }
-        : item,
-    );
-
-    return {
-      ...(source === "local"
-        ? { localItems: nextItems }
-        : { cloudItems: nextItems }),
-      pendingContentByDocumentId: omitPendingContent(
-        state.pendingContentByDocumentId,
-        documentId,
-      ),
-    };
-  });
+  const nextPendingContent = { ...pendingContentByDocumentId };
+  delete nextPendingContent[documentId];
+  return nextPendingContent;
 }
 
-export const useWorkspaceItemsStore = create<WorkspaceItemsStoreState>(
-  (set, get) => ({
-    activeSource: "local",
-    localItems: normalizeWorkspaceItems(LOCAL_WORKSPACE_ITEMS),
-    cloudItems: CLOUD_WORKSPACE_ITEMS,
-    localCollapsedFolderIds: [],
-    cloudCollapsedFolderIds: [],
-    selectedDocumentId: SELECTED_DOCUMENT_ID,
-    pendingContentByDocumentId: {},
+export function createWorkspaceItemsState<T extends WorkspaceItemsStoreState>(
+  options: WorkspaceItemsStoreOptions,
+): StateCreator<T, [], [], WorkspaceItemsStoreState> {
+  const pendingContentUpdates = new Map<string, PendingContentUpdate>();
 
-    setActiveSource: (activeSource) => {
-      const currentDocumentId = get().selectedDocumentId;
+  return (set, get) => {
+    const updateItems = (nextItems: WorkspaceItem[]) => {
+      const previousItems = get().items;
+      set({ items: nextItems } as Partial<T>);
+      void options.onItemsChanged?.(previousItems, nextItems);
+    };
 
-      if (currentDocumentId) {
-        get().flushPendingContent(currentDocumentId);
-      }
-
-      set({ activeSource, selectedDocumentId: null });
-    },
-
-    toggleFolderExpanded: (source, folderId) => {
-      const collapsedFolderIds = getCollapsedFolderIds(get(), source);
-      const isCollapsed = collapsedFolderIds.includes(folderId);
-      const nextCollapsedFolderIds = isCollapsed
-        ? collapsedFolderIds.filter((id) => id !== folderId)
-        : [...collapsedFolderIds, folderId];
-
-      set(
-        source === "local"
-          ? { localCollapsedFolderIds: nextCollapsedFolderIds }
-          : { cloudCollapsedFolderIds: nextCollapsedFolderIds },
-      );
-    },
-
-    createFolder: (source, rawName, parentId = null, color = "primary") => {
-      const name = rawName.trim();
-
-      if (!name) {
-        return null;
-      }
-
-      const items = getWorkspaceItems(get(), source);
-
-      if (
-        parentId &&
-        !items.some((item) => isWorkspaceFolder(item) && item.id === parentId)
-      ) {
-        return null;
-      }
-
-      const timestamp = now();
-      const folder: WorkspaceItem = {
-        id: createItemId(`${source}-folder`),
-        type: "folder",
-        parent_id: parentId,
-        name,
-        created_at: timestamp,
-        updated_at: timestamp,
-        color,
-      };
-
-      setWorkspaceItems(set, source, [...items, folder]);
-      return folder.id;
-    },
-
-    renameFolder: (source, folderId, rawName, color) => {
-      const name = rawName.trim();
-
-      if (!name) {
-        return;
-      }
-
-      const items = getWorkspaceItems(get(), source);
-
-      if (
-        !items.some((item) => isWorkspaceFolder(item) && item.id === folderId)
-      ) {
-        return;
-      }
-
-      setWorkspaceItems(
-        set,
-        source,
-        items.map((item) =>
-          isWorkspaceFolder(item) && item.id === folderId
-            ? { ...item, name, color, updated_at: now() }
-            : item,
-        ),
-      );
-    },
-
-    deleteFolder: (source, folderId) => {
-      const items = getWorkspaceItems(get(), source);
-      const folder = items.find(
-        (item) => isWorkspaceFolder(item) && item.id === folderId,
-      );
-
-      if (!folder || folder.parent_id === null) {
-        return false;
-      }
-
-      const folderIdsToDelete = getDescendantFolderIds(items, folderId);
-      const timestamp = now();
-      const nextItems = items
-        .filter((item) => !folderIdsToDelete.has(item.id))
-        .map((item) =>
-          isWorkspaceDocument(item) &&
-          item.parent_id !== null &&
-          folderIdsToDelete.has(item.parent_id)
-            ? { ...item, deleted_at: timestamp, updated_at: timestamp }
-            : item,
-        );
-      const collapsedFolderIds = getCollapsedFolderIds(get(), source).filter(
-        (id) => !folderIdsToDelete.has(id),
-      );
-
-      set(
-        source === "local"
-          ? {
-              localItems: nextItems,
-              localCollapsedFolderIds: collapsedFolderIds,
-            }
-          : {
-              cloudItems: nextItems,
-              cloudCollapsedFolderIds: collapsedFolderIds,
-            },
-      );
-
-      return true;
-    },
-
-    createDocument: (source, title, parentId = null) => {
-      const trimmedTitle = title?.trim();
-      const timestamp = now();
-      const document: WorkspaceItem = {
-        id: createItemId(`${source}-document`),
-        type: "document",
-        parent_id: parentId,
-        name: trimmedTitle || UNTITLED_DOCUMENT_TITLE,
-        created_at: timestamp,
-        updated_at: timestamp,
-        content: createInitialMarkdown(trimmedTitle),
-        group: "documents",
-      };
-
-      const items = getWorkspaceItems(get(), source);
-      setWorkspaceItems(set, source, [...items, document]);
-
-      return document.id;
-    },
-
-    renameDocument: (source, documentId, rawTitle) => {
-      const name = rawTitle.trim();
-
-      if (!name) {
-        return;
-      }
-
-      const items = getWorkspaceItems(get(), source);
-      setWorkspaceItems(
-        set,
-        source,
-        items.map((item) =>
-          isWorkspaceDocument(item) && item.id === documentId
-            ? { ...item, name, deleted_at: null, updated_at: now() }
-            : item,
-        ),
-      );
-    },
-
-    moveDocument: (source, documentId, folderId) => {
-      const items = getWorkspaceItems(get(), source);
-
-      if (
-        folderId &&
-        !items.some((item) => isWorkspaceFolder(item) && item.id === folderId)
-      ) {
-        return;
-      }
-
-      setWorkspaceItems(
-        set,
-        source,
-        items.map((item) =>
-          isWorkspaceDocument(item) && item.id === documentId
-            ? { ...item, parent_id: folderId, updated_at: now() }
-            : item,
-        ),
-      );
-    },
-
-    moveFolder: (source, folderId, parentId) => {
-      const items = getWorkspaceItems(get(), source);
-      const folder = items.find(
-        (item) => isWorkspaceFolder(item) && item.id === folderId,
-      );
-
-      if (!folder || folder.parent_id === null) {
-        return false;
-      }
-
-      if (
-        !parentId ||
-        !items.some((item) => isWorkspaceFolder(item) && item.id === parentId)
-      ) {
-        return false;
-      }
-
-      const movedFolderIds = getDescendantFolderIds(items, folderId);
-
-      if (movedFolderIds.has(parentId) || folder.parent_id === parentId) {
-        return false;
-      }
-
-      setWorkspaceItems(
-        set,
-        source,
-        items.map((item) =>
-          isWorkspaceFolder(item) && item.id === folderId
-            ? { ...item, parent_id: parentId, updated_at: now() }
-            : item,
-        ),
-      );
-
-      return true;
-    },
-
-    toggleFavorite: (source, documentId) => {
-      const items = getWorkspaceItems(get(), source);
-      setWorkspaceItems(
-        set,
-        source,
-        items.map((item) =>
-          isWorkspaceDocument(item) && item.id === documentId
-            ? { ...item, favorite: !item.favorite, updated_at: now() }
-            : item,
-        ),
-      );
-    },
-
-    deleteDocument: (source, documentId) => {
-      const items = getWorkspaceItems(get(), source);
-      const timestamp = now();
-
-      setWorkspaceItems(
-        set,
-        source,
-        items.map((item) =>
-          isWorkspaceDocument(item) && item.id === documentId
-            ? { ...item, deleted_at: timestamp, updated_at: timestamp }
-            : item,
-        ),
-      );
-    },
-
-    selectDocument: (documentId) => {
-      const currentDocumentId = get().selectedDocumentId;
-      const items = getWorkspaceItems(get(), get().activeSource);
-
-      if (
-        currentDocumentId === documentId ||
-        !items.some(
-          (item) =>
-            isWorkspaceDocument(item) &&
-            item.id === documentId &&
-            !item.deleted_at,
-        )
-      ) {
-        return;
-      }
-
-      if (currentDocumentId) {
-        get().flushPendingContent(currentDocumentId);
-      }
-
-      set({ selectedDocumentId: documentId });
-    },
-
-    clearSelection: () => {
-      const currentDocumentId = get().selectedDocumentId;
-
-      if (currentDocumentId) {
-        get().flushPendingContent(currentDocumentId);
-      }
-
-      set({ selectedDocumentId: null });
-    },
-
-    scheduleContentUpdate: (documentId, content) => {
-      const state = get();
-      const source = getDocumentSource(state, documentId);
-      const items = source ? getWorkspaceItems(state, source) : [];
-      const document = items.find(
-        (item): item is WorkspaceDocumentItem =>
-          isWorkspaceDocument(item) && item.id === documentId,
-      );
-
-      if (!source || !document) {
-        return;
-      }
-
-      const maxCharacters =
-        source === "local"
-          ? SESSION_MARKDOWN_CHARACTER_LIMIT
-          : MAX_MARKDOWN_CHARACTERS;
-      const limitedContent = normalizeMarkdownDocument(
-        content,
-        maxCharacters,
-      ).content;
-
-      if (document.content === limitedContent) {
-        cancelPendingContentUpdate(documentId);
-        set((currentState) => ({
-          pendingContentByDocumentId: omitPendingContent(
-            currentState.pendingContentByDocumentId,
-            documentId,
-          ),
-        }));
-        return;
-      }
-
-      cancelPendingContentUpdate(documentId);
-      set((currentState) => ({
-        pendingContentByDocumentId: {
-          ...currentState.pendingContentByDocumentId,
-          [documentId]: limitedContent,
-        },
-      }));
-
-      const timeoutId = setTimeout(() => {
-        const pendingUpdate = pendingContentUpdates.get(documentId);
-
-        if (!pendingUpdate || pendingUpdate.timeoutId !== timeoutId) {
-          return;
-        }
-
-        pendingContentUpdates.delete(documentId);
-        commitContent(set, documentId, pendingUpdate.content);
-      }, DOCUMENT_CONTENT_DEBOUNCE_MS);
-
-      pendingContentUpdates.set(documentId, {
-        content: limitedContent,
-        timeoutId,
-      });
-    },
-
-    flushPendingContent: (documentId) => {
+    const cancelPendingContentUpdate = (documentId: string) => {
       const pendingUpdate = pendingContentUpdates.get(documentId);
 
       if (!pendingUpdate) {
         return;
       }
 
-      cancelPendingContentUpdate(documentId);
-      commitContent(set, documentId, pendingUpdate.content);
-    },
+      clearTimeout(pendingUpdate.timeoutId);
+      pendingContentUpdates.delete(documentId);
+    };
 
-    flushAllPendingContent: () => {
-      [...pendingContentUpdates.keys()].forEach((documentId) => {
-        get().flushPendingContent(documentId);
-      });
-    },
-  }),
-);
+    const commitContent = (documentId: string, content: string) => {
+      const document = get().items.find(
+        (item): item is WorkspaceDocumentItem =>
+          isWorkspaceDocument(item) && item.id === documentId,
+      );
+      const title = getFirstHeadingTitle(content) || UNTITLED_DOCUMENT_TITLE;
 
-export type { WorkspaceItemsStoreState };
+      if (
+        !document ||
+        (document.content === content && document.name === title)
+      ) {
+        set(
+          (state) =>
+            ({
+              pendingContentByDocumentId: omitPendingContent(
+                state.pendingContentByDocumentId,
+                documentId,
+              ),
+            }) as Partial<T>,
+        );
+        return;
+      }
+
+      updateItems(
+        get().items.map((item) =>
+          isWorkspaceDocument(item) && item.id === documentId
+            ? { ...item, content, name: title, updated_at: now() }
+            : item,
+        ),
+      );
+      set(
+        (state) =>
+          ({
+            pendingContentByDocumentId: omitPendingContent(
+              state.pendingContentByDocumentId,
+              documentId,
+            ),
+          }) as Partial<T>,
+      );
+    };
+
+    return {
+      items: normalizeWorkspaceItems(options.initialItems),
+      pendingContentByDocumentId: {},
+      collapsedFolderIds: [],
+
+      setItems: updateItems,
+
+      toggleFolderExpanded: (folderId) => {
+        const isCollapsed = get().collapsedFolderIds.includes(folderId);
+        set({
+          collapsedFolderIds: isCollapsed
+            ? get().collapsedFolderIds.filter((id) => id !== folderId)
+            : [...get().collapsedFolderIds, folderId],
+        } as Partial<T>);
+      },
+
+      createFolder: (
+        rawName,
+        parentId = null,
+        color = DEFAULT_DOCUMENT_FOLDER_COLOR,
+        icon = DEFAULT_DOCUMENT_FOLDER_ICON,
+      ) => {
+        const name = rawName.trim();
+
+        if (
+          !name ||
+          (parentId &&
+            !get().items.some(
+              (item) => isWorkspaceFolder(item) && item.id === parentId,
+            ))
+        ) {
+          return null;
+        }
+
+        const timestamp = now();
+        const folder: WorkspaceFolderItem = {
+          id: createItemId("folder"),
+          type: "folder",
+          parent_id: parentId,
+          name,
+          created_at: timestamp,
+          updated_at: timestamp,
+          color,
+          icon,
+        };
+
+        updateItems([...get().items, folder]);
+        return folder.id;
+      },
+
+      renameFolder: (folderId, rawName, color, icon) => {
+        const name = rawName.trim();
+
+        if (!name) {
+          return;
+        }
+
+        updateItems(
+          get().items.map((item) =>
+            isWorkspaceFolder(item) && item.id === folderId
+              ? { ...item, name, color, icon, updated_at: now() }
+              : item,
+          ),
+        );
+      },
+
+      deleteFolder: (folderId) => {
+        const folder = get().items.find(
+          (item) => isWorkspaceFolder(item) && item.id === folderId,
+        );
+
+        if (!folder || folder.parent_id === null) {
+          return false;
+        }
+
+        const folderIdsToDelete = getDescendantFolderIds(get().items, folderId);
+        const timestamp = now();
+        updateItems(
+          get()
+            .items.filter((item) => !folderIdsToDelete.has(item.id))
+            .map((item) =>
+              isWorkspaceDocument(item) &&
+              item.parent_id !== null &&
+              folderIdsToDelete.has(item.parent_id)
+                ? { ...item, deleted_at: timestamp, updated_at: timestamp }
+                : item,
+            ),
+        );
+        set({
+          collapsedFolderIds: get().collapsedFolderIds.filter(
+            (id) => !folderIdsToDelete.has(id),
+          ),
+        } as Partial<T>);
+
+        return true;
+      },
+
+      createDocument: (title, parentId = null) => {
+        const trimmedTitle = title?.trim();
+        const timestamp = now();
+        const document: WorkspaceDocumentItem = {
+          id: createItemId("document"),
+          type: "document",
+          parent_id: parentId,
+          name: trimmedTitle || UNTITLED_DOCUMENT_TITLE,
+          created_at: timestamp,
+          updated_at: timestamp,
+          content: createInitialMarkdown(trimmedTitle),
+          group: "documents",
+        };
+
+        updateItems([...get().items, document]);
+        return document.id;
+      },
+
+      renameDocument: (documentId, rawName) => {
+        const name = rawName.trim();
+
+        if (!name) {
+          return;
+        }
+
+        updateItems(
+          get().items.map((item) =>
+            isWorkspaceDocument(item) && item.id === documentId
+              ? { ...item, name, deleted_at: null, updated_at: now() }
+              : item,
+          ),
+        );
+      },
+
+      moveDocument: (documentId, folderId) => {
+        if (
+          folderId &&
+          !get().items.some(
+            (item) => isWorkspaceFolder(item) && item.id === folderId,
+          )
+        ) {
+          return;
+        }
+
+        updateItems(
+          get().items.map((item) =>
+            isWorkspaceDocument(item) && item.id === documentId
+              ? { ...item, parent_id: folderId, updated_at: now() }
+              : item,
+          ),
+        );
+      },
+
+      moveFolder: (folderId, parentId) => {
+        const folder = get().items.find(
+          (item) => isWorkspaceFolder(item) && item.id === folderId,
+        );
+
+        if (
+          !folder ||
+          folder.parent_id === null ||
+          !parentId ||
+          !get().items.some(
+            (item) => isWorkspaceFolder(item) && item.id === parentId,
+          )
+        ) {
+          return false;
+        }
+
+        const movedFolderIds = getDescendantFolderIds(get().items, folderId);
+
+        if (movedFolderIds.has(parentId) || folder.parent_id === parentId) {
+          return false;
+        }
+
+        updateItems(
+          get().items.map((item) =>
+            isWorkspaceFolder(item) && item.id === folderId
+              ? { ...item, parent_id: parentId, updated_at: now() }
+              : item,
+          ),
+        );
+
+        return true;
+      },
+
+      toggleFavorite: (documentId) => {
+        updateItems(
+          get().items.map((item) =>
+            isWorkspaceDocument(item) && item.id === documentId
+              ? { ...item, favorite: !item.favorite, updated_at: now() }
+              : item,
+          ),
+        );
+      },
+
+      deleteDocument: (documentId) => {
+        const timestamp = now();
+        updateItems(
+          get().items.map((item) =>
+            isWorkspaceDocument(item) && item.id === documentId
+              ? { ...item, deleted_at: timestamp, updated_at: timestamp }
+              : item,
+          ),
+        );
+      },
+
+      scheduleContentUpdate: (documentId, content) => {
+        const document = get().items.find(
+          (item): item is WorkspaceDocumentItem =>
+            isWorkspaceDocument(item) && item.id === documentId,
+        );
+
+        if (!document) {
+          return;
+        }
+
+        const limitedContent = normalizeMarkdownDocument(
+          content,
+          options.maxMarkdownCharacters,
+        ).content;
+
+        if (document.content === limitedContent) {
+          cancelPendingContentUpdate(documentId);
+          set(
+            (state) =>
+              ({
+                pendingContentByDocumentId: omitPendingContent(
+                  state.pendingContentByDocumentId,
+                  documentId,
+                ),
+              }) as Partial<T>,
+          );
+          return;
+        }
+
+        cancelPendingContentUpdate(documentId);
+        set(
+          (state) =>
+            ({
+              pendingContentByDocumentId: {
+                ...state.pendingContentByDocumentId,
+                [documentId]: limitedContent,
+              },
+            }) as Partial<T>,
+        );
+
+        const timeoutId = setTimeout(() => {
+          const pendingUpdate = pendingContentUpdates.get(documentId);
+
+          if (!pendingUpdate || pendingUpdate.timeoutId !== timeoutId) {
+            return;
+          }
+
+          pendingContentUpdates.delete(documentId);
+          commitContent(documentId, pendingUpdate.content);
+        }, DOCUMENT_CONTENT_DEBOUNCE_MS);
+
+        pendingContentUpdates.set(documentId, {
+          content: limitedContent,
+          timeoutId,
+        });
+      },
+
+      flushPendingContent: (documentId) => {
+        const pendingUpdate = pendingContentUpdates.get(documentId);
+
+        if (!pendingUpdate) {
+          return;
+        }
+
+        cancelPendingContentUpdate(documentId);
+        commitContent(documentId, pendingUpdate.content);
+      },
+
+      flushAllPendingContent: () => {
+        [...pendingContentUpdates.keys()].forEach((documentId) => {
+          get().flushPendingContent(documentId);
+        });
+      },
+    };
+  };
+}

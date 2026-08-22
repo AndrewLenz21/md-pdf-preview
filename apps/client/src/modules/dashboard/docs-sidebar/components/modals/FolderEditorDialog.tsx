@@ -1,20 +1,29 @@
+import { useState } from "react";
+
 import { ModalShell } from "@/shared/components/ModalShell";
 import { DialogFormFooter } from "@/shared/components/DialogFormFooter";
 import { DialogTextField } from "@/shared/components/DialogTextField";
-import type { DocumentFolderColor } from "@/modules/dashboard/document/model/document.types";
+import type {
+  DocumentFolderColor,
+  DocumentFolderIcon,
+} from "@/modules/dashboard/document/model/document.types";
 
 import {
   FOLDER_COLOR_OPTIONS,
   FOLDER_SWATCH_COLOR_CLASSES,
 } from "../folderColors";
+import { FolderIconSelector } from "../FolderIconSelector";
 
 export function FolderEditorDialog({
   open,
   title,
   name,
   color,
+  icon,
+  mobile = false,
   onNameChange,
   onColorChange,
+  onIconChange,
   onClose,
   onSubmit,
 }: {
@@ -22,18 +31,24 @@ export function FolderEditorDialog({
   title: string;
   name: string;
   color: DocumentFolderColor;
+  icon: DocumentFolderIcon;
+  mobile?: boolean;
   onNameChange: (name: string) => void;
   onColorChange: (color: DocumentFolderColor) => void;
+  onIconChange: (icon: DocumentFolderIcon) => void;
   onClose: () => void;
   onSubmit: () => void;
 }) {
+  const [iconPickerOpen, setIconPickerOpen] = useState(false);
+
   return (
     <ModalShell
       open={open}
       onClose={onClose}
       title={title}
-      description="Choose a name and color for this folder."
+      description="Choose a name, icon, and color for this folder."
       closeLabel="Close folder dialog"
+      closeOnEscape={!iconPickerOpen}
     >
       <form
         className="space-y-5"
@@ -42,14 +57,24 @@ export function FolderEditorDialog({
           onSubmit();
         }}
       >
-        <DialogTextField
-          label="Folder name"
-          value={name}
-          maxLength={200}
-          onChange={onNameChange}
-          placeholder="New folder"
-          autoFocus
-        />
+        <div className="flex items-end gap-3">
+          <FolderIconSelector
+            icon={icon}
+            mobile={mobile}
+            onChange={onIconChange}
+            onOpenChange={setIconPickerOpen}
+          />
+          <div className="min-w-0 flex-1">
+            <DialogTextField
+              label="Folder name"
+              value={name}
+              maxLength={200}
+              onChange={onNameChange}
+              placeholder="New folder"
+              autoFocus
+            />
+          </div>
+        </div>
 
         <fieldset className="space-y-2">
           <legend className="text-xs font-semibold text-foreground">

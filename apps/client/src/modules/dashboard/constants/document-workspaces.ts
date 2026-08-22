@@ -38,6 +38,7 @@ export const LOCAL_WORKSPACE_ITEMS_OLD: LegacyWorkspaceData = {
       parentId: null,
       route: LOCAL_ROOT_ROUTE,
       color: "primary",
+      icon: "folder",
     },
     {
       id: LOCAL_RECENT_FOLDER_ID,
@@ -45,6 +46,7 @@ export const LOCAL_WORKSPACE_ITEMS_OLD: LegacyWorkspaceData = {
       parentId: LOCAL_ROOT_FOLDER_ID,
       route: LOCAL_RECENT_ROUTE,
       color: "blue",
+      icon: "briefcase",
     },
     {
       id: LOCAL_DOCUMENTS_FOLDER_ID,
@@ -52,6 +54,7 @@ export const LOCAL_WORKSPACE_ITEMS_OLD: LegacyWorkspaceData = {
       parentId: LOCAL_ROOT_FOLDER_ID,
       route: LOCAL_DOCUMENTS_ROUTE,
       color: "violet",
+      icon: "archive",
     },
     {
       id: LOCAL_WORKING_SET_FOLDER_ID,
@@ -59,6 +62,7 @@ export const LOCAL_WORKSPACE_ITEMS_OLD: LegacyWorkspaceData = {
       parentId: LOCAL_RECENT_FOLDER_ID,
       route: LOCAL_WORKING_SET_ROUTE,
       color: "blue",
+      icon: "target",
     },
     {
       id: LOCAL_RESEARCH_NOTES_FOLDER_ID,
@@ -66,6 +70,7 @@ export const LOCAL_WORKSPACE_ITEMS_OLD: LegacyWorkspaceData = {
       parentId: LOCAL_RECENT_FOLDER_ID,
       route: LOCAL_RESEARCH_NOTES_ROUTE,
       color: "emerald",
+      icon: "lightbulb",
     },
     {
       id: LOCAL_PLANNING_FOLDER_ID,
@@ -73,6 +78,7 @@ export const LOCAL_WORKSPACE_ITEMS_OLD: LegacyWorkspaceData = {
       parentId: LOCAL_DOCUMENTS_FOLDER_ID,
       route: LOCAL_PLANNING_ROUTE,
       color: "amber",
+      icon: "code",
     },
     {
       id: LOCAL_NOTES_FOLDER_ID,
@@ -80,6 +86,7 @@ export const LOCAL_WORKSPACE_ITEMS_OLD: LegacyWorkspaceData = {
       parentId: LOCAL_DOCUMENTS_FOLDER_ID,
       route: LOCAL_NOTES_ROUTE,
       color: "rose",
+      icon: "book",
     },
   ],
   organization: {
@@ -140,6 +147,7 @@ const LOCAL_WORKSPACE_FOLDER_ITEMS: WorkspaceItem[] = [
     created_at: LOCAL_WORKSPACE_CREATED_AT,
     updated_at: LOCAL_WORKSPACE_CREATED_AT,
     color: "primary",
+    icon: "folder",
   },
   {
     id: LOCAL_RECENT_FOLDER_ID,
@@ -149,6 +157,7 @@ const LOCAL_WORKSPACE_FOLDER_ITEMS: WorkspaceItem[] = [
     created_at: LOCAL_WORKSPACE_CREATED_AT,
     updated_at: LOCAL_WORKSPACE_CREATED_AT,
     color: "blue",
+    icon: "briefcase",
   },
   {
     id: LOCAL_DOCUMENTS_FOLDER_ID,
@@ -158,6 +167,7 @@ const LOCAL_WORKSPACE_FOLDER_ITEMS: WorkspaceItem[] = [
     created_at: LOCAL_WORKSPACE_CREATED_AT,
     updated_at: LOCAL_WORKSPACE_CREATED_AT,
     color: "violet",
+    icon: "archive",
   },
   {
     id: LOCAL_WORKING_SET_FOLDER_ID,
@@ -167,6 +177,7 @@ const LOCAL_WORKSPACE_FOLDER_ITEMS: WorkspaceItem[] = [
     created_at: LOCAL_WORKSPACE_CREATED_AT,
     updated_at: LOCAL_WORKSPACE_CREATED_AT,
     color: "blue",
+    icon: "target",
   },
   {
     id: LOCAL_RESEARCH_NOTES_FOLDER_ID,
@@ -176,6 +187,7 @@ const LOCAL_WORKSPACE_FOLDER_ITEMS: WorkspaceItem[] = [
     created_at: LOCAL_WORKSPACE_CREATED_AT,
     updated_at: LOCAL_WORKSPACE_CREATED_AT,
     color: "emerald",
+    icon: "lightbulb",
   },
   {
     id: LOCAL_PLANNING_FOLDER_ID,
@@ -185,6 +197,7 @@ const LOCAL_WORKSPACE_FOLDER_ITEMS: WorkspaceItem[] = [
     created_at: LOCAL_WORKSPACE_CREATED_AT,
     updated_at: LOCAL_WORKSPACE_CREATED_AT,
     color: "amber",
+    icon: "code",
   },
   {
     id: LOCAL_NOTES_FOLDER_ID,
@@ -194,6 +207,7 @@ const LOCAL_WORKSPACE_FOLDER_ITEMS: WorkspaceItem[] = [
     created_at: LOCAL_WORKSPACE_CREATED_AT,
     updated_at: LOCAL_WORKSPACE_CREATED_AT,
     color: "rose",
+    icon: "book",
   },
 ];
 
@@ -226,5 +240,6 @@ export const CLOUD_WORKSPACE_ITEMS: WorkspaceItem[] = [
     created_at: LOCAL_WORKSPACE_CREATED_AT,
     updated_at: LOCAL_WORKSPACE_CREATED_AT,
     color: "primary",
+    icon: "folder",
   },
 ];

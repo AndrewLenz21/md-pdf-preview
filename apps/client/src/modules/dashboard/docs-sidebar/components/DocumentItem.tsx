@@ -6,7 +6,7 @@ import {
 } from "react";
 import {
   ChevronLeft,
-  FileText,
+  FileCode2,
   FolderInput,
   MoreHorizontal,
   Pencil,
@@ -24,7 +24,7 @@ import {
   DocumentRenameDialog,
 } from "./modals";
 
-const TREE_INDENT = 22;
+const TREE_INDENT = 10;
 
 export type DocumentFolderOption = {
   id: string | null;
@@ -149,7 +149,7 @@ export function DocumentItem({
       data-tree-layout-id={`document:${documentId}`}
       className={`group/document relative flex min-w-0 items-center rounded-lg border-l-2 transition-colors ${selected ? "border-primary bg-accent text-accent-foreground shadow-sm" : `border-transparent text-muted-foreground ${isDragActive ? "" : "hover:bg-accent/60 hover:text-foreground"}`}`}
       style={{
-        paddingLeft: depth === 0 ? "8px" : `${7 + (depth - 1) * TREE_INDENT}px`,
+        paddingLeft: depth === 0 ? "8px" : `${depth * TREE_INDENT}px`,
       }}
       onPointerDown={onDragPointerDown}
       onClickCapture={onDragClickCapture}
@@ -182,11 +182,13 @@ export function DocumentItem({
           aria-current={selected ? "page" : undefined}
           className="flex min-w-0 flex-1 items-center gap-0.5 px-1 py-1.5 text-left"
         >
-          <FileText
-            className={`h-4 w-4 shrink-0 ${selected ? "text-primary" : `text-muted-foreground/70 ${isDragActive ? "" : "group-hover/document:text-foreground"}`}`}
+          <FileCode2
+            className={`h-4 w-4 shrink-0 transition-transform duration-150 ease-out ${selected ? "text-primary" : `text-muted-foreground/70 ${isDragActive ? "" : "group-hover/document:text-foreground"}`} ${isDragActive ? "" : "group-hover/document:translate-x-0.5"}`}
             strokeWidth={1.7}
           />
-          <span className="flex min-w-0 flex-1 items-center gap-2">
+          <span
+            className={`flex min-w-0 flex-1 items-center gap-2 transition-transform duration-150 ease-out ${isDragActive ? "" : "group-hover/document:translate-x-0.5"}`}
+          >
             <span
               className={`docs-sidebar-dnd-label min-w-0 flex-1 truncate text-sm ${selected ? "font-medium" : "font-normal"}`}
             >

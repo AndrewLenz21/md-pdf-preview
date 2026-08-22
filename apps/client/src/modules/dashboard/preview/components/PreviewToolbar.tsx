@@ -14,7 +14,9 @@ import type { WorkspaceDocumentItem } from "@/modules/dashboard/document/model/d
 import {
   MAX_MARKDOWN_CHARACTERS,
   isWorkspaceDocument,
-  useWorkspaceItemsStore,
+  useCloudWorkspaceStore,
+  useLocalWorkspaceStore,
+  useWorkspaceSessionStore,
 } from "@/modules/dashboard/stores";
 import type { DocumentEditorMode } from "@/modules/dashboard/types/editor.types";
 
@@ -106,8 +108,18 @@ function EditingActionButtons({
 }
 
 function ClearSelectionButton() {
-  const clearSelection = useWorkspaceItemsStore(
+  const activeSource = useWorkspaceSessionStore((state) => state.activeSource);
+  const selectedDocumentId = useWorkspaceSessionStore(
+    (state) => state.selectedDocumentId,
+  );
+  const clearSelection = useWorkspaceSessionStore(
     (state) => state.clearSelection,
+  );
+  const flushLocalPendingContent = useLocalWorkspaceStore(
+    (state) => state.flushPendingContent,
+  );
+  const flushCloudPendingContent = useCloudWorkspaceStore(
+    (state) => state.flushPendingContent,
   );
 
   return (
@@ -115,7 +127,15 @@ function ClearSelectionButton() {
       type="button"
       title="Clear selection"
       aria-label="Clear selection"
-      onClick={clearSelection}
+      onClick={() => {
+        if (selectedDocumentId) {
+          (activeSource === "local"
+            ? flushLocalPendingContent
+            : flushCloudPendingContent)(selectedDocumentId);
+        }
+
+        clearSelection();
+      }}
       className="mobile-preview-toolbar-clear-action mobile-preview-toolbar-action-visible flex h-8 items-center gap-1 rounded-md px-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40 lg:text-[11px]"
     >
       <X className="h-3.5 w-3.5" strokeWidth={1.8} />
@@ -187,17 +207,34 @@ export function PreviewToolbar({
   splitMode?: boolean;
 }) {
   const isPreviewMode = mode === "preview";
-  const activeSource = useWorkspaceItemsStore((state) => state.activeSource);
+  const activeSource = useWorkspaceSessionStore((state) => state.activeSource);
   const hasCharacterLimit = activeSource === "cloud";
-  const markdownCharacterCount = useWorkspaceItemsStore((state) => {
-    const pendingContent = state.pendingContentByDocumentId[document.id];
-    const storedDocument = [...state.localItems, ...state.cloudItems].find(
-      (item): item is WorkspaceDocumentItem =>
-        isWorkspaceDocument(item) && item.id === document.id,
-    );
+  const localPendingContent = useLocalWorkspaceStore(
+    (state) => state.pendingContentByDocumentId[document.id],
+  );
+  const cloudPendingContent = useCloudWorkspaceStore(
+    (state) => state.pendingContentByDocumentId[document.id],
+  );
+  const localDocumentContent = useLocalWorkspaceStore(
+    (state) =>
+      state.items.find(
+        (item): item is WorkspaceDocumentItem =>
+          isWorkspaceDocument(item) && item.id === document.id,
+      )?.content,
+  );
+  const cloudDocumentContent = useCloudWorkspaceStore(
+    (state) =>
+      state.items.find(
+        (item): item is WorkspaceDocumentItem =>
+          isWorkspaceDocument(item) && item.id === document.id,
+      )?.content,
+  );
+  const markdownCharacterCount =
+    (activeSource === "local"
+      ? (localPendingContent ?? localDocumentContent)
+      : (cloudPendingContent ?? cloudDocumentContent)
+    )?.length ?? 0;
 
-    return (pendingContent ?? storedDocument?.content ?? "").length;
-  });
   const isAtCharacterLimit =
     hasCharacterLimit && markdownCharacterCount >= MAX_MARKDOWN_CHARACTERS;
 

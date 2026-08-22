@@ -11,7 +11,9 @@ import {
 import type { Editor } from "@tiptap/core";
 
 import {
-  useWorkspaceItemsStore,
+  useCloudWorkspaceStore,
+  useLocalWorkspaceStore,
+  useWorkspaceSessionStore,
   useWorkspaceStore,
 } from "@/modules/dashboard/stores";
 import type { WorkspaceDocumentItem } from "@/modules/dashboard/document/model/document.types";
@@ -263,9 +265,15 @@ export function DocumentPreview({
   pageBreakMarkers?: number[];
 }) {
   const paperSize = useWorkspaceStore((state) => state.paperSize);
-  const pendingContent = useWorkspaceItemsStore(
+  const activeSource = useWorkspaceSessionStore((state) => state.activeSource);
+  const localPendingContent = useLocalWorkspaceStore(
     (state) => state.pendingContentByDocumentId[document.id],
   );
+  const cloudPendingContent = useCloudWorkspaceStore(
+    (state) => state.pendingContentByDocumentId[document.id],
+  );
+  const pendingContent =
+    activeSource === "local" ? localPendingContent : cloudPendingContent;
   const { zoom } = useModeZoom(mode);
   const paperDimensions = getPaperDimensions(mode, paperSize, zoom);
   const storedMarkdown = pendingContent ?? document.content ?? "";

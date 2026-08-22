@@ -12,8 +12,6 @@ import {
   Cloud,
   FilePlus2,
   Files,
-  Folder,
-  FolderOpen,
   FolderPlus,
   Pencil,
   Plus,
@@ -22,6 +20,7 @@ import {
 import { Link } from "@/core/i18n";
 import { useDismissableLayer } from "@/shared/hooks/useDismissableLayer";
 import type {
+  DocumentSource,
   WorkspaceDocumentItem,
   WorkspaceFolderItem,
   WorkspaceItem,
@@ -33,9 +32,10 @@ import {
 
 import { DocumentItem, type DocumentFolderOption } from "./DocumentItem";
 import { FOLDER_ICON_COLOR_CLASSES } from "./folderColors";
+import { FolderIcon } from "./folderIcons";
 import type { LongPressDragItem } from "./longPressDrag";
 
-const TREE_INDENT = 22;
+const TREE_INDENT = 8;
 const TREE_LAYOUT_ITEM_SELECTOR = "[data-tree-layout-id]";
 const TREE_LAYOUT_EASING = "cubic-bezier(0.22, 1, 0.36, 1)";
 
@@ -257,6 +257,7 @@ function FolderDropLabel({
 
 export function FolderTree({
   items,
+  source,
   selectedId,
   onSelect,
   onRename,
@@ -277,13 +278,14 @@ export function FolderTree({
   onDragClickCapture,
 }: {
   items: WorkspaceItem[];
+  source: DocumentSource;
   selectedId: string | null;
   onSelect: (id: string) => void;
   onRename: (id: string, title: string) => void;
   onDelete: (id: string) => void;
   onMove: (id: string, folderId: string | null) => void;
   onToggleFavorite: (id: string) => void;
-  onCreateDocument: (folderId: string, title?: string) => void;
+  onCreateDocument: (folderId: string) => void;
   onCreateFolder: (parentId: string) => void;
   onEditFolder: (folder: WorkspaceFolderItem) => void;
   collapsedFolderIds: string[];
@@ -329,7 +331,12 @@ export function FolderTree({
   }
 
   return (
-    <div ref={treeRef} className="space-y-0.5" data-dnd-root-drop="true">
+    <div
+      ref={treeRef}
+      className="space-y-0.5"
+      data-dnd-root-drop="true"
+      data-dnd-source={source}
+    >
       {rootDocuments.map((document) => (
         <DocumentItem
           key={document.id}
@@ -360,6 +367,7 @@ export function FolderTree({
           folder={folder}
           depth={0}
           items={items}
+          source={source}
           selectedId={selectedId}
           folderOptions={folderOptions}
           onSelect={onSelect}
@@ -389,6 +397,7 @@ function FolderNode({
   folder,
   depth,
   items,
+  source,
   selectedId,
   folderOptions,
   onSelect,
@@ -412,6 +421,7 @@ function FolderNode({
   folder: WorkspaceFolderItem;
   depth: number;
   items: WorkspaceItem[];
+  source: DocumentSource;
   selectedId: string | null;
   folderOptions: DocumentFolderOption[];
   onSelect: (id: string) => void;
@@ -419,7 +429,7 @@ function FolderNode({
   onDelete: (id: string) => void;
   onMove: (id: string, folderId: string | null) => void;
   onToggleFavorite: (id: string) => void;
-  onCreateDocument: (folderId: string, title?: string) => void;
+  onCreateDocument: (folderId: string) => void;
   onCreateFolder: (parentId: string) => void;
   onEditFolder: (folder: WorkspaceFolderItem) => void;
   collapsedFolderIds: string[];
@@ -452,6 +462,7 @@ function FolderNode({
     <div
       ref={folderItemRef}
       data-dnd-folder-id={folder.id}
+      data-dnd-source={source}
       data-dnd-dragging={
         draggingItem?.kind === "folder" && draggingItem.id === folder.id
           ? "true"
@@ -460,136 +471,136 @@ function FolderNode({
       className={`relative ${depth === 0 ? "mt-4 first:mt-0" : ""}`}
       onClickCapture={onDragClickCapture}
     >
-      <div
-        data-dnd-item="folder"
-        data-tree-layout-id={`folder:${folder.id}`}
-        data-dnd-drop-target={
-          dropTargetFolderId === folder.id ? "true" : undefined
-        }
-        className="group/folder flex w-full items-center"
-        style={
-          depth === 0
-            ? undefined
-            : { paddingLeft: `${(depth - 1) * TREE_INDENT}px` }
-        }
-        onPointerDown={(event) =>
-          onDragPointerDown({ kind: "folder", id: folder.id }, event)
-        }
-      >
-        <button
-          type="button"
-          aria-expanded={hasChildren ? expanded : undefined}
-          className={`flex min-w-0 flex-1 items-center gap-0.5 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-accent/60 hover:text-foreground ${depth === 0 ? "text-foreground" : "text-muted-foreground"}`}
-          onClick={() => {
-            if (hasChildren || depth === 0) {
-              onToggleFolder(folder.id);
-            }
-          }}
-        >
-          {depth > 0 ? (
-            <ChevronRight
-              className={`h-3.5 w-3.5 shrink-0 transition-transform ${expanded && hasChildren ? "rotate-90" : ""} ${hasChildren ? "" : "opacity-0"}`}
-              strokeWidth={1.8}
-            />
-          ) : null}
-          <span aria-hidden="true" className="relative h-4 w-4 shrink-0">
-            <Folder
-              className={`absolute inset-0 h-4 w-4 transition-all duration-200 ease-out ${FOLDER_ICON_COLOR_CLASSES[folder.color]} ${expanded ? "scale-75 opacity-0" : "scale-100 opacity-100"}`}
-              strokeWidth={1.7}
-            />
-            <FolderOpen
-              className={`absolute inset-0 h-4 w-4 transition-all duration-200 ease-out ${FOLDER_ICON_COLOR_CLASSES[folder.color]} ${expanded ? "scale-100 opacity-100" : "scale-75 opacity-0"}`}
-              strokeWidth={1.7}
-            />
-          </span>
-          <span
-            className={`docs-sidebar-dnd-label min-w-0 flex-1 truncate text-sm ${depth === 0 ? "font-semibold" : "font-medium"}`}
-          >
-            {folder.name}
-          </span>
-          <FolderDropLabel
-            isDropTarget={
-              dropTargetFolderId === folder.id && draggingItem !== null
-            }
-            folderName={folder.name}
-            count={childDocuments.length || childFolders.length}
-            className={`text-[11px] tabular-nums ${depth === 0 ? "text-muted-foreground" : "text-muted-foreground/70"}`}
-          />
-        </button>
-        {!cloudUnauthenticated ? (
-          <button
-            type="button"
-            aria-label={
-              mobile
-                ? `Create in ${folder.name}`
-                : `Folder actions for ${folder.name}`
-            }
-            aria-expanded={mobile ? undefined : folderMenuOpen}
-            aria-haspopup={mobile ? "dialog" : "menu"}
-            data-dnd-ignore="true"
-            className="mr-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground opacity-70 transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:opacity-0 sm:group-hover/folder:opacity-100 sm:group-focus-within/folder:opacity-100"
-            onClick={() => {
-              if (mobile) {
-                onOpenFolderActions(folder);
-                return;
-              }
-
-              setFolderMenuOpen((value) => !value);
-            }}
-          >
-            <Plus className="h-4 w-4" strokeWidth={1.8} />
-          </button>
-        ) : null}
-      </div>
-      {folderMenuOpen ? (
+      <div className="relative">
         <div
-          role="menu"
-          aria-label={`${folder.name} actions`}
-          className="absolute right-1 top-[calc(100%-0.25rem)] z-50 w-48 rounded-xl border border-border bg-background p-1.5 shadow-xl"
+          data-dnd-item="folder"
+          data-tree-layout-id={`folder:${folder.id}`}
+          data-dnd-drop-target={
+            dropTargetFolderId === folder.id ? "true" : undefined
+          }
+          className="group/folder flex w-full items-center"
+          style={
+            depth === 0
+              ? undefined
+              : { paddingLeft: `${depth * TREE_INDENT}px` }
+          }
+          onPointerDown={(event) =>
+            onDragPointerDown({ kind: "folder", id: folder.id }, event)
+          }
         >
           <button
             type="button"
-            role="menuitem"
-            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-foreground transition-colors hover:bg-accent"
+            aria-expanded={hasChildren ? expanded : undefined}
+            className={`flex min-w-0 flex-1 items-center gap-0.5 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-accent/60 hover:text-foreground ${depth === 0 ? "text-foreground" : "text-muted-foreground"}`}
             onClick={() => {
-              onCreateDocument(folder.id);
-              setFolderMenuOpen(false);
+              if (hasChildren || depth === 0) {
+                onToggleFolder(folder.id);
+              }
             }}
           >
-            <FilePlus2 className="h-3.5 w-3.5 text-muted-foreground" />
-            New file
+            <span aria-hidden="true" className="relative h-4 w-4 shrink-0">
+              <FolderIcon
+                icon={folder.icon}
+                className={`absolute inset-0 h-4 w-4 transition-[transform,opacity] duration-150 ease-out ${FOLDER_ICON_COLOR_CLASSES[folder.color]} ${hasChildren ? "group-hover/folder:scale-75 group-hover/folder:opacity-0 group-focus-visible/folder:scale-75 group-focus-visible/folder:opacity-0" : expanded ? "scale-100 opacity-100" : "scale-95 opacity-100"}`}
+              />
+              {hasChildren ? (
+                <ChevronRight
+                  aria-hidden="true"
+                  className={`absolute inset-0 h-4 w-4 scale-75 opacity-0 transition-[transform,opacity] duration-150 ease-out group-hover/folder:scale-100 group-hover/folder:opacity-100 group-focus-visible/folder:scale-100 group-focus-visible/folder:opacity-100 ${expanded ? "rotate-90" : ""}`}
+                  strokeWidth={1.8}
+                />
+              ) : null}
+            </span>
+            <span
+              className={`docs-sidebar-dnd-label min-w-0 flex-1 truncate text-sm ${depth === 0 ? "font-semibold" : "font-medium"}`}
+            >
+              {folder.name}
+            </span>
+            <FolderDropLabel
+              isDropTarget={
+                dropTargetFolderId === folder.id && draggingItem !== null
+              }
+              folderName={folder.name}
+              count={childDocuments.length || childFolders.length}
+              className={`text-[11px] tabular-nums ${depth === 0 ? "text-muted-foreground" : "text-muted-foreground/70"}`}
+            />
           </button>
-          <button
-            type="button"
-            role="menuitem"
-            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-foreground transition-colors hover:bg-accent"
-            onClick={() => {
-              onCreateFolder(folder.id);
-              setFolderMenuOpen(false);
-            }}
-          >
-            <FolderPlus className="h-3.5 w-3.5 text-muted-foreground" />
-            New folder
-          </button>
-          {depth > 0 ? (
-            <>
-              <div className="my-1 border-t border-border/70" />
-              <button
-                type="button"
-                role="menuitem"
-                className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-foreground transition-colors hover:bg-accent"
-                onClick={() => {
-                  onEditFolder(folder);
-                  setFolderMenuOpen(false);
-                }}
-              >
-                <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
-                Edit folder
-              </button>
-            </>
+          {!cloudUnauthenticated ? (
+            <button
+              type="button"
+              aria-label={
+                mobile
+                  ? `Create in ${folder.name}`
+                  : `Folder actions for ${folder.name}`
+              }
+              aria-expanded={mobile ? undefined : folderMenuOpen}
+              aria-haspopup={mobile ? "dialog" : "menu"}
+              data-dnd-ignore="true"
+              className="mr-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground opacity-70 transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:opacity-0 sm:group-hover/folder:opacity-100 sm:group-focus-within/folder:opacity-100"
+              onClick={() => {
+                if (mobile) {
+                  onOpenFolderActions(folder);
+                  return;
+                }
+
+                setFolderMenuOpen((value) => !value);
+              }}
+            >
+              <Plus className="h-4 w-4" strokeWidth={1.8} />
+            </button>
           ) : null}
         </div>
-      ) : null}
+        {folderMenuOpen ? (
+          <div
+            role="menu"
+            aria-label={`${folder.name} actions`}
+            data-dnd-ignore="true"
+            className="absolute right-1 top-[calc(100%-0.25rem)] z-50 w-48 rounded-xl border border-border bg-background p-1.5 shadow-xl"
+          >
+            <button
+              type="button"
+              role="menuitem"
+              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-foreground transition-colors hover:bg-accent"
+              onClick={() => {
+                onCreateDocument(folder.id);
+                setFolderMenuOpen(false);
+              }}
+            >
+              <FilePlus2 className="h-3.5 w-3.5 text-muted-foreground" />
+              New file
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-foreground transition-colors hover:bg-accent"
+              onClick={() => {
+                onCreateFolder(folder.id);
+                setFolderMenuOpen(false);
+              }}
+            >
+              <FolderPlus className="h-3.5 w-3.5 text-muted-foreground" />
+              New folder
+            </button>
+            {depth > 0 ? (
+              <>
+                <div className="my-1 border-t border-border/70" />
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-foreground transition-colors hover:bg-accent"
+                  onClick={() => {
+                    onEditFolder(folder);
+                    setFolderMenuOpen(false);
+                  }}
+                >
+                  <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                  Edit folder
+                </button>
+              </>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
       {expanded ? (
         !hasChildren && depth === 0 ? (
           <EmptyWorkspaceState cloudUnauthenticated={cloudUnauthenticated} />
@@ -635,6 +646,7 @@ function FolderNode({
                 folder={childFolder}
                 depth={depth + 1}
                 items={items}
+                source={source}
                 selectedId={selectedId}
                 folderOptions={folderOptions}
                 onSelect={onSelect}

@@ -478,5 +478,3 @@ export const MOCK_DOCUMENTS: MockDocument[] = [
     updatedAt: "Edited 2 weeks ago",
   },
 ];
-
-export const SELECTED_DOCUMENT_ID = "project-research";

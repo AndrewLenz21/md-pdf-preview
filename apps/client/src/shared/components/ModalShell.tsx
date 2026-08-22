@@ -28,6 +28,8 @@ export function ModalShell({
   title,
   description,
   closeLabel,
+  closeOnEscape = true,
+  zIndex = 300,
   children,
   maxWidth = "max-w-md",
   className,
@@ -39,6 +41,8 @@ export function ModalShell({
   title: string;
   description?: string;
   closeLabel: string;
+  closeOnEscape?: boolean;
+  zIndex?: number;
   children: React.ReactNode;
   maxWidth?: string;
   className?: string;
@@ -73,15 +77,15 @@ export function ModalShell({
   }, [open]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || !closeOnEscape) return;
 
-    const closeOnEscape = (event: KeyboardEvent) => {
+    const handleEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
     };
 
-    document.addEventListener("keydown", closeOnEscape);
-    return () => document.removeEventListener("keydown", closeOnEscape);
-  }, [open, onClose]);
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [closeOnEscape, open, onClose]);
 
   if (!mounted || typeof document === "undefined") return null;
 
@@ -89,6 +93,7 @@ export function ModalShell({
     <div
       ref={shellRef}
       inert={!open}
+      style={{ zIndex }}
       className={`modal-shell ${open ? "modal-shell-open" : "modal-shell-closed"} fixed inset-0 z-[300] flex items-center justify-center p-4 ${className ?? ""}`}
     >
       <button

@@ -6,10 +6,12 @@ import {
 } from "react";
 
 import { useDocumentDndStore } from "@/modules/dashboard/stores";
+import type { DocumentSource } from "@/modules/dashboard/document/model/document.types";
 
 export type LongPressDragItem = {
   kind: "document" | "folder";
   id: string;
+  source?: DocumentSource;
 };
 
 export type LongPressDragPosition = {
@@ -17,7 +19,12 @@ export type LongPressDragPosition = {
   y: number;
 };
 
-export type LongPressDragPreviewPhase = "enter" | "exit";
+export type LongPressDragPreviewPhase = "enter" | "exit" | "return";
+
+export type LongPressDropTarget =
+  | { kind: "folder"; source: DocumentSource; folderId: string }
+  | { kind: "root"; source: DocumentSource }
+  | { kind: "source-toggle"; source: DocumentSource };
 
 type PendingDrag = {
   item: LongPressDragItem;
@@ -29,13 +36,20 @@ type PendingDrag = {
 
 export function useLongPressDrag({
   onDrop,
+  onTargetChange,
+  onDragEnd,
 }: {
-  onDrop: (item: LongPressDragItem, targetFolderId: string | null) => void;
+  onDrop: (item: LongPressDragItem, target: LongPressDropTarget) => boolean;
+  onTargetChange?: (
+    item: LongPressDragItem,
+    target: LongPressDropTarget | null,
+  ) => void;
+  onDragEnd?: () => void;
 }) {
   const [draggingItem, setDraggingItem] = useState<LongPressDragItem | null>(
     null,
   );
-  const [dropTargetFolderId, setDropTargetFolderId] = useState<string | null>(
+  const [dropTarget, setDropTarget] = useState<LongPressDropTarget | null>(
     null,
   );
   const [dragPosition, setDragPosition] =
@@ -47,16 +61,21 @@ export function useLongPressDrag({
   const pendingDragRef = useRef<PendingDrag | null>(null);
   const activeDragRef = useRef<LongPressDragItem | null>(null);
   const activePointerIdRef = useRef<number | null>(null);
-  const dropTargetRef = useRef<string | null>(null);
+  const dropTargetRef = useRef<LongPressDropTarget | null>(null);
   const previewExitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
   const suppressClickRef = useRef(false);
   const onDropRef = useRef(onDrop);
+  const onTargetChangeRef = useRef(onTargetChange);
+  const onDragEndRef = useRef(onDragEnd);
+  const originPositionRef = useRef<LongPressDragPosition | null>(null);
 
   useEffect(() => {
     onDropRef.current = onDrop;
-  }, [onDrop]);
+    onTargetChangeRef.current = onTargetChange;
+    onDragEndRef.current = onDragEnd;
+  }, [onDragEnd, onDrop, onTargetChange]);
 
   useEffect(() => {
     const clearPendingDrag = () => {
@@ -68,21 +87,36 @@ export function useLongPressDrag({
       }
     };
 
-    const finishPreview = () => {
-      setDragPreviewPhase("exit");
+    const finishPreview = (returnToOrigin = false) => {
+      if (returnToOrigin && originPositionRef.current) {
+        setDragPreviewPhase("return");
+        requestAnimationFrame(() => {
+          if (originPositionRef.current) {
+            setDragPosition(originPositionRef.current);
+          }
+        });
+      } else {
+        setDragPreviewPhase("exit");
+      }
 
       if (previewExitTimeoutRef.current) {
         clearTimeout(previewExitTimeoutRef.current);
       }
 
-      previewExitTimeoutRef.current = setTimeout(() => {
-        setDragPreviewItem(null);
-        setDragPreviewPhase(null);
-        setDragPosition(null);
-        useDocumentDndStore.getState().setDragging(false);
-        previewExitTimeoutRef.current = null;
-      }, 180);
+      previewExitTimeoutRef.current = setTimeout(
+        () => {
+          setDragPreviewItem(null);
+          setDragPreviewPhase(null);
+          setDragPosition(null);
+          useDocumentDndStore.getState().setDragging(false);
+          previewExitTimeoutRef.current = null;
+        },
+        returnToOrigin ? 220 : 180,
+      );
     };
+
+    const getSource = (value: string | undefined): DocumentSource | null =>
+      value === "local" || value === "cloud" ? value : null;
 
     const getDropTarget = (clientX: number, clientY: number) => {
       const element = document.elementFromPoint(clientX, clientY);
@@ -91,23 +125,39 @@ export function useLongPressDrag({
       );
 
       if (folderElement) {
-        return folderElement.dataset.dndFolderId ?? null;
+        const source = getSource(folderElement.dataset.dndSource);
+        const folderId = folderElement.dataset.dndFolderId;
+
+        return source && folderId
+          ? { kind: "folder" as const, source, folderId }
+          : null;
       }
 
-      return element?.closest("[data-dnd-root-drop]") ? null : undefined;
+      const sourceTarget = element?.closest<HTMLElement>(
+        "[data-dnd-source-target]",
+      );
+      const source = getSource(sourceTarget?.dataset.dndSourceTarget);
+
+      if (source) {
+        return { kind: "source-toggle" as const, source };
+      }
+
+      const rootElement = element?.closest<HTMLElement>("[data-dnd-root-drop]");
+      const rootSource = getSource(rootElement?.dataset.dndSource);
+
+      return rootSource ? { kind: "root" as const, source: rootSource } : null;
     };
 
     const updateDropTarget = (clientX: number, clientY: number) => {
       const nextTarget = getDropTarget(clientX, clientY);
 
-      if (nextTarget === undefined) {
-        dropTargetRef.current = null;
-        setDropTargetFolderId(null);
-        return;
-      }
-
       dropTargetRef.current = nextTarget;
-      setDropTargetFolderId(nextTarget);
+      setDropTarget(nextTarget);
+      const activeDrag = activeDragRef.current;
+
+      if (activeDrag) {
+        onTargetChangeRef.current?.(activeDrag, nextTarget);
+      }
     };
 
     const finishDrag = (event: PointerEvent, cancel: boolean) => {
@@ -115,11 +165,13 @@ export function useLongPressDrag({
 
       clearPendingDrag();
 
+      let accepted = false;
+
       if (activeDrag && !cancel) {
         const nextTarget = getDropTarget(event.clientX, event.clientY);
 
-        if (nextTarget !== undefined) {
-          onDropRef.current(activeDrag, nextTarget);
+        if (nextTarget) {
+          accepted = onDropRef.current(activeDrag, nextTarget);
         }
 
         suppressClickRef.current = true;
@@ -130,9 +182,13 @@ export function useLongPressDrag({
       dropTargetRef.current = null;
       setDraggingItem(null);
       if (activeDrag) {
-        finishPreview();
+        finishPreview(!cancel && !accepted);
       }
-      setDropTargetFolderId(null);
+      setDropTarget(null);
+      if (activeDrag) {
+        onTargetChangeRef.current?.(activeDrag, null);
+      }
+      onDragEndRef.current?.();
     };
 
     const handlePointerMove = (event: PointerEvent) => {
@@ -266,8 +322,12 @@ export function useLongPressDrag({
       setDragPreviewPhase("enter");
       setDragPosition({ x: pendingDrag.startX, y: pendingDrag.startY });
       useDocumentDndStore.getState().setDragging(true);
+      originPositionRef.current = {
+        x: pendingDrag.startX,
+        y: pendingDrag.startY,
+      };
       dropTargetRef.current = null;
-      setDropTargetFolderId(null);
+      setDropTarget(null);
     }, 500);
 
     pendingDragRef.current = {
@@ -294,7 +354,9 @@ export function useLongPressDrag({
     dragPosition,
     dragPreviewItem,
     dragPreviewPhase,
-    dropTargetFolderId,
+    dropTarget,
+    dropTargetFolderId:
+      dropTarget?.kind === "folder" ? dropTarget.folderId : null,
     startLongPress,
     suppressClick,
   };

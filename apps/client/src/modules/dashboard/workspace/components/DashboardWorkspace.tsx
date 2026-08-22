@@ -10,15 +10,17 @@ import {
 } from "react";
 
 import { DocsSidebar } from "@/modules/dashboard/docs-sidebar";
+import { authClient } from "@/lib/auth-client";
 import {
   DashboardBottomNav,
   type MobileDashboardSection,
 } from "@/modules/dashboard/mobile-navigation";
 import {
   useDocumentEditorStore,
-  getWorkspaceItems,
   isWorkspaceDocument,
-  useWorkspaceItemsStore,
+  useCloudWorkspaceStore,
+  useLocalWorkspaceStore,
+  useWorkspaceSessionStore,
   useWorkspaceStore,
 } from "@/modules/dashboard/stores";
 import {
@@ -64,29 +66,50 @@ function EmptyDocumentState() {
 }
 
 export function DashboardWorkspace() {
-  const activeSource = useWorkspaceItemsStore((state) => state.activeSource);
-  const items = useWorkspaceItemsStore((state) =>
-    getWorkspaceItems(state, activeSource),
+  const { data: session, isPending: sessionPending } = authClient.useSession();
+  const activeSource = useWorkspaceSessionStore((state) => state.activeSource);
+  const localItems = useLocalWorkspaceStore((state) => state.items);
+  const cloudItems = useCloudWorkspaceStore((state) => state.items);
+  const hydrateLocalWorkspace = useLocalWorkspaceStore(
+    (state) => state.hydrate,
   );
+  const items = activeSource === "local" ? localItems : cloudItems;
   const documents = items.filter(
     (item): item is WorkspaceDocumentItem =>
       isWorkspaceDocument(item) && !item.deleted_at,
   );
-  const selectedDocumentId = useWorkspaceItemsStore(
+  const selectedDocumentId = useWorkspaceSessionStore(
     (state) => state.selectedDocumentId,
   );
-  const selectDocumentInStore = useWorkspaceItemsStore(
+  const selectDocumentInStore = useWorkspaceSessionStore(
     (state) => state.selectDocument,
   );
-  const clearSelectionInStore = useWorkspaceItemsStore(
+  const clearSelectionInStore = useWorkspaceSessionStore(
     (state) => state.clearSelection,
   );
-  const scheduleContentUpdate = useWorkspaceItemsStore(
+  const setActiveSourceInStore = useWorkspaceSessionStore(
+    (state) => state.setActiveSource,
+  );
+  const scheduleLocalContentUpdate = useLocalWorkspaceStore(
     (state) => state.scheduleContentUpdate,
   );
-  const flushPendingContent = useWorkspaceItemsStore(
+  const scheduleCloudContentUpdate = useCloudWorkspaceStore(
+    (state) => state.scheduleContentUpdate,
+  );
+  const flushLocalPendingContent = useLocalWorkspaceStore(
     (state) => state.flushPendingContent,
   );
+  const flushCloudPendingContent = useCloudWorkspaceStore(
+    (state) => state.flushPendingContent,
+  );
+  const scheduleContentUpdate =
+    activeSource === "local"
+      ? scheduleLocalContentUpdate
+      : scheduleCloudContentUpdate;
+  const flushPendingContent =
+    activeSource === "local"
+      ? flushLocalPendingContent
+      : flushCloudPendingContent;
   const initializeWorkspaceZoom = useWorkspaceStore(
     (state) => state.initializeViewportZoom,
   );
@@ -94,7 +117,7 @@ export function DashboardWorkspace() {
     (state) => state.initializeViewportZoom,
   );
   const [mobileSection, setMobileSection] =
-    useState<MobileDashboardSection>("preview");
+    useState<MobileDashboardSection>("files");
   const { activeDialog, openDialog, closeDialog } = usePreferencesDialog();
   const isDesktopViewport = useMediaQuery("(min-width: 1024px)");
   const [mobileTransitionDirection, setMobileTransitionDirection] = useState<
@@ -133,6 +156,21 @@ export function DashboardWorkspace() {
   const selectedDocument = selectedDocumentId
     ? documents.find((document) => document.id === selectedDocumentId)
     : undefined;
+
+  const initialSourceResolvedRef = useRef(false);
+
+  useEffect(() => {
+    if (sessionPending || initialSourceResolvedRef.current) {
+      return;
+    }
+
+    initialSourceResolvedRef.current = true;
+    setActiveSourceInStore(session?.user ? "cloud" : "local");
+  }, [session?.user, sessionPending, setActiveSourceInStore]);
+
+  useEffect(() => {
+    void hydrateLocalWorkspace();
+  }, [hydrateLocalWorkspace]);
 
   useLayoutEffect(() => {
     const isSmallScreen =
@@ -297,6 +335,10 @@ export function DashboardWorkspace() {
   };
 
   const selectDocument = (id: string) => {
+    if (selectedDocumentId && selectedDocumentId !== id) {
+      flushPendingContent(selectedDocumentId);
+    }
+
     saveMobileSectionScroll(mobileSection);
     selectDocumentInStore(id);
     setMobileTransitionDirection("forward");

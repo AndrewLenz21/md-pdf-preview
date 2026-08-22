@@ -5,12 +5,34 @@ export type DocumentSource = "local" | "cloud";
 export type DocumentFolderColor =
   "primary" | "blue" | "violet" | "amber" | "rose" | "emerald";
 
+export type DocumentFolderIcon =
+  | "folder"
+  | "briefcase"
+  | "book"
+  | "code"
+  | "lightbulb"
+  | "archive"
+  | "star"
+  | "target"
+  | "calendar"
+  | "image"
+  | "music"
+  | "heart"
+  | "users"
+  | "map"
+  | "key"
+  | "wrench";
+
+export const DEFAULT_DOCUMENT_FOLDER_COLOR: DocumentFolderColor = "primary";
+export const DEFAULT_DOCUMENT_FOLDER_ICON: DocumentFolderIcon = "folder";
+
 export type DocumentFolder = {
   id: string;
   name: string;
   parentId: string | null;
   route: string;
   color: DocumentFolderColor;
+  icon: DocumentFolderIcon;
 };
 
 export type DocumentOrganization = {
@@ -40,6 +62,7 @@ type WorkspaceItemBase = {
 export type WorkspaceFolderItem = WorkspaceItemBase & {
   type: "folder";
   color: DocumentFolderColor;
+  icon: DocumentFolderIcon;
 };
 
 export type WorkspaceDocumentItem = WorkspaceItemBase & {
