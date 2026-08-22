@@ -11,10 +11,10 @@ import {
 import type { Editor } from "@tiptap/core";
 
 import {
-  useDocumentStore,
+  useWorkspaceItemsStore,
   useWorkspaceStore,
 } from "@/modules/dashboard/stores";
-import type { MockDocument } from "@/modules/dashboard/document/model/document.types";
+import type { WorkspaceDocumentItem } from "@/modules/dashboard/document/model/document.types";
 import type { DocumentEditorMode } from "@/modules/dashboard/types/editor.types";
 
 import { MarkdownSourceEditor } from "./MarkdownSourceEditor";
@@ -249,7 +249,7 @@ export function DocumentPreview({
   scrollContainerRef,
   pageBreakMarkers,
 }: {
-  document: MockDocument;
+  document: WorkspaceDocumentItem;
   mode: DocumentEditorMode;
   scrollScope: DocumentPreviewScrollScope;
   onModeChange: (mode: DocumentEditorMode) => void;
@@ -263,7 +263,7 @@ export function DocumentPreview({
   pageBreakMarkers?: number[];
 }) {
   const paperSize = useWorkspaceStore((state) => state.paperSize);
-  const pendingContent = useDocumentStore(
+  const pendingContent = useWorkspaceItemsStore(
     (state) => state.pendingContentByDocumentId[document.id],
   );
   const { zoom } = useModeZoom(mode);
@@ -446,7 +446,7 @@ export function DocumentPreview({
           >
             <ModeContent
               mode={mode}
-              documentTitle={document.title}
+              documentTitle={document.name}
               markdown={markdown}
               zoom={zoom}
               markdownEditorRef={markdownEditorRef}

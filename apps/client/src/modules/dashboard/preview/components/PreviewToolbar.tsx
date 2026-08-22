@@ -10,16 +10,35 @@ import {
   X,
 } from "lucide-react";
 
-import type { MockDocument } from "@/modules/dashboard/document/model/document.types";
+import type { WorkspaceDocumentItem } from "@/modules/dashboard/document/model/document.types";
 import {
   MAX_MARKDOWN_CHARACTERS,
-  useDocumentOrganizationStore,
-  useDocumentStore,
+  isWorkspaceDocument,
+  useWorkspaceItemsStore,
 } from "@/modules/dashboard/stores";
 import type { DocumentEditorMode } from "@/modules/dashboard/types/editor.types";
 
 import { PaperSizeSelect } from "./paper-preview/PaperSizeSelect";
 import type { EditingActions } from "../utils/editingActions";
+
+function formatUpdatedAt(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  const today = new Date();
+  if (date.toDateString() === today.toDateString()) {
+    return "Edited today";
+  }
+
+  return `Edited ${date.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  })}`;
+}
 
 function EditingActionButtons({
   editingActions,
@@ -87,7 +106,9 @@ function EditingActionButtons({
 }
 
 function ClearSelectionButton() {
-  const clearSelection = useDocumentStore((state) => state.clearSelection);
+  const clearSelection = useWorkspaceItemsStore(
+    (state) => state.clearSelection,
+  );
 
   return (
     <button
@@ -159,21 +180,20 @@ export function PreviewToolbar({
   editingActions,
   splitMode = false,
 }: {
-  document: MockDocument;
+  document: WorkspaceDocumentItem;
   mode: DocumentEditorMode;
   onModeChange: (mode: DocumentEditorMode) => void;
   editingActions?: EditingActions | null;
   splitMode?: boolean;
 }) {
   const isPreviewMode = mode === "preview";
-  const activeSource = useDocumentOrganizationStore(
-    (state) => state.activeSource,
-  );
+  const activeSource = useWorkspaceItemsStore((state) => state.activeSource);
   const hasCharacterLimit = activeSource === "cloud";
-  const markdownCharacterCount = useDocumentStore((state) => {
+  const markdownCharacterCount = useWorkspaceItemsStore((state) => {
     const pendingContent = state.pendingContentByDocumentId[document.id];
-    const storedDocument = state.documents.find(
-      (item) => item.id === document.id,
+    const storedDocument = [...state.localItems, ...state.cloudItems].find(
+      (item): item is WorkspaceDocumentItem =>
+        isWorkspaceDocument(item) && item.id === document.id,
     );
 
     return (pendingContent ?? storedDocument?.content ?? "").length;
@@ -188,10 +208,12 @@ export function PreviewToolbar({
     >
       <div className="mobile-preview-toolbar-meta min-w-0">
         <p className="truncate text-sm font-semibold text-foreground">
-          {document.title}
+          {document.name}
         </p>
         <p className="mt-0.5 flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
-          <span className="truncate">{document.updatedAt}</span>
+          <span className="truncate">
+            {formatUpdatedAt(document.updated_at)}
+          </span>
           <span
             className={`shrink-0 tabular-nums ${isAtCharacterLimit ? "font-semibold text-destructive" : ""}`}
             title="Markdown character count"

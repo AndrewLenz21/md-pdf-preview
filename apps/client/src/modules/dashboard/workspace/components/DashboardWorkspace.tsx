@@ -16,8 +16,9 @@ import {
 } from "@/modules/dashboard/mobile-navigation";
 import {
   useDocumentEditorStore,
-  useDocumentOrganizationStore,
-  useDocumentStore,
+  getWorkspaceItems,
+  isWorkspaceDocument,
+  useWorkspaceItemsStore,
   useWorkspaceStore,
 } from "@/modules/dashboard/stores";
 import {
@@ -27,6 +28,7 @@ import {
   PreviewZoomControl,
 } from "@/modules/dashboard/preview";
 import type { EditingActions } from "@/modules/dashboard/preview/utils/editingActions";
+import type { WorkspaceDocumentItem } from "@/modules/dashboard/document/model/document.types";
 import type { DocumentEditorMode } from "@/modules/dashboard/types/editor.types";
 import { useMediaQuery } from "@/shared/hooks/useMediaQuery";
 import {
@@ -62,20 +64,27 @@ function EmptyDocumentState() {
 }
 
 export function DashboardWorkspace() {
-  const documents = useDocumentStore((state) => state.documents);
-  const selectedDocumentId = useDocumentStore(
+  const activeSource = useWorkspaceItemsStore((state) => state.activeSource);
+  const items = useWorkspaceItemsStore((state) =>
+    getWorkspaceItems(state, activeSource),
+  );
+  const documents = items.filter(
+    (item): item is WorkspaceDocumentItem =>
+      isWorkspaceDocument(item) && !item.deleted_at,
+  );
+  const selectedDocumentId = useWorkspaceItemsStore(
     (state) => state.selectedDocumentId,
   );
-  const selectDocumentInStore = useDocumentStore(
+  const selectDocumentInStore = useWorkspaceItemsStore(
     (state) => state.selectDocument,
   );
-  const clearSelectionInStore = useDocumentStore(
+  const clearSelectionInStore = useWorkspaceItemsStore(
     (state) => state.clearSelection,
   );
-  const scheduleContentUpdate = useDocumentStore(
+  const scheduleContentUpdate = useWorkspaceItemsStore(
     (state) => state.scheduleContentUpdate,
   );
-  const flushPendingContent = useDocumentStore(
+  const flushPendingContent = useWorkspaceItemsStore(
     (state) => state.flushPendingContent,
   );
   const initializeWorkspaceZoom = useWorkspaceStore(
@@ -299,11 +308,8 @@ export function DashboardWorkspace() {
       return;
     }
 
-    const localDocumentOrganization =
-      useDocumentOrganizationStore.getState().localDocuments;
     const nextDocument = documents.find(
-      (document) =>
-        document.id !== id && !localDocumentOrganization[document.id]?.deleted,
+      (document) => document.id !== id && !document.deleted_at,
     );
 
     if (nextDocument) {
@@ -365,7 +371,6 @@ export function DashboardWorkspace() {
             className="h-screen min-w-0 shrink-0 overflow-hidden bg-sidebar"
           >
             <DocsSidebar
-              documents={documents}
               selectedId={selectedDocumentId}
               onSelect={selectDocument}
               onDelete={handleDocumentDeleted}
@@ -475,7 +480,6 @@ export function DashboardWorkspace() {
                 className={`dashboard-mobile-section dashboard-mobile-section-${mobileTransitionDirection}`}
               >
                 <DocsSidebar
-                  documents={documents}
                   selectedId={selectedDocumentId}
                   onSelect={selectDocument}
                   onDelete={handleDocumentDeleted}

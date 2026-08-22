@@ -22,10 +22,14 @@ import {
 import { Link } from "@/core/i18n";
 import { useDismissableLayer } from "@/shared/hooks/useDismissableLayer";
 import type {
-  DocumentFolder,
-  DocumentOrganization,
-  MockDocument,
+  WorkspaceDocumentItem,
+  WorkspaceFolderItem,
+  WorkspaceItem,
 } from "@/modules/dashboard/document/model/document.types";
+import {
+  isWorkspaceDocument,
+  isWorkspaceFolder,
+} from "@/modules/dashboard/stores";
 
 import { DocumentItem, type DocumentFolderOption } from "./DocumentItem";
 import { FOLDER_ICON_COLOR_CLASSES } from "./folderColors";
@@ -143,28 +147,30 @@ function useTreeLayoutAnimation(
   );
 }
 
-function getChildFolders(folders: DocumentFolder[], parentId: string | null) {
-  return folders.filter((folder) => folder.parentId === parentId);
+function getChildFolders(items: WorkspaceItem[], parentId: string | null) {
+  return items.filter(
+    (item): item is WorkspaceFolderItem =>
+      isWorkspaceFolder(item) && item.parent_id === parentId,
+  );
 }
 
-function getDocumentsInFolder(
-  documents: MockDocument[],
-  organization: Record<string, DocumentOrganization>,
-  folderId: string | null,
-) {
-  return documents.filter(
-    (document) => (organization[document.id]?.parentId ?? null) === folderId,
+function getDocumentsInFolder(items: WorkspaceItem[], folderId: string | null) {
+  return items.filter(
+    (item): item is WorkspaceDocumentItem =>
+      isWorkspaceDocument(item) &&
+      !item.deleted_at &&
+      item.parent_id === folderId,
   );
 }
 
 function flattenFolders(
-  folders: DocumentFolder[],
+  items: WorkspaceItem[],
   parentId: string | null,
   depth = 0,
 ): DocumentFolderOption[] {
-  return getChildFolders(folders, parentId).flatMap((folder) => [
+  return getChildFolders(items, parentId).flatMap((folder) => [
     { id: folder.id, label: folder.name, depth },
-    ...flattenFolders(folders, folder.id, depth + 1),
+    ...flattenFolders(items, folder.id, depth + 1),
   ]);
 }
 
@@ -250,9 +256,7 @@ function FolderDropLabel({
 }
 
 export function FolderTree({
-  documents,
-  folders,
-  organization,
+  items,
   selectedId,
   onSelect,
   onRename,
@@ -272,9 +276,7 @@ export function FolderTree({
   onDragPointerDown,
   onDragClickCapture,
 }: {
-  documents: MockDocument[];
-  folders: DocumentFolder[];
-  organization: Record<string, DocumentOrganization>;
+  items: WorkspaceItem[];
   selectedId: string | null;
   onSelect: (id: string) => void;
   onRename: (id: string, title: string) => void;
@@ -283,12 +285,12 @@ export function FolderTree({
   onToggleFavorite: (id: string) => void;
   onCreateDocument: (folderId: string, title?: string) => void;
   onCreateFolder: (parentId: string) => void;
-  onEditFolder: (folder: DocumentFolder) => void;
+  onEditFolder: (folder: WorkspaceFolderItem) => void;
   collapsedFolderIds: string[];
   onToggleFolder: (folderId: string) => void;
   cloudUnauthenticated: boolean;
   mobile: boolean;
-  onOpenFolderActions: (folder: DocumentFolder) => void;
+  onOpenFolderActions: (folder: WorkspaceFolderItem) => void;
   draggingItem: LongPressDragItem | null;
   dropTargetFolderId: string | null;
   onDragPointerDown: (
@@ -298,33 +300,31 @@ export function FolderTree({
   onDragClickCapture: (event: ReactMouseEvent<HTMLDivElement>) => void;
 }) {
   const treeRef = useRef<HTMLDivElement>(null);
-  const rootFolders = getChildFolders(folders, null);
+  const rootFolders = getChildFolders(items, null);
   const folderOptions: DocumentFolderOption[] = rootFolders.flatMap(
     (folder) => [
       { id: folder.id, label: folder.name, depth: 0 },
-      ...flattenFolders(folders, folder.id, 1),
+      ...flattenFolders(items, folder.id, 1),
     ],
   );
-  const visibleDocuments = documents.filter(
-    (document) => !organization[document.id]?.deleted,
+  const visibleDocuments = items.filter(
+    (item): item is WorkspaceDocumentItem =>
+      isWorkspaceDocument(item) && !item.deleted_at,
   );
-  const rootDocuments = getDocumentsInFolder(
-    visibleDocuments,
-    organization,
-    null,
-  );
+  const rootDocuments = getDocumentsInFolder(items, null);
   const layoutKey = [
-    ...folders.map((folder) => `folder:${folder.id}:${folder.parentId ?? ""}`),
+    ...items
+      .filter(isWorkspaceFolder)
+      .map((folder) => `folder:${folder.id}:${folder.parent_id ?? ""}`),
     ...visibleDocuments.map(
-      (document) =>
-        `document:${document.id}:${organization[document.id]?.parentId ?? ""}`,
+      (document) => `document:${document.id}:${document.parent_id ?? ""}`,
     ),
     ...collapsedFolderIds,
   ].join("|");
 
   useTreeLayoutAnimation(treeRef, layoutKey);
 
-  if (!visibleDocuments.length && !folders.length) {
+  if (!visibleDocuments.length && !items.some(isWorkspaceFolder)) {
     return <EmptyWorkspaceState cloudUnauthenticated={cloudUnauthenticated} />;
   }
 
@@ -334,10 +334,8 @@ export function FolderTree({
         <DocumentItem
           key={document.id}
           documentId={document.id}
-          displayTitle={
-            organization[document.id]?.displayTitle ?? document.title
-          }
-          favorite={organization[document.id]?.favorite === true}
+          displayTitle={document.name}
+          favorite={document.favorite === true}
           selected={document.id === selectedId}
           onSelect={() => onSelect(document.id)}
           onRename={(title) => onRename(document.id, title)}
@@ -361,9 +359,7 @@ export function FolderTree({
           key={folder.id}
           folder={folder}
           depth={0}
-          folders={folders}
-          documents={visibleDocuments}
-          organization={organization}
+          items={items}
           selectedId={selectedId}
           folderOptions={folderOptions}
           onSelect={onSelect}
@@ -392,9 +388,7 @@ export function FolderTree({
 function FolderNode({
   folder,
   depth,
-  folders,
-  documents,
-  organization,
+  items,
   selectedId,
   folderOptions,
   onSelect,
@@ -415,11 +409,9 @@ function FolderNode({
   onDragPointerDown,
   onDragClickCapture,
 }: {
-  folder: DocumentFolder;
+  folder: WorkspaceFolderItem;
   depth: number;
-  folders: DocumentFolder[];
-  documents: MockDocument[];
-  organization: Record<string, DocumentOrganization>;
+  items: WorkspaceItem[];
   selectedId: string | null;
   folderOptions: DocumentFolderOption[];
   onSelect: (id: string) => void;
@@ -429,12 +421,12 @@ function FolderNode({
   onToggleFavorite: (id: string) => void;
   onCreateDocument: (folderId: string, title?: string) => void;
   onCreateFolder: (parentId: string) => void;
-  onEditFolder: (folder: DocumentFolder) => void;
+  onEditFolder: (folder: WorkspaceFolderItem) => void;
   collapsedFolderIds: string[];
   onToggleFolder: (folderId: string) => void;
   cloudUnauthenticated: boolean;
   mobile: boolean;
-  onOpenFolderActions: (folder: DocumentFolder) => void;
+  onOpenFolderActions: (folder: WorkspaceFolderItem) => void;
   draggingItem: LongPressDragItem | null;
   dropTargetFolderId: string | null;
   onDragPointerDown: (
@@ -446,12 +438,8 @@ function FolderNode({
   const folderItemRef = useRef<HTMLDivElement>(null);
   const [folderMenuOpen, setFolderMenuOpen] = useState(false);
   const expanded = !collapsedFolderIds.includes(folder.id);
-  const childFolders = getChildFolders(folders, folder.id);
-  const childDocuments = getDocumentsInFolder(
-    documents,
-    organization,
-    folder.id,
-  );
+  const childFolders = getChildFolders(items, folder.id);
+  const childDocuments = getDocumentsInFolder(items, folder.id);
   const hasChildren = childFolders.length > 0 || childDocuments.length > 0;
 
   useDismissableLayer({
@@ -616,10 +604,8 @@ function FolderNode({
               <DocumentItem
                 key={document.id}
                 documentId={document.id}
-                displayTitle={
-                  organization[document.id]?.displayTitle ?? document.title
-                }
-                favorite={organization[document.id]?.favorite === true}
+                displayTitle={document.name}
+                favorite={document.favorite === true}
                 selected={document.id === selectedId}
                 onSelect={() => onSelect(document.id)}
                 onRename={(title) => onRename(document.id, title)}
@@ -648,9 +634,7 @@ function FolderNode({
                 key={childFolder.id}
                 folder={childFolder}
                 depth={depth + 1}
-                folders={folders}
-                documents={documents}
-                organization={organization}
+                items={items}
                 selectedId={selectedId}
                 folderOptions={folderOptions}
                 onSelect={onSelect}

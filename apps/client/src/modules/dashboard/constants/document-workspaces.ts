@@ -2,11 +2,11 @@ import { MOCK_DOCUMENTS } from "./mock-documents";
 import type {
   DocumentFolder,
   DocumentOrganization,
-  LocalWorkspaceItem,
   MockDocument,
+  WorkspaceItem,
 } from "../document/model/document.types";
 
-export type DocumentWorkspaceData = {
+export type LegacyWorkspaceData = {
   documents: MockDocument[];
   folders: DocumentFolder[];
   organization: Record<string, DocumentOrganization>;
@@ -28,7 +28,8 @@ const LOCAL_RESEARCH_NOTES_ROUTE = `${LOCAL_RECENT_ROUTE}/${LOCAL_RESEARCH_NOTES
 const LOCAL_PLANNING_ROUTE = `${LOCAL_DOCUMENTS_ROUTE}/${LOCAL_PLANNING_FOLDER_ID}`;
 const LOCAL_NOTES_ROUTE = `${LOCAL_DOCUMENTS_ROUTE}/${LOCAL_NOTES_FOLDER_ID}`;
 
-export const LOCAL_WORKSPACE_ITEMS_OLD: DocumentWorkspaceData = {
+// Legacy snapshot kept for migration and rollback reference. Runtime uses the flat items below.
+export const LOCAL_WORKSPACE_ITEMS_OLD: LegacyWorkspaceData = {
   documents: MOCK_DOCUMENTS,
   folders: [
     {
@@ -119,140 +120,111 @@ export const LOCAL_WORKSPACE_ITEMS_OLD: DocumentWorkspaceData = {
 
 const LOCAL_WORKSPACE_CREATED_AT = "2026-08-22T00:00:00.000Z";
 
-const LOCAL_WORKSPACE_FOLDER_ITEMS: LocalWorkspaceItem[] = [
+const LOCAL_WORKSPACE_DOCUMENT_PARENT_IDS: Record<string, string> = {
+  "project-research": LOCAL_WORKING_SET_FOLDER_ID,
+  "product-proposal": LOCAL_WORKING_SET_FOLDER_ID,
+  "cash-basis-tax-view": LOCAL_WORKING_SET_FOLDER_ID,
+  "research-notes": LOCAL_RESEARCH_NOTES_FOLDER_ID,
+  "meeting-notes": LOCAL_NOTES_FOLDER_ID,
+  architecture: LOCAL_PLANNING_FOLDER_ID,
+  roadmap: LOCAL_PLANNING_FOLDER_ID,
+  ideas: LOCAL_NOTES_FOLDER_ID,
+};
+
+const LOCAL_WORKSPACE_FOLDER_ITEMS: WorkspaceItem[] = [
   {
     id: LOCAL_ROOT_FOLDER_ID,
     type: "folder",
     parent_id: null,
-    route: "/Workspace",
     name: "Workspace",
     created_at: LOCAL_WORKSPACE_CREATED_AT,
+    updated_at: LOCAL_WORKSPACE_CREATED_AT,
     color: "primary",
   },
   {
     id: LOCAL_RECENT_FOLDER_ID,
     type: "folder",
     parent_id: LOCAL_ROOT_FOLDER_ID,
-    route: "/Workspace/Recents",
     name: "Recents",
     created_at: LOCAL_WORKSPACE_CREATED_AT,
+    updated_at: LOCAL_WORKSPACE_CREATED_AT,
     color: "blue",
   },
   {
     id: LOCAL_DOCUMENTS_FOLDER_ID,
     type: "folder",
     parent_id: LOCAL_ROOT_FOLDER_ID,
-    route: "/Workspace/Documents",
     name: "Documents",
     created_at: LOCAL_WORKSPACE_CREATED_AT,
+    updated_at: LOCAL_WORKSPACE_CREATED_AT,
     color: "violet",
   },
   {
     id: LOCAL_WORKING_SET_FOLDER_ID,
     type: "folder",
     parent_id: LOCAL_RECENT_FOLDER_ID,
-    route: "/Workspace/Recents/Working set",
     name: "Working set",
     created_at: LOCAL_WORKSPACE_CREATED_AT,
+    updated_at: LOCAL_WORKSPACE_CREATED_AT,
     color: "blue",
   },
   {
     id: LOCAL_RESEARCH_NOTES_FOLDER_ID,
     type: "folder",
     parent_id: LOCAL_RECENT_FOLDER_ID,
-    route: "/Workspace/Recents/Research notes",
     name: "Research notes",
     created_at: LOCAL_WORKSPACE_CREATED_AT,
+    updated_at: LOCAL_WORKSPACE_CREATED_AT,
     color: "emerald",
   },
   {
     id: LOCAL_PLANNING_FOLDER_ID,
     type: "folder",
     parent_id: LOCAL_DOCUMENTS_FOLDER_ID,
-    route: "/Workspace/Documents/Planning",
     name: "Planning",
     created_at: LOCAL_WORKSPACE_CREATED_AT,
+    updated_at: LOCAL_WORKSPACE_CREATED_AT,
     color: "amber",
   },
   {
     id: LOCAL_NOTES_FOLDER_ID,
     type: "folder",
     parent_id: LOCAL_DOCUMENTS_FOLDER_ID,
-    route: "/Workspace/Documents/Notes",
     name: "Notes",
     created_at: LOCAL_WORKSPACE_CREATED_AT,
+    updated_at: LOCAL_WORKSPACE_CREATED_AT,
     color: "rose",
   },
 ];
 
-const LOCAL_WORKSPACE_DOCUMENT_ITEMS: LocalWorkspaceItem[] =
-  LOCAL_WORKSPACE_ITEMS_OLD.documents.map((document) => {
-    const organization = LOCAL_WORKSPACE_ITEMS_OLD.organization[document.id];
-    const parentFolder = LOCAL_WORKSPACE_FOLDER_ITEMS.find(
-      (folder) => folder.id === organization?.parentId,
-    );
-
+const LOCAL_WORKSPACE_DOCUMENT_ITEMS: WorkspaceItem[] = MOCK_DOCUMENTS.map(
+  (document) => {
     return {
       id: document.id,
       type: "document",
-      parent_id: organization?.parentId ?? null,
-      route: `${parentFolder?.route ?? "/Workspace"}/${document.title}`,
+      parent_id: LOCAL_WORKSPACE_DOCUMENT_PARENT_IDS[document.id] ?? null,
       name: document.title,
       created_at: LOCAL_WORKSPACE_CREATED_AT,
-      updated_at: document.updatedAt,
-      content: document.content,
+      updated_at: LOCAL_WORKSPACE_CREATED_AT,
+      content: document.content ?? "",
       group: document.group,
     };
-  });
+  },
+);
 
-export const LOCAL_WORKSPACE_ITEMS: LocalWorkspaceItem[] = [
+export const LOCAL_WORKSPACE_ITEMS: WorkspaceItem[] = [
   ...LOCAL_WORKSPACE_FOLDER_ITEMS,
   ...LOCAL_WORKSPACE_DOCUMENT_ITEMS,
 ];
 
-export function getLocalWorkspaceDocuments(): MockDocument[] {
-  return LOCAL_WORKSPACE_ITEMS.filter((item) => item.type === "document").map(
-    (item) => ({
-      id: item.id,
-      title: item.name,
-      group: item.group ?? "documents",
-      updatedAt: item.updated_at ?? "Edited today",
-      content: item.content,
-    }),
-  );
-}
-
-export function getLocalWorkspaceFolders(): DocumentFolder[] {
-  return LOCAL_WORKSPACE_ITEMS.filter((item) => item.type === "folder").map(
-    (item) => ({
-      id: item.id,
-      name: item.name,
-      parentId: item.parent_id,
-      route: item.route,
-      color: item.color ?? "primary",
-    }),
-  );
-}
-
-export function getLocalWorkspaceOrganization(): Record<
-  string,
-  DocumentOrganization
-> {
-  return Object.fromEntries(
-    LOCAL_WORKSPACE_ITEMS.filter((item) => item.type === "document").map(
-      (item) => [
-        item.id,
-        {
-          parentId: item.parent_id,
-          route: item.route,
-        },
-      ],
-    ),
-  );
-}
-
-export const CLOUD_WORKSPACE_DATA: DocumentWorkspaceData = {
-  documents: [],
-  folders: [],
-  organization: {},
-};
+export const CLOUD_WORKSPACE_ITEMS: WorkspaceItem[] = [
+  {
+    id: "cloud-folder-root",
+    type: "folder",
+    parent_id: null,
+    name: "Cloud",
+    created_at: LOCAL_WORKSPACE_CREATED_AT,
+    updated_at: LOCAL_WORKSPACE_CREATED_AT,
+    color: "primary",
+  },
+];

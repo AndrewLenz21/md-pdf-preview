@@ -29,15 +29,25 @@ export type MockDocument = {
   content?: string;
 };
 
-export type LocalWorkspaceItem = {
+type WorkspaceItemBase = {
   id: string;
-  type: "folder" | "document";
   parent_id: string | null;
-  route: string;
   name: string;
   created_at: string;
-  updated_at?: string;
-  content?: string;
-  group?: DocumentGroup;
-  color?: DocumentFolderColor;
+  updated_at: string;
 };
+
+export type WorkspaceFolderItem = WorkspaceItemBase & {
+  type: "folder";
+  color: DocumentFolderColor;
+};
+
+export type WorkspaceDocumentItem = WorkspaceItemBase & {
+  type: "document";
+  group: DocumentGroup;
+  content: string;
+  favorite?: boolean;
+  deleted_at?: string | null;
+};
+
+export type WorkspaceItem = WorkspaceFolderItem | WorkspaceDocumentItem;

@@ -4,7 +4,7 @@ import { useLayoutEffect, useState, type RefObject } from "react";
 
 import {
   MAX_MARKDOWN_CHARACTERS,
-  useDocumentOrganizationStore,
+  useWorkspaceItemsStore,
 } from "@/modules/dashboard/stores";
 
 function resizeTextarea(textarea: HTMLTextAreaElement | null) {
@@ -58,9 +58,7 @@ export function MarkdownSourceEditor({
   onMarkdownChange: (markdown: string) => void;
 }) {
   const zoomFactor = zoom / 100;
-  const activeSource = useDocumentOrganizationStore(
-    (state) => state.activeSource,
-  );
+  const activeSource = useWorkspaceItemsStore((state) => state.activeSource);
   const hasCharacterLimit = activeSource === "cloud";
   const [draftState, setDraftState] = useState({
     source: markdown,

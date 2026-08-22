@@ -3,9 +3,23 @@
 import { cleanup, render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { MOCK_DOCUMENTS } from "@/modules/dashboard/constants/mock-documents";
+import { LOCAL_WORKSPACE_ITEMS } from "@/modules/dashboard/constants/document-workspaces";
+import type { WorkspaceDocumentItem } from "@/modules/dashboard/document/model/document.types";
 
 import { DocumentPreview } from "./DocumentPreview";
+
+function getDocument(): WorkspaceDocumentItem {
+  const document = LOCAL_WORKSPACE_ITEMS.find(
+    (item): item is WorkspaceDocumentItem =>
+      item.type === "document" && item.id === "project-research",
+  );
+
+  if (!document) {
+    throw new Error("Test document is missing");
+  }
+
+  return document;
+}
 
 describe("DocumentPreview page-break overlay", () => {
   beforeEach(() => {
@@ -59,7 +73,7 @@ describe("DocumentPreview page-break overlay", () => {
   });
 
   it("renders page-break markers in the non-embedded document view", () => {
-    const document = MOCK_DOCUMENTS[0];
+    const document = getDocument();
 
     const { container } = render(
       <DocumentPreview
@@ -85,7 +99,7 @@ describe("DocumentPreview page-break overlay", () => {
   });
 
   it("uses the window scroll for the non-embedded preview view", () => {
-    const document = MOCK_DOCUMENTS[0];
+    const document = getDocument();
 
     const { container } = render(
       <DocumentPreview
@@ -106,7 +120,7 @@ describe("DocumentPreview page-break overlay", () => {
   });
 
   it("keeps the mobile toolbar outside the preview canvas", () => {
-    const document = MOCK_DOCUMENTS[0];
+    const document = getDocument();
 
     const { container } = render(
       <DocumentPreview
