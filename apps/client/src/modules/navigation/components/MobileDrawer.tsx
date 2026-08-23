@@ -100,9 +100,9 @@ export function MobileDrawer({
             <p className="px-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
               {preferencesSection}
             </p>
-            <div className="mt-2 space-y-1 rounded-lg border border-border p-2">
-              <ThemeMenu inline showLabel />
-              <LanguageSelector inline showLabel />
+            <div className="mt-2 flex flex-col gap-1">
+              <ThemeMenu inline showLabel listItem />
+              <LanguageSelector inline showLabel listItem />
             </div>
           </div>
         ) : null}

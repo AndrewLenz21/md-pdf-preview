@@ -29,9 +29,11 @@ function ChevronDownIcon() {
 export function ThemeMenu({
   showLabel = false,
   inline = false,
+  listItem = false,
 }: {
   showLabel?: boolean;
   inline?: boolean;
+  listItem?: boolean;
 }) {
   const menuRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
@@ -48,7 +50,11 @@ export function ThemeMenu({
     <div ref={menuRef} className="relative">
       <button
         type="button"
-        className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
+        className={
+          listItem
+            ? "flex w-full items-center gap-2 rounded-lg px-3 py-3 text-sm font-medium text-foreground transition-colors hover:bg-accent/60"
+            : "flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
+        }
         aria-label={t("theme.select")}
         aria-expanded={open}
         aria-haspopup="menu"
@@ -57,8 +63,8 @@ export function ThemeMenu({
         <ThemeModeIcon dark={isDarkTheme} />
         <span
           className={
-            showLabel
-              ? "text-xs font-medium"
+            showLabel || listItem
+              ? "flex-1 text-left text-sm font-medium"
               : "hidden text-xs font-medium lg:inline"
           }
         >

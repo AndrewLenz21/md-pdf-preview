@@ -33,7 +33,7 @@ export function ThemeOptionList({
               type="button"
               role="menuitemradio"
               aria-checked={selected}
-              className={`grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors ${selected ? "bg-accent font-semibold text-foreground" : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"}`}
+              className={`grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 rounded-lg px-2.5 py-2.5 text-left transition-colors ${selected ? "bg-accent font-semibold text-foreground" : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"}`}
               onClick={() => onSelect(theme)}
             >
               <ThemePreview theme={theme} />

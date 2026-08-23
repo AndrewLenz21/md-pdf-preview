@@ -35,7 +35,7 @@ export function LanguageOptionList({
               type="button"
               role="menuitemradio"
               aria-checked={selected}
-              className={`flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-xs transition-colors ${selected ? "bg-accent font-semibold text-foreground" : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"}`}
+              className={`flex w-full items-center justify-between rounded-md px-3 py-2.5 text-left text-sm transition-colors ${selected ? "bg-accent font-semibold text-foreground" : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"}`}
               onClick={() => onSelect(language.code)}
             >
               <span className="flex items-center gap-2">
