@@ -8,8 +8,6 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react";
-import { Loader2 } from "lucide-react";
-
 import { DocsSidebar } from "@/modules/dashboard/docs-sidebar";
 import { authClient } from "@/lib/auth-client";
 import {
@@ -30,7 +28,10 @@ import {
   PreviewToolbar,
   PreviewZoomControl,
 } from "@/modules/dashboard/preview";
-import type { EditingActions } from "@/modules/dashboard/preview/utils/editingActions";
+import {
+  isSaveShortcut,
+  type EditingActions,
+} from "@/modules/dashboard/preview/utils/editingActions";
 import type { WorkspaceDocumentItem } from "@/modules/dashboard/document/model/document.types";
 import type { DocumentEditorMode } from "@/modules/dashboard/types/editor.types";
 import { useMediaQuery } from "@/shared/hooks/useMediaQuery";
@@ -80,7 +81,6 @@ export function DashboardWorkspace() {
     (state) => state.isHydrating,
   );
   const cloudError = useCloudWorkspaceStore((state) => state.error);
-  const cloudIsSaving = useCloudWorkspaceStore((state) => state.isSaving);
   const resetCloudWorkspace = useCloudWorkspaceStore((state) => state.reset);
   const hydrateLocalWorkspace = useLocalWorkspaceStore(
     (state) => state.hydrate,
@@ -368,6 +368,32 @@ export function DashboardWorkspace() {
       setMobilePageBreakMarkers,
     );
   }, [editorMode, mobileSection, selectedDocumentId]);
+
+  useEffect(() => {
+    const handleSaveShortcut = (event: KeyboardEvent) => {
+      if (!isSaveShortcut(event) || !selectedDocumentId) {
+        return;
+      }
+
+      event.preventDefault();
+
+      if (selectedSource === "cloud") {
+        void useCloudWorkspaceStore
+          .getState()
+          .flushPendingContentAndSave(selectedDocumentId)
+          .catch(() => undefined);
+        return;
+      }
+
+      useLocalWorkspaceStore
+        .getState()
+        .flushPendingContent(selectedDocumentId);
+    };
+
+    window.addEventListener("keydown", handleSaveShortcut);
+    return () => window.removeEventListener("keydown", handleSaveShortcut);
+  }, [selectedDocumentId, selectedSource]);
+
   const changeEditorMode = (nextMode: DocumentEditorMode) => {
     if (nextMode === editorMode || !selectedDocument) {
       return;
@@ -493,12 +519,6 @@ export function DashboardWorkspace() {
       <main
         className={`relative min-w-0 flex-1 lg:flex lg:h-screen lg:min-h-0 lg:flex-col lg:overflow-hidden ${!selectedDocument ? "h-[calc(100dvh-var(--mobile-dashboard-nav-height))] overflow-hidden pb-0" : isMobileFilesSection ? "h-[calc(100dvh-var(--mobile-dashboard-nav-height))] overflow-hidden pb-0" : isPreviewMode ? "pb-0" : "pb-20"} lg:pb-0`}
       >
-        {selectedSource === "cloud" && cloudIsSaving ? (
-          <div className="pointer-events-none absolute top-3 right-4 z-40 flex items-center gap-2 rounded-full border border-border/80 bg-background/90 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur-sm">
-            <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
-            Saving to cloud...
-          </div>
-        ) : null}
         <div
           className="hidden h-full min-h-0 flex-col lg:flex"
         >

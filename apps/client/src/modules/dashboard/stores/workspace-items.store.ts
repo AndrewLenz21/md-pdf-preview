@@ -13,6 +13,7 @@ import type {
 } from "@/modules/dashboard/document/model/document.types";
 
 export const DOCUMENT_CONTENT_DEBOUNCE_MS = 500;
+export const CLOUD_DOCUMENT_CONTENT_DEBOUNCE_MS = 3_000;
 export const MAX_MARKDOWN_CHARACTERS = 20_000;
 export const SESSION_MARKDOWN_CHARACTER_LIMIT = Number.POSITIVE_INFINITY;
 export const UNTITLED_DOCUMENT_TITLE = "Untitled";
@@ -55,6 +56,7 @@ export type WorkspaceItemsStoreState = {
 type WorkspaceItemsStoreOptions = {
   initialItems: WorkspaceItem[];
   maxMarkdownCharacters: number;
+  contentDebounceMs?: number;
   onItemsChanged?: (
     previousItems: WorkspaceItem[],
     nextItems: WorkspaceItem[],
@@ -594,7 +596,7 @@ export function createWorkspaceItemsState<T extends WorkspaceItemsStoreState>(
 
           pendingContentUpdates.delete(documentId);
           commitContent(documentId, pendingUpdate.content);
-        }, DOCUMENT_CONTENT_DEBOUNCE_MS);
+        }, options.contentDebounceMs ?? DOCUMENT_CONTENT_DEBOUNCE_MS);
 
         pendingContentUpdates.set(documentId, {
           content: limitedContent,

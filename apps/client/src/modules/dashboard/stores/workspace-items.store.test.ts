@@ -12,6 +12,7 @@ import {
 } from "./cloud-workspace.store";
 import { useLocalWorkspaceStore } from "./local-workspace.store";
 import {
+  CLOUD_DOCUMENT_CONTENT_DEBOUNCE_MS,
   DOCUMENT_CONTENT_DEBOUNCE_MS,
   MAX_MARKDOWN_CHARACTERS,
   getWorkspaceRoute,
@@ -83,6 +84,40 @@ describe("workspace item stores", () => {
 
     vi.advanceTimersByTime(1);
     expect(getLocalDocument("project-research")?.content).toBe(expectedContent);
+  });
+
+  it("waits three seconds before committing a Cloud edit", () => {
+    const cloudDocumentId = useCloudWorkspaceStore
+      .getState()
+      .createDocument("Cloud document", "cloud-folder-root");
+    const initialContent = useCloudWorkspaceStore
+      .getState()
+      .items.find(
+        (item): item is WorkspaceDocumentItem =>
+          isWorkspaceDocument(item) && item.id === cloudDocumentId,
+      )?.content;
+
+    useCloudWorkspaceStore
+      .getState()
+      .scheduleContentUpdate(cloudDocumentId, "Cloud draft");
+
+    vi.advanceTimersByTime(CLOUD_DOCUMENT_CONTENT_DEBOUNCE_MS - 1);
+    expect(
+      useCloudWorkspaceStore.getState().items.find(
+        (item): item is WorkspaceDocumentItem =>
+          isWorkspaceDocument(item) && item.id === cloudDocumentId,
+      )?.content,
+    ).toBe(initialContent);
+
+    vi.advanceTimersByTime(1);
+    expect(
+      useCloudWorkspaceStore.getState().items.find(
+        (item): item is WorkspaceDocumentItem =>
+          isWorkspaceDocument(item) && item.id === cloudDocumentId,
+      )?.content,
+    ).toBe(
+      normalizeMarkdownDocument("Cloud draft", MAX_MARKDOWN_CHARACTERS).content,
+    );
   });
 
   it("keeps local Markdown unlimited and limits Cloud Markdown", () => {

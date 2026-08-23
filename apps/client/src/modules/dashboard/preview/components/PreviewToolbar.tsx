@@ -6,6 +6,7 @@ import {
   Copy,
   Eye,
   FileText,
+  Loader2,
   Printer,
   X,
 } from "lucide-react";
@@ -247,6 +248,9 @@ export function PreviewToolbar({
   const cloudPendingContent = useCloudWorkspaceStore(
     (state) => state.pendingContentByDocumentId[document.id],
   );
+  const cloudIsSaving = useCloudWorkspaceStore(
+    (state) => state.savingDocumentIds[document.id] === true,
+  );
   const localDocumentContent = useLocalWorkspaceStore(
     (state) =>
       state.items.find(
@@ -269,6 +273,7 @@ export function PreviewToolbar({
 
   const isAtCharacterLimit =
     hasCharacterLimit && markdownCharacterCount >= MAX_MARKDOWN_CHARACTERS;
+  const isSavingToCloud = selectedSource === "cloud" && cloudIsSaving;
 
   return (
     <header
@@ -279,20 +284,30 @@ export function PreviewToolbar({
         <p className="truncate text-sm font-semibold text-foreground">
           {document.name}
         </p>
-        <p className="mt-0.5 flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
-          <span className="truncate">
-            {formatUpdatedAt(document.updated_at)}
-          </span>
-          <span
-            className={`shrink-0 tabular-nums ${isAtCharacterLimit ? "font-semibold text-destructive" : ""}`}
-            title="Markdown character count"
+        {isSavingToCloud ? (
+          <p
+            aria-live="polite"
+            className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground"
           >
-            {markdownCharacterCount.toLocaleString()}
-            {hasCharacterLimit
-              ? ` / ${MAX_MARKDOWN_CHARACTERS.toLocaleString()}`
+            <Loader2 className="h-3 w-3 animate-spin text-primary" />
+            <span>Saving to cloud...</span>
+          </p>
+        ) : (
+          <p className="mt-0.5 flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
+            <span className="truncate">
+              {formatUpdatedAt(document.updated_at)}
+            </span>
+            <span
+              className={`shrink-0 tabular-nums ${isAtCharacterLimit ? "font-semibold text-destructive" : ""}`}
+              title="Markdown character count"
+            >
+              {markdownCharacterCount.toLocaleString()}
+              {hasCharacterLimit
+                ? ` / ${MAX_MARKDOWN_CHARACTERS.toLocaleString()}`
               : null}
-          </span>
-        </p>
+            </span>
+          </p>
+        )}
       </div>
 
       <div
@@ -330,7 +345,7 @@ export function PreviewToolbar({
       </div>
 
       <div className="mobile-preview-toolbar-right flex shrink-0 items-center gap-2 sm:gap-3">
-        {!isPreviewMode ? (
+        {!isPreviewMode && !isSavingToCloud ? (
           <ClearSelectionButton
             className="mobile-preview-toolbar-mobile-clear"
             onCleared={onMobileClear}
@@ -363,7 +378,7 @@ export function PreviewToolbar({
         />
         <EditingActionButtons
           editingActions={editingActions}
-          includeClear={!isPreviewMode}
+          includeClear={!isPreviewMode && !isSavingToCloud}
           visible={!isPreviewMode || splitMode}
         />
       </div>

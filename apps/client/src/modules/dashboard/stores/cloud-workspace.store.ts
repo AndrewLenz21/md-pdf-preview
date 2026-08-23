@@ -19,6 +19,7 @@ import {
 } from "../services/workspace-api";
 
 import {
+  CLOUD_DOCUMENT_CONTENT_DEBOUNCE_MS,
   MAX_MARKDOWN_CHARACTERS,
   createInitialMarkdown,
   createWorkspaceItemsState,
@@ -329,6 +330,7 @@ export const useCloudWorkspaceStore = create<CloudWorkspaceStoreState>(
     const baseState = createWorkspaceItemsState<CloudWorkspaceStoreState>({
       initialItems: [],
       maxMarkdownCharacters: MAX_MARKDOWN_CHARACTERS,
+      contentDebounceMs: CLOUD_DOCUMENT_CONTENT_DEBOUNCE_MS,
       onContentCommitted: (documentId, content, document) =>
         get().isHydrated
           ? saveDocumentContent(documentId, content, document).catch(

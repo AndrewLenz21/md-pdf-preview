@@ -2,7 +2,7 @@
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { createEditingActions } from "./editingActions";
+import { createEditingActions, isSaveShortcut } from "./editingActions";
 
 describe("editing actions", () => {
   afterEach(() => {
@@ -22,5 +22,22 @@ describe("editing actions", () => {
     actions.print();
 
     expect(print).toHaveBeenCalledOnce();
+  });
+});
+
+describe("isSaveShortcut", () => {
+  it("recognizes Ctrl+S and Cmd+S", () => {
+    expect(isSaveShortcut({ key: "s", ctrlKey: true, metaKey: false })).toBe(
+      true,
+    );
+    expect(isSaveShortcut({ key: "S", ctrlKey: false, metaKey: true })).toBe(
+      true,
+    );
+  });
+
+  it("ignores S without a save modifier", () => {
+    expect(isSaveShortcut({ key: "s", ctrlKey: false, metaKey: false })).toBe(
+      false,
+    );
   });
 });

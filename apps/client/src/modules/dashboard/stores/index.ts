@@ -1,5 +1,6 @@
 export {
   DOCUMENT_CONTENT_DEBOUNCE_MS,
+  CLOUD_DOCUMENT_CONTENT_DEBOUNCE_MS,
   MAX_MARKDOWN_CHARACTERS,
   createInitialMarkdown,
   createWorkspaceItemId,

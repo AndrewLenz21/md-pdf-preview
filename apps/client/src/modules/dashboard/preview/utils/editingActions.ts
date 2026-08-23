@@ -10,6 +10,14 @@ export type EditingActions = {
   print: () => void;
 };
 
+export function isSaveShortcut(
+  event: Pick<KeyboardEvent, "key" | "ctrlKey" | "metaKey">,
+) {
+  return (
+    (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s"
+  );
+}
+
 type EditingActionContext = {
   modeRef: RefObject<DocumentEditorMode>;
   markdownRef: RefObject<string>;

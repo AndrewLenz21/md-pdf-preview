@@ -383,7 +383,6 @@ export function DocsSidebar({
     (cloudIsHydrating ||
       (!cloudIsHydrated && !cloudError) ||
       cloudOperation !== null ||
-      cloudIsSaving ||
       cloudError !== null);
   const sourceItems = displaySource === "local" ? localItems : cloudItems;
   const sourceDocuments = sourceItems.filter(
@@ -803,11 +802,6 @@ export function DocsSidebar({
               <span className="flex items-center gap-2">
                 <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
                 Transferring workspace items...
-              </span>
-            ) : cloudIsSaving ? (
-              <span className="flex items-center gap-2">
-                <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
-                Saving cloud changes...
               </span>
             ) : cloudOperation !== null ? (
               <span className="flex items-center gap-2">
