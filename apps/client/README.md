@@ -29,12 +29,14 @@ Next.js 16 (App Router) application: the editor, the paper-accurate preview, the
 
 ## 🚀 Getting Started
 
-```bash
+The development scripts and examples in this repository target Windows 10/11 and PowerShell.
+
+```powershell
 # From the repo root
 npm install
 
 # Configure environment variables
-cp .env.example .env.local
+Copy-Item apps/client/.env.example apps/client/.env.local
 
 # Start the client
 npm run dev --filter=client
@@ -72,8 +74,8 @@ src/
 
 ## 🧪 Tests
 
-```bash
-npm run test
+```powershell
+npm run test --workspace=client
 ```
 
 Coverage focuses on the hard parts: Markdown parsing, TipTap ↔ Markdown conversion, pagination strategies, block measurement, stores, and persistence.

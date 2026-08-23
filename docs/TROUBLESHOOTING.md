@@ -2,6 +2,8 @@
 
 > Common issues encountered during development and deployment of md-pdf-preview.
 
+The commands in this guide target Windows 10/11 with PowerShell.
+
 ## Table of Contents
 
 - [Environment variable errors on startup](#environment-variable-errors-on-startup)
@@ -29,8 +31,8 @@ BACKEND_URL must be configured.
 **Solution:**  
 Copy the example file and fill in real values:
 
-```bash
-cp apps/client/.env.example apps/client/.env.local
+```powershell
+Copy-Item apps/client/.env.example apps/client/.env.local
 ```
 
 Required values even for local-only mode:
@@ -52,7 +54,7 @@ The dashboard works, but signing in or cloud sync fails with "Backend service is
 **Solution:**  
 Check the full stack is running and configured:
 
-- Is the Go server running on the port in `BACKEND_URL`? → `curl http://localhost:8080/health`
+- Is the Go server running on the port in `BACKEND_URL`? → `curl.exe http://localhost:8080/health`
 - Do client and server share the same `INTERNAL_API_KEY`?
 - Is PostgreSQL reachable from the server (`DATABASE_URL`)?
 - If R2 is not configured, document upload/download will fail — local workspace still works.
@@ -72,7 +74,7 @@ The server dev task requires:
 
 If you only want to work on the client, run it alone:
 
-```bash
+```powershell
 npm run dev --filter=client
 ```
 

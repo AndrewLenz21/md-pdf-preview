@@ -27,15 +27,18 @@ The server is **optional**. The client runs in local-only mode (IndexedDB) witho
 
 ### Prerequisites
 
+- **Windows 10/11** with PowerShell
 - **Go** 1.25+
-- **PostgreSQL** (local, Docker, or Supabase/Neon)
+- **PostgreSQL** (local or Supabase/Neon)
 - [**air**](https://github.com/air-verse/air) for hot-reload (optional)
+
+The development scripts and examples in this repository target Windows and PowerShell.
 
 ### Run
 
-```bash
+```powershell
 # 1. Configure environment variables
-cp .env.example .env
+Copy-Item apps/server/.env.example apps/server/.env
 #   DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@YOUR_HOST:5432/postgres
 #   INTERNAL_API_KEY=generate_a-long-random-secret
 #   R2_*  (only if you use document cloud storage)
@@ -45,11 +48,10 @@ npm run dev --filter=server
 
 # 3. Or build and run the binary
 npm run build --filter=server
-./build/server.exe        # Windows
-./build/server            # macOS / Linux
+.\apps\server\build\server.exe
 ```
 
-Health check: `curl http://localhost:8080/health`
+Health check: `curl.exe http://localhost:8080/health`
 
 > **Note:** Migrations in `src/config/postgres/migrations/` run automatically at startup. The PostgreSQL pool starts independently, so a database outage never blocks the HTTP server.
 
@@ -103,8 +105,8 @@ The server never exposes this API publicly — it is meant to be reached only th
 
 ## 🧪 Tests
 
-```bash
-npm run check-types --filter=server   # go test ./...
+```powershell
+npm run check-types --workspace=server   # go test ./...
 ```
 
 Coverage includes controllers, services, repositories, and middlewares (API key, rate limiter, logger).

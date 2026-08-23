@@ -20,7 +20,9 @@
 The project has two deployable pieces:
 
 1. **Client** — a Next.js 16 app (App Router) with server API routes (Hono). Deployed to **Cloudflare**. The dashboard works in local-only mode with no backend at all; cloud sync requires the server.
-2. **Server** — a Go binary (Echo) that provides the workspace API, PostgreSQL persistence, and Cloudflare R2 presigned URLs. It runs anywhere Go runs (VPS, Docker, Railway, Fly.io, etc.).
+2. **Server** — a Go binary (Echo) that provides the workspace API, PostgreSQL persistence, and Cloudflare R2 presigned URLs.
+
+The development and deployment instructions in this repository target **Windows 10/11 with PowerShell**. The npm scripts for the Go server use Windows command syntax.
 
 ## Repository
 
@@ -53,7 +55,7 @@ The client never talks to PostgreSQL or R2 directly. All cloud requests flow thr
 
 Run these commands from the repository root:
 
-```bash
+```powershell
 # Development
 npm run dev                 # client + server
 npm run dev:client          # client only
@@ -83,8 +85,12 @@ not as a static Pages site. Before the first deployment:
 4. Deploy with `npm run deploy:client`.
 
 For local Worker preview, copy `apps/client/.dev.vars.example` to
-`apps/client/.dev.vars` and keep the application values in the ignored
-`apps/client/.env.local` file.
+`apps/client/.dev.vars` with PowerShell and keep the application values in the
+ignored `apps/client/.env.local` file:
+
+```powershell
+Copy-Item apps/client/.dev.vars.example apps/client/.dev.vars
+```
 
 The `wrangler.jsonc` file enables the `nodejs_compat` compatibility flag needed
 by the Next.js API routes. The Worker name can be changed in
@@ -98,25 +104,14 @@ by the Next.js API routes. The Worker name can be changed in
 
 ### From source
 
-```bash
-cd apps/server
-go build -o server .
+```powershell
+Set-Location apps/server
+go build -o build\server.exe .
+Set-Location ../..
 ```
 
-### With Docker
-
-```bash
-# Build the image
-docker build -t md-pdf-preview-server apps/server
-
-# Run it
-docker run -d \
-  --env-file apps/server/.env \
-  -p 8080:8080 \
-  md-pdf-preview-server
-```
-
-> **Note:** A `Dockerfile` for the server is planned — until it lands, use `go build` and run the binary directly.
+Run the generated `apps/server/build/server.exe` from PowerShell after configuring
+`apps/server/.env`.
 
 ### Configuration
 
@@ -172,11 +167,11 @@ The server reads a `.env` file from its working directory (see `apps/server/.env
 
 Test the production build locally before deploying:
 
-```bash
+```powershell
 npm run preview:client
 ```
 
-`npm run start --filter=client` still runs the standard Next.js server when a
+`npm run start --workspace=client` still runs the standard Next.js server when a
 Node.js production preview is preferred.
 
 ## Redeploy
@@ -184,4 +179,4 @@ Node.js production preview is preferred.
 1. Push to the `main` branch (GitHub push triggers auto-deploy via the connected Git integration), or
 2. Go to **Cloudflare Dashboard → Workers & Pages → <your-project> → Deployments** and click **Create Deployment**.
 
-For the server, rebuild and restart the binary/container with the new version.
+For the server, rebuild and restart the binary with the new version.
