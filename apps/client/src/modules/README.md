@@ -5,6 +5,7 @@ The client organizes editing, authentication, and navigation by functional domai
 | Module | Main responsibility |
 | --- | --- |
 | `auth` | Sign-up, sign-in, verification, and OAuth |
+| `legal` | Public Terms, Privacy, and Cookie pages |
 | `navigation` | Navbar, preferences, themes, locales, and mobile navigation |
 | `dashboard` | Workspace, Markdown editor, paginated preview, and sync |
 

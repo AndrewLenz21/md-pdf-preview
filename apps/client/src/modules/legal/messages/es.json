@@ -1,0 +1,441 @@
+{
+  "label": "Información legal",
+  "dates": {
+    "effective": "Fecha de entrada en vigor",
+    "updated": "Última actualización"
+  },
+  "related": {
+    "label": "Páginas legales relacionadas",
+    "terms": "Términos",
+    "privacy": "Privacidad",
+    "cookies": "Cookies",
+    "home": "Volver al inicio"
+  },
+  "privacy": {
+    "title": "Política de Privacidad",
+    "summary": "Esta política explica qué datos procesa el servicio alojado md-pdf-preview, con qué finalidad y cómo puedes ejercer tus derechos. Describe la implementación actual y no las instalaciones autoalojadas que un operador puede configurar de otra forma.",
+    "sections": {
+      "controller": {
+        "title": "Responsable del tratamiento",
+        "paragraphs": [
+          "El Responsable del tratamiento de la instancia alojada es [DATA CONTROLLER LEGAL NAME], que opera bajo [BUSINESS / PROJECT NAME]. Contacto: [CONTACT EMAIL]. Dirección: [REGISTERED ADDRESS IF APPLICABLE]. País de establecimiento: [COUNTRY OF ESTABLISHMENT]. El operador debe sustituir estos marcadores antes de poner el servicio en producción.",
+          "El repositorio de código abierto y la instancia alojada son contextos separados. El operador de una instalación autoalojada es responsable de su propia información del responsable, proveedores, plazos de conservación y política de privacidad."
+        ]
+      },
+      "scope": {
+        "title": "Ámbito de esta política",
+        "paragraphs": [
+          "md-pdf-preview es un editor Markdown local-first con sincronización en la nube opcional. Puedes usar el editor sin una cuenta; el inicio de sesión solo es necesario para el espacio de trabajo en la nube y las funciones de cuenta.",
+          "El servicio actualmente no tiene pagos, suscripciones, publicidad ni analítica opcional configurada en este repositorio. Esta política se actualizará antes de introducir nuevos tratamientos."
+        ]
+      },
+      "data": {
+        "title": "Datos personales tratados",
+        "paragraphs": [
+          "Las siguientes categorías están respaldadas por el código y el esquema de base de datos actuales. El servicio no almacena intencionadamente contraseñas en texto plano."
+        ],
+        "bullets": [
+          "Datos de cuenta: nombre, dirección de correo, estado de verificación, identificadores y fechas de creación y actualización, además de una URL de imagen de perfil opcional.",
+          "Datos de autenticación: proveedor e identificador de la cuenta del proveedor. En cuentas con email y contraseña, la contraseña se almacena mediante hash criptográfico seguro, no en texto plano.",
+          "Datos de sesión y seguridad: identificador de sesión del servidor, fechas de creación, actualización y caducidad, dirección IP y agente de usuario. El navegador también recibe una cookie de sesión necesaria.",
+          "Datos OAuth: los tokens de acceso, renovación e identidad y sus fechas de caducidad pueden almacenarse en el servidor cuando el proveedor los devuelve. No se muestran en la aplicación.",
+          "Datos del espacio de trabajo: nombres, jerarquía, iconos, colores, favoritos, orden, fechas, revisiones, tipo y tamaño de archivo, hash y contenido de documentos cuando eliges la sincronización en la nube.",
+          "Datos de email: dirección, finalidad de verificación, identificador del mensaje del proveedor, estado de entrega, fechas, fecha de cuota e información limitada de errores.",
+          "Datos operativos: identificador de petición, endpoint, método, estado, duración, identificador de usuario cuando existe, IP e información limitada y saneada de petición, respuesta o error para seguridad y diagnóstico."
+        ]
+      },
+      "local": {
+        "title": "Espacio local y almacenamiento del navegador",
+        "paragraphs": [
+          "Cuando trabajas sin sincronización en la nube, los documentos y metadatos permanecen en la base de datos IndexedDB del navegador llamada md-pdf-preview. En este modo, el contenido no se envía a la API del espacio de trabajo alojado.",
+          "La aplicación también guarda un estado limitado de interfaz. Se usa para funciones que has elegido y no para rastrearte. Borrar los datos del sitio o cambiar de perfil puede eliminar documentos y preferencias locales."
+        ],
+        "bullets": [
+          "Base IndexedDB md-pdf-preview: elementos y metadatos del espacio local, hasta que los borres o elimines los datos del sitio.",
+          "Clave localStorage theme: tema visual elegido, hasta que se borre.",
+          "Claves localStorage md-pdf-preview:zoom-preferences y md-pdf-preview:desktop-sidebar-collapsed: preferencias de editor y diseño, hasta que se borren.",
+          "Claves sessionStorage md-pdf-preview:scroll:*: restauración temporal de posición, normalmente hasta cerrar la pestaña o sesión.",
+          "Cookie NEXT_LOCALE: recuerda el idioma elegido; es una preferencia de sesión."
+        ]
+      },
+      "authentication": {
+        "title": "Autenticación por email y sesiones",
+        "paragraphs": [
+          "El registro por email y contraseña requiere verificar el correo. Los mensajes se envían mediante Resend. Se aplican límites de frecuencia y se conserva un registro de intentos de entrega para prevenir abusos.",
+          "La cookie de sesión de Better Auth es HTTP-only y same-site. Sirve para mantener la sesión iniciada y no está disponible para los scripts de la página."
+        ],
+        "bullets": [
+          "La duración predeterminada de la sesión actual es de hasta 7 días, sujeta a cierre de sesión, caducidad y futuros ajustes de la implementación.",
+          "Una cookie de estado OAuth protege brevemente el flujo de Google o GitHub contra falsificaciones; su duración configurada es de aproximadamente 10 minutos.",
+          "Los registros de verificación contienen un identificador, un valor de verificación y una caducidad. Solo se usan para verificar el email."
+        ]
+      },
+      "google": {
+        "title": "Inicio de sesión con Google",
+        "paragraphs": [
+          "Si eliges Google, el servicio te redirige a Google y recibe la identidad necesaria para crear o acceder a una cuenta. La configuración actual no solicita Gmail, Drive, Calendar, contactos ni otras API de Google.",
+          "Google trata la petición OAuth conforme a sus propios términos y política de privacidad."
+        ],
+        "bullets": [
+          "Scopes solicitados: openid, email y profile.",
+          "Datos usados por la aplicación: identificador de cuenta de Google, nombre, email, URL de imagen y declaración de verificación.",
+          "La aplicación no usa datos de Google para publicidad ni perfilado."
+        ]
+      },
+      "github": {
+        "title": "Inicio de sesión con GitHub",
+        "paragraphs": [
+          "Si eliges GitHub, el servicio usa la API OAuth de GitHub para obtener la identidad necesaria para crear o acceder a una cuenta. La configuración no solicita acceso a repositorios, organizaciones, incidencias ni código.",
+          "GitHub trata la petición OAuth conforme a sus propios términos y política de privacidad."
+        ],
+        "bullets": [
+          "Scopes solicitados: read:user y user:email.",
+          "Datos usados por la aplicación: identificador de usuario, nombre o login, avatar, email y estado de verificación del email principal.",
+          "No se solicita contenido ni permisos de repositorios."
+        ]
+      },
+      "purposes": {
+        "title": "Finalidades y bases jurídicas",
+        "paragraphs": [
+          "El Responsable usa la información solo para las finalidades siguientes. La base jurídica se determina para cada finalidad y no se trata todo como consentimiento."
+        ],
+        "bullets": [
+          "Crear y gestionar una cuenta, autenticarte, verificar el email y proporcionar sincronización: artículo 6.1.b del RGPD, ejecución del servicio solicitado.",
+          "Mantener sesiones, proteger cuentas, prevenir abusos, aplicar límites e investigar incidentes: artículo 6.1.f del RGPD, interés legítimo en operar un servicio seguro.",
+          "Enviar un email de verificación solicitado: artículo 6.1.b del RGPD.",
+          "Conservar registros exigidos por ley cuando exista una obligación: artículo 6.1.c del RGPD.",
+          "Analítica, publicidad o perfilado opcional: no hay ninguno configurado actualmente. Si se introduce, se bloqueará hasta obtener consentimiento válido y revocable."
+        ]
+      },
+      "processors": {
+        "title": "Encargados y otros destinatarios",
+        "paragraphs": [
+          "Los siguientes servicios se pueden verificar en el repositorio o la configuración. La entidad jurídica, plan, región y condiciones contractuales concretas requieren confirmación del propietario antes de producción."
+        ],
+        "bullets": [
+          "Cloudflare Workers/OpenNext: aloja o entrega la aplicación y puede tratar metadatos de petición en el borde. Cloudflare R2 almacena objetos de documentos y metadatos de almacenamiento.",
+          "PostgreSQL: almacena cuenta, sesión, autenticación, emails, metadatos del espacio y registros operativos. Proveedor y región de la base de datos: OWNER INPUT REQUIRED.",
+          "Resend: envía verificaciones y trata email, nombre, enlace de verificación, metadatos de entrega y webhooks.",
+          "Google: recibe peticiones OAuth y devuelve claims de identidad solo al elegir Google.",
+          "GitHub: recibe peticiones OAuth y devuelve perfil y email solo al elegir GitHub.",
+          "OWNER INPUT REQUIRED: confirmar hosting, proveedor PostgreSQL, ubicación de R2, acuerdo de email y proveedores adicionales de CDN, observabilidad, copias o soporte."
+        ]
+      },
+      "transfers": {
+        "title": "Transferencias internacionales",
+        "paragraphs": [
+          "El repositorio no demuestra que todo el tratamiento permanezca dentro del EEE. Cloudflare, Resend, Google, GitHub y el proveedor PostgreSQL elegido pueden tratar datos fuera del EEE según la cuenta, región y configuración.",
+          "Antes de producción, el Responsable debe documentar el mecanismo aplicable a cada proveedor: decisión de adecuación, Marco de Privacidad de Datos UE-EE. UU. cuando proceda, cláusulas contractuales tipo y garantías adicionales. Las ubicaciones y mecanismos concretos son OWNER INPUT REQUIRED."
+        ]
+      },
+      "retention": {
+        "title": "Conservación",
+        "paragraphs": [
+          "El código contiene algunas caducidades, pero no un calendario completo de borrado. Esta es la descripción más específica que permite la implementación; cuando no exista un plazo automático, el Responsable debe definirlo y publicarlo."
+        ],
+        "bullets": [
+          "Datos locales: hasta que los borres, limpies los datos del sitio, uses navegación privada o el navegador los elimine.",
+          "Cuenta y espacio en la nube: mientras la cuenta esté activa y hasta que borres los datos o el Responsable los elimine conforme a una política documentada. Los objetos R2 se eliminan al borrar el elemento correspondiente.",
+          "Sesiones: hasta 7 días por defecto, con borrado anterior al cerrar sesión o eliminar la cuenta.",
+          "Tokens OAuth y enlaces de cuenta: mientras sean necesarios para la cuenta vinculada, conforme a revocación del proveedor y al procedimiento de eliminación.",
+          "Registros de verificación y email: los primeros tienen campo de caducidad; no hay tarea de limpieza visible para los registros de entrega. Plazo concreto: OWNER INPUT REQUIRED.",
+          "Logs operativos y objetos de errores en R2: se guardan peticiones correctas y fallidas, pero no aparece una tarea de limpieza ni plazo. Esto es OWNER INPUT REQUIRED.",
+          "Copias de seguridad: existencia, ubicación y calendario de borrado no constan en el repositorio y son OWNER INPUT REQUIRED."
+        ]
+      },
+      "rights": {
+        "title": "Tus derechos RGPD",
+        "paragraphs": [
+          "Con las condiciones y límites del RGPD, puedes solicitar acceso, rectificación, supresión, limitación, portabilidad e información sobre tratamientos automatizados. Puedes oponerte a tratamientos basados en intereses legítimos.",
+          "Cuando el tratamiento se base en consentimiento, puedes retirarlo en cualquier momento. La retirada no afecta al tratamiento anterior."
+        ],
+        "bullets": [
+          "Acceso: recibir una copia de los datos tratados.",
+          "Rectificación: corregir datos inexactos o incompletos.",
+          "Supresión: solicitar el borrado cuando se cumplan los requisitos legales.",
+          "Limitación: pedir que se limite el tratamiento en los casos del RGPD.",
+          "Portabilidad: recibir ciertos datos en formato estructurado y legible por máquina.",
+          "Oposición: oponerte al interés legítimo por motivos relacionados con tu situación.",
+          "Reclamación: contactar con una autoridad de control, especialmente la autoridad competente de tu residencia."
+        ],
+        "complaint": "En Italia, la autoridad de control es",
+        "garante": "Garante per la protezione dei dati personali"
+      },
+      "deletion": {
+        "title": "Eliminación de cuenta y datos",
+        "paragraphs": [
+          "El frontend actual no tiene un control de eliminación de cuenta. Para solicitarlo o ejercer otro derecho, escribe a [CONTACT EMAIL] sin enviar contraseñas ni tokens OAuth.",
+          "Eliminar un elemento cloud elimina sus metadatos PostgreSQL y objetos R2 asociados. La eliminación de cuenta, copias, logs y registros de email requiere un procedimiento del operador; no se presenta como instantánea. El propietario debe sustituir este marcador por el procedimiento de producción."
+        ]
+      },
+      "security": {
+        "title": "Seguridad",
+        "paragraphs": [
+          "La aplicación usa cookies de sesión HTTP-only y same-site, hash seguro de contraseñas mediante Better Auth, protección de estado OAuth, límites de frecuencia, comprobaciones de acceso, URLs presignadas y redacción de secretos y campos de contenido en logs. Estas medidas reducen riesgos, pero no garantizan seguridad absoluta.",
+          "Si crees que una cuenta o documento está en riesgo, deja de compartir las credenciales afectadas y contacta con [CONTACT EMAIL]."
+        ]
+      },
+      "changes": {
+        "title": "Cambios en esta política",
+        "paragraphs": [
+          "La política puede cambiar si cambia el servicio, los proveedores o las finalidades. Los cambios materiales se publicarán con nueva fecha y, cuando proceda, se comunicarán mediante el servicio."
+        ]
+      },
+      "contact": {
+        "title": "Contacto",
+        "paragraphs": [
+          "Solicitudes de privacidad: [CONTACT EMAIL]. Responsable: [DATA CONTROLLER LEGAL NAME], [REGISTERED ADDRESS IF APPLICABLE]. Sustituye todos los campos entre corchetes antes de producción."
+        ]
+      }
+    }
+  },
+  "terms": {
+    "title": "Términos de Servicio",
+    "summary": "Estos términos regulan el uso del servicio alojado md-pdf-preview operado por el propietario del proyecto. No sustituyen la licencia de código abierto del repositorio.",
+    "sections": {
+      "acceptance": {
+        "title": "1. Aceptación",
+        "paragraphs": [
+          "Al usar el servicio alojado aceptas estos Términos y la Política de Privacidad. Si no estás de acuerdo, no crees una cuenta ni uses el servicio.",
+          "El operador es [DATA CONTROLLER LEGAL NAME], bajo [BUSINESS / PROJECT NAME]. Contacto: [CONTACT EMAIL]."
+        ]
+      },
+      "eligibility": {
+        "title": "2. Elegibilidad",
+        "paragraphs": [
+          "Debes tener al menos [MINIMUM USER AGE] años o contar con la autorización y supervisión exigidas por tu ley. La edad mínima y los territorios previstos son OWNER INPUT REQUIRED."
+        ]
+      },
+      "service": {
+        "title": "3. Servicio",
+        "paragraphs": [
+          "md-pdf-preview ofrece edición Markdown, organización de documentos, vista previa paginada y sincronización cloud opcional. La edición local puede funcionar sin cuenta; las funciones cloud requieren autenticación."
+        ]
+      },
+      "free": {
+        "title": "4. Servicio gratuito",
+        "paragraphs": [
+          "El servicio alojado es actualmente gratuito. No hay pagos, suscripciones ni niveles de pago."
+        ]
+      },
+      "accounts": {
+        "title": "5. Cuentas",
+        "paragraphs": [
+          "Debes proporcionar información exacta y proteger tus credenciales. Eres responsable de la actividad de tu cuenta salvo que derive de un fallo del operador en seguridad razonable. Informa a [CONTACT EMAIL] de accesos no autorizados.",
+          "El registro por email requiere verificación y se aplican controles razonables contra abusos."
+        ]
+      },
+      "authentication": {
+        "title": "6. Google y GitHub",
+        "paragraphs": [
+          "Puedes usar Google o GitHub. Sus proveedores tienen sus propios términos y políticas. El servicio solicita solo los permisos descritos en la Política de Privacidad y no obtiene acceso a repositorios, Gmail, Drive o Calendar."
+        ]
+      },
+      "acceptableUse": {
+        "title": "7. Uso aceptable y seguridad",
+        "paragraphs": [
+          "Usa el servicio legalmente y no interfieras con otros espacios de trabajo ni con la operación del servicio."
+        ],
+        "bullets": [
+          "No eludas autenticación ni accedas a otra cuenta o endpoint privado.",
+          "No subas malware, credenciales, material ilegal o contenido que no puedas procesar.",
+          "No sobrecargues, raspes para abusar ni evadas límites o controles de seguridad.",
+          "No uses el servicio para probar ataques; comunica vulnerabilidades mediante el contacto de seguridad publicado."
+        ]
+      },
+      "userContent": {
+        "title": "8. Tu contenido",
+        "paragraphs": [
+          "Conservas tus derechos sobre los documentos y contenido que crees o sincronices. Concedes solo el permiso necesario para alojar, almacenar, transmitir y mostrar ese contenido como parte del servicio. Eres responsable de contar con los derechos necesarios.",
+          "No uses el servicio como única copia de seguridad."
+        ]
+      },
+      "intellectualProperty": {
+        "title": "9. Propiedad intelectual",
+        "paragraphs": [
+          "El servicio alojado, la marca y los materiales del operador están protegidos por las leyes aplicables. Estos términos solo conceden un derecho limitado de uso y no transfieren propiedad."
+        ]
+      },
+      "openSource": {
+        "title": "10. Separación del código abierto",
+        "paragraphs": [
+          "El código del repositorio está licenciado separadamente bajo la licencia MIT, que regula copia, modificación, redistribución y avisos.",
+          "Estos términos regulan el uso de la instancia alojada. Ejecutar una copia autoalojada no somete automáticamente a su operador a estos términos; deberá ofrecer sus propias condiciones y política cuando corresponda."
+        ]
+      },
+      "thirdParties": {
+        "title": "11. Servicios de terceros",
+        "paragraphs": [
+          "El servicio depende de proveedores como Cloudflare, PostgreSQL, Resend, Google y GitHub, descritos en la Política de Privacidad. Pueden tener términos, límites o interrupciones propios."
+        ]
+      },
+      "availability": {
+        "title": "12. Disponibilidad y copias",
+        "paragraphs": [
+          "Se harán esfuerzos razonables para mantener el servicio, pero no se promete funcionamiento ininterrumpido, permanencia ni rendimiento concreto. El usuario debe conservar copias independientes del contenido importante."
+        ]
+      },
+      "changesService": {
+        "title": "13. Cambios del servicio",
+        "paragraphs": [
+          "El operador puede añadir, cambiar, suspender o retirar funciones por razones operativas, de seguridad, legales o de producto. Los cambios materiales se comunicarán cuando sea razonable."
+        ]
+      },
+      "suspension": {
+        "title": "14. Suspensión y terminación",
+        "paragraphs": [
+          "El operador puede suspender o terminar el acceso cuando sea razonablemente necesario por abuso, seguridad, ley, proveedor o incumplimiento material. Considerará las circunstancias y los derechos obligatorios.",
+          "Puedes dejar de usar el servicio en cualquier momento."
+        ]
+      },
+      "deletion": {
+        "title": "15. Eliminación de cuenta",
+        "paragraphs": [
+          "El servicio no ofrece actualmente eliminación de cuenta autoservicio. Solicítala en [CONTACT EMAIL]. Los documentos cloud pueden borrarse desde el espacio de trabajo. La eliminación de copias, logs y datos sujetos a conservación legal puede requerir tiempo."
+        ]
+      },
+      "warranties": {
+        "title": "16. Exclusiones",
+        "paragraphs": [
+          "En la máxima medida permitida por la ley, el servicio se ofrece sin promesa de funcionamiento ininterrumpido, sin errores o aptitud para una finalidad concreta. Nada excluye derechos de consumidores de la UE o Italia que no puedan excluirse."
+        ]
+      },
+      "liability": {
+        "title": "17. Responsabilidad",
+        "paragraphs": [
+          "En la medida permitida por la ley, el operador no responde por pérdidas indirectas o imprevisibles derivadas del servicio gratuito. No se limita la responsabilidad que la ley obligatoria no permita limitar."
+        ]
+      },
+      "changesTerms": {
+        "title": "18. Cambios de estos términos",
+        "paragraphs": [
+          "El operador puede actualizar estos términos por cambios del servicio o la ley. Se publicarán la versión, fecha efectiva y fecha de actualización. Los cambios materiales se comunicarán cuando sea razonable y no exigen renunciar a derechos obligatorios."
+        ]
+      },
+      "law": {
+        "title": "19. Ley y jurisdicción",
+        "paragraphs": [
+          "Estos términos se rigen por la ley de [COUNTRY OF ESTABLISHMENT], sin perjuicio de las protecciones obligatorias del país de residencia. Los tribunales de [JURISDICTION] tendrán jurisdicción en la medida permitida. Sustituye los marcadores antes de producción."
+        ]
+      },
+      "contact": {
+        "title": "20. Contacto",
+        "paragraphs": [
+          "Preguntas sobre el servicio o estos términos: [CONTACT EMAIL]. Operador: [DATA CONTROLLER LEGAL NAME], [REGISTERED ADDRESS IF APPLICABLE]."
+        ]
+      }
+    }
+  },
+  "cookies": {
+    "title": "Política de Cookies",
+    "summary": "Este aviso enumera las cookies y mecanismos de almacenamiento del navegador detectados en la aplicación actual y explica su uso.",
+    "sections": {
+      "notice": {
+        "title": "Enfoque actual",
+        "paragraphs": [
+          "La aplicación usa solo mecanismos técnicos y almacenamiento necesarios para funciones que solicitas: sesión, OAuth, espacio local y preferencias.",
+          "No se detectó publicidad, perfilado ni analítica opcional en el repositorio. Por ello no se muestra un banner para aceptar almacenamiento necesario. Si se introduce seguimiento opcional, debe bloquearse hasta obtener consentimiento granular, con aceptar y rechazar igualmente accesibles y retirada posterior."
+        ]
+      },
+      "categories": {
+        "title": "Categorías",
+        "paragraphs": [
+          "Cookies, localStorage, sessionStorage e IndexedDB son tecnologías distintas, pero se enumeran juntas porque pueden cumplir una función equivalente para el usuario."
+        ],
+        "bullets": [
+          "Estrictamente necesarias / técnicas: necesarias para autenticación, seguridad OAuth o funciones solicitadas.",
+          "Preferencias: recuerdan tema, zoom, diseño o scroll; no sirven para identificarte entre servicios.",
+          "Analítica: mide uso más allá de lo necesario. No se detecta ninguna.",
+          "Marketing / perfilado: publicidad o creación de perfiles. No se detecta ninguno."
+        ]
+      },
+      "control": {
+        "title": "Gestión del almacenamiento",
+        "paragraphs": [
+          "Puedes borrar cookies y almacenamiento desde el navegador. Borrar la cookie de sesión cerrará la sesión; borrar IndexedDB elimina el espacio local; borrar preferencias reinicia la interfaz. El almacenamiento técnico puede volver a crearse al usar la función.",
+          "No existe una preferencia de consentimiento opcional porque no hay cookies opcionales ni trackers configurados."
+        ]
+      },
+      "changes": {
+        "title": "Cambios",
+        "paragraphs": [
+          "La tabla se actualizará si la aplicación añade, elimina o cambia mecanismos de almacenamiento. Las fechas de arriba identifican la versión."
+        ]
+      },
+      "contact": {
+        "title": "Contacto",
+        "paragraphs": [
+          "Preguntas sobre cookies o almacenamiento: [CONTACT EMAIL]. Operador: [DATA CONTROLLER LEGAL NAME]."
+        ]
+      }
+    },
+    "table": {
+      "title": "Cookies y almacenamiento equivalente detectado",
+      "columns": {
+        "name": "Nombre / identificador",
+        "provider": "Proveedor",
+        "purpose": "Finalidad",
+        "category": "Categoría",
+        "duration": "Duración"
+      },
+      "rows": [
+        {
+          "name": "better-auth.session_token (en producción puede llevar prefijo __Secure-)",
+          "provider": "Aplicación alojada / Better Auth",
+          "purpose": "Mantener la sesión autenticada mediante cookie HTTP-only same-site.",
+          "category": "Estrictamente necesaria / técnica",
+          "duration": "Hasta 7 días por defecto o hasta cerrar sesión/caducar"
+        },
+        {
+          "name": "better-auth.oauth_state",
+          "provider": "Aplicación alojada / Better Auth",
+          "purpose": "Proteger el callback OAuth de Google y GitHub.",
+          "category": "Estrictamente necesaria / técnica",
+          "duration": "Aproximadamente 10 minutos o hasta terminar OAuth"
+        },
+        {
+          "name": "NEXT_LOCALE",
+          "provider": "Aplicación alojada / next-intl",
+          "purpose": "Recordar el idioma elegido en el selector.",
+          "category": "Preferencias",
+          "duration": "Cookie de sesión, normalmente hasta cerrar el navegador"
+        },
+        {
+          "name": "md-pdf-preview (base IndexedDB)",
+          "provider": "Aplicación alojada",
+          "purpose": "Guardar el espacio local y documentos sin sincronización cloud.",
+          "category": "Necesaria / función solicitada",
+          "duration": "Hasta borrar los datos o limpiar el sitio"
+        },
+        {
+          "name": "theme (localStorage)",
+          "provider": "Aplicación / next-themes",
+          "purpose": "Recordar el tema visual.",
+          "category": "Preferencias",
+          "duration": "Hasta borrar localStorage"
+        },
+        {
+          "name": "md-pdf-preview:zoom-preferences (localStorage)",
+          "provider": "Aplicación alojada",
+          "purpose": "Recordar el zoom del editor y la vista previa.",
+          "category": "Preferencias",
+          "duration": "Hasta borrar localStorage"
+        },
+        {
+          "name": "md-pdf-preview:desktop-sidebar-collapsed (localStorage)",
+          "provider": "Aplicación alojada",
+          "purpose": "Recordar si la barra lateral está contraída.",
+          "category": "Preferencias",
+          "duration": "Hasta borrar localStorage"
+        },
+        {
+          "name": "md-pdf-preview:scroll:* (sessionStorage)",
+          "provider": "Aplicación alojada",
+          "purpose": "Restaurar la posición de scroll durante la sesión.",
+          "category": "Preferencias",
+          "duration": "Normalmente hasta cerrar pestaña o sesión"
+        }
+      ]
+    }
+  }
+}

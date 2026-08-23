@@ -1,0 +1,441 @@
+{
+  "label": "Legal information",
+  "dates": {
+    "effective": "Effective date",
+    "updated": "Last updated"
+  },
+  "related": {
+    "label": "Related legal pages",
+    "terms": "Terms",
+    "privacy": "Privacy",
+    "cookies": "Cookies",
+    "home": "Back to home"
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "summary": "This policy explains what the hosted md-pdf-preview service processes, why it processes it, and how you can exercise your rights. It describes the current implementation, not self-hosted deployments that an operator may configure differently.",
+    "sections": {
+      "controller": {
+        "title": "Data Controller",
+        "paragraphs": [
+          "The Data Controller for the hosted instance is [DATA CONTROLLER LEGAL NAME], operating under [BUSINESS / PROJECT NAME]. Contact: [CONTACT EMAIL]. Address: [REGISTERED ADDRESS IF APPLICABLE]. Country of establishment: [COUNTRY OF ESTABLISHMENT]. These placeholders must be replaced by the operator before the service is put into production.",
+          "The open-source repository and a hosted instance are separate contexts. The operator of a self-hosted deployment is responsible for its own controller information, providers, retention rules, and privacy notice."
+        ]
+      },
+      "scope": {
+        "title": "What This Policy Covers",
+        "paragraphs": [
+          "md-pdf-preview is a local-first Markdown editor with optional cloud synchronization. You can use the editor without an account; signing in is needed only for the hosted cloud workspace and account features.",
+          "The service currently has no payments, subscriptions, advertising, or optional analytics configured in this repository. This policy will be updated before any new processing is introduced."
+        ]
+      },
+      "data": {
+        "title": "Personal Data Processed",
+        "paragraphs": [
+          "The following categories are supported by the current code and database schema. The service does not intentionally store plaintext passwords."
+        ],
+        "bullets": [
+          "Account data: name, email address, email-verification status, account identifier, creation and update timestamps, and an optional profile image URL.",
+          "Authentication data: the authentication provider and provider account identifier. For email/password accounts, the password is stored using the authentication library's secure cryptographic hashing, not as plaintext.",
+          "Session and security data: a server-side session identifier, session creation/update/expiry timestamps, IP address, and user-agent string. The browser also receives a necessary session cookie.",
+          "OAuth account data: the provider access, refresh, and ID tokens and their expiry metadata may be stored server-side by the authentication implementation when returned by a provider. They are not displayed in the application.",
+          "Workspace data: folder and document names, hierarchy, icons, colors, favorites, ordering, timestamps, revision metadata, file type, size, hash, and cloud document content when you choose cloud synchronization.",
+          "Email-delivery data: the email address, verification-email purpose, provider message identifier, delivery status, timestamps, quota date, and limited provider error information.",
+          "Operational data: request identifier, endpoint, method, status, duration, user identifier when available, IP address, and bounded sanitized request/response or error information used for security and troubleshooting."
+        ]
+      },
+      "local": {
+        "title": "Local-Only Workspace and Browser Storage",
+        "paragraphs": [
+          "When you work without cloud synchronization, documents and workspace metadata remain in the browser's IndexedDB database named md-pdf-preview. In this mode, document contents are not sent to the hosted workspace API.",
+          "The application also stores limited interface state in browser storage. These values are used to provide features you have selected and are not used for tracking. Clearing site data or changing browser profiles can remove local documents and settings."
+        ],
+        "bullets": [
+          "IndexedDB database md-pdf-preview: local workspace items and metadata, retained until you delete them or clear browser site data.",
+          "localStorage key theme: selected visual theme, retained until cleared.",
+          "localStorage keys md-pdf-preview:zoom-preferences and md-pdf-preview:desktop-sidebar-collapsed: selected editor and layout preferences, retained until cleared.",
+          "sessionStorage keys md-pdf-preview:scroll:*: temporary scroll-position restoration, normally ending with the browser tab or session.",
+          "NEXT_LOCALE cookie: remembers the language selected in the locale switcher; it is a session preference."
+        ]
+      },
+      "authentication": {
+        "title": "Email Authentication and Sessions",
+        "paragraphs": [
+          "Email/password registration requires email verification. Verification messages are sent through Resend. Rate limiting and a server-side record of delivery attempts are used to prevent abuse.",
+          "The Better Auth session cookie is an HTTP-only, same-site cookie used to keep you signed in. It is not available to page scripts."
+        ],
+        "bullets": [
+          "The default session lifetime in the current configuration is up to 7 days, subject to sign-out, expiry, and any future deployment settings.",
+          "An OAuth state cookie is used briefly to protect the Google or GitHub sign-in flow from request forgery; its configured lifetime is approximately 10 minutes.",
+          "Verification records contain an identifier, a verification value, and an expiry time. They are used only for email verification and are not a marketing mailing list."
+        ]
+      },
+      "google": {
+        "title": "Google Sign-In",
+        "paragraphs": [
+          "If you choose Google sign-in, the service redirects you to Google and receives the identity information needed to create or access an account. The current Better Auth configuration does not request access to Gmail, Drive, Calendar, contacts, or other Google APIs.",
+          "Google processes the OAuth request under Google's own terms and privacy policy."
+        ],
+        "bullets": [
+          "Scopes actually requested: openid, email, and profile.",
+          "Data used by the application: Google's subject/account identifier, name, email address, profile image URL, and email-verification claim.",
+          "No Google data is used for advertising or profiling by this application."
+        ]
+      },
+      "github": {
+        "title": "GitHub Sign-In",
+        "paragraphs": [
+          "If you choose GitHub sign-in, the service uses GitHub's OAuth API to obtain the identity information needed to create or access an account. The current configuration does not request repository, organization, issue, or code access.",
+          "GitHub processes the OAuth request under GitHub's own terms and privacy policy."
+        ],
+        "bullets": [
+          "Scopes actually requested: read:user and user:email.",
+          "Data used by the application: GitHub user identifier, name or login, avatar URL, email address, and the primary email's verification status.",
+          "No repository content or repository permission is requested by the current implementation."
+        ]
+      },
+      "purposes": {
+        "title": "Purposes and Legal Bases",
+        "paragraphs": [
+          "The Controller uses the information only for the purposes below. The legal basis is selected for the specific purpose rather than treating all processing as consent."
+        ],
+        "bullets": [
+          "Creating and managing an account, authenticating you, verifying your email, and providing cloud synchronization: Article 6(1)(b) GDPR, performance of the service requested by you.",
+          "Maintaining sessions and protecting accounts, preventing abuse, applying rate limits, and investigating security incidents: Article 6(1)(f) GDPR, the Controller's legitimate interest in operating a secure service.",
+          "Sending a verification email that you request: Article 6(1)(b) GDPR, because it is necessary to activate the requested account.",
+          "Keeping records required by law, where a legal obligation applies: Article 6(1)(c) GDPR.",
+          "Optional analytics, advertising, or profiling: none is currently configured. If introduced, it will be blocked until a valid consent mechanism is available and consent will be withdrawable."
+        ]
+      },
+      "processors": {
+        "title": "Processors and Other Recipients",
+        "paragraphs": [
+          "The following services are verifiable from the repository or deployment configuration. The exact legal entity, plan, data-centre region, and contractual transfer terms for the hosted deployment require owner confirmation before production."
+        ],
+        "bullets": [
+          "Cloudflare Workers/OpenNext: hosts or delivers the Next.js application and may process request metadata at the network edge. Cloudflare R2 stores cloud document objects and related storage metadata.",
+          "PostgreSQL: stores account, session, authentication, email-delivery, workspace metadata, and operational log records. The database hosting provider and region are OWNER INPUT REQUIRED.",
+          "Resend: sends email-verification messages and processes the recipient email, name, verification link, delivery metadata, and webhook events.",
+          "Google: receives OAuth requests and returns identity claims only when you select Google sign-in.",
+          "GitHub: receives OAuth requests and returns profile and email data only when you select GitHub sign-in.",
+          "OWNER INPUT REQUIRED: confirm the production hosting account, PostgreSQL provider, R2 location, email-provider agreement, and any additional CDN, observability, backup, or support providers."
+        ]
+      },
+      "transfers": {
+        "title": "International Transfers",
+        "paragraphs": [
+          "The repository does not prove that all processing remains inside the European Economic Area. Cloudflare, Resend, Google, GitHub, and the selected PostgreSQL provider may process data in countries outside the EEA depending on the account, region, and service configuration.",
+          "Before production, the Controller must document the transfer mechanism applicable to each provider, such as an adequacy decision, the EU-US Data Privacy Framework where applicable, Standard Contractual Clauses, and any supplementary safeguards. The applicable provider locations and mechanisms are OWNER INPUT REQUIRED."
+        ]
+      },
+      "retention": {
+        "title": "Retention",
+        "paragraphs": [
+          "The codebase provides some expiry behavior but does not define a complete deletion or cleanup schedule. The following is the most specific description supported by the implementation; where no automated period exists, the Controller must set and publish one."
+        ],
+        "bullets": [
+          "Local browser data: until you delete it, clear site data, use private browsing, or the browser removes it.",
+          "Account and workspace data: while the account remains active and until you delete the relevant data or the Controller removes it under a documented policy. Cloud document objects are deleted when the corresponding workspace item is deleted by the service.",
+          "Sessions: the configured session expiry is up to 7 days by default, with earlier deletion on sign-out or account deletion.",
+          "OAuth tokens and account links: while needed for the linked authentication account, subject to provider revocation and account deletion procedures.",
+          "Verification records and email-delivery records: verification records have an expiry field; email-delivery rows have no cleanup job visible in the repository. A concrete retention period is OWNER INPUT REQUIRED.",
+          "Operational request logs and R2 error-log objects: the repository shows storage of successful and failed request records but no automated cleanup job or retention period. This is OWNER INPUT REQUIRED, and the period should be limited to what security and troubleshooting require.",
+          "Backups: backup existence, location, and deletion schedule are not represented in the repository and are OWNER INPUT REQUIRED."
+        ]
+      },
+      "rights": {
+        "title": "Your GDPR Rights",
+        "paragraphs": [
+          "Subject to the conditions and limits in the GDPR, you may ask the Controller for access to your personal data, correction of inaccurate data, erasure, restriction of processing, portability of data you provided, and information about automated processing. You may object to processing based on legitimate interests.",
+          "Where processing is based on consent, you may withdraw consent at any time. Withdrawal does not affect processing that occurred before withdrawal."
+        ],
+        "bullets": [
+          "Access: receive a copy of personal data being processed.",
+          "Rectification: correct incomplete or inaccurate data.",
+          "Erasure: request deletion where the legal requirements are met.",
+          "Restriction: ask the Controller to limit processing in the situations defined by the GDPR.",
+          "Portability: receive certain data in a structured, commonly used, machine-readable format.",
+          "Objection: object to processing based on legitimate interests, including for reasons related to your situation.",
+          "Complaint: contact a supervisory authority, especially the Garante per la protezione dei dati personali if you are in Italy."
+        ],
+        "complaint": "The Italian supervisory authority is",
+        "garante": "Garante per la protezione dei dati personali"
+      },
+      "deletion": {
+        "title": "Account and Data Deletion",
+        "paragraphs": [
+          "The current frontend has no self-service account-deletion control. To request account deletion or exercise another privacy right, contact [CONTACT EMAIL] and include enough information to identify the account without sending a password or OAuth token.",
+          "Deletion of a cloud workspace item removes its PostgreSQL metadata and associated R2 objects through the current workspace service. Account deletion, backups, operational logs, and email-delivery records require an operator procedure; deletion is therefore not represented as instantaneous. The Controller must replace this placeholder with the production procedure and target time before launch."
+        ]
+      },
+      "security": {
+        "title": "Security",
+        "paragraphs": [
+          "The application uses HTTP-only same-site session cookies, secure password hashing through Better Auth, OAuth state protection, rate limiting, server-side access checks, presigned storage URLs, and redaction of common secrets and document-content fields in operational logs. These measures reduce risk but cannot guarantee absolute security.",
+          "If you believe an account or document is at risk, stop sharing the affected credentials and contact [CONTACT EMAIL]."
+        ]
+      },
+      "changes": {
+        "title": "Changes to This Policy",
+        "paragraphs": [
+          "This policy may change when the service, providers, or processing purposes change. Material changes will be published with a new effective date and, where appropriate, communicated through the service. The current version is always available at this public URL."
+        ]
+      },
+      "contact": {
+        "title": "Contact",
+        "paragraphs": [
+          "Privacy requests and questions: [CONTACT EMAIL]. Data Controller: [DATA CONTROLLER LEGAL NAME], [REGISTERED ADDRESS IF APPLICABLE]. Replace all bracketed owner-input fields before production."
+        ]
+      }
+    }
+  },
+  "terms": {
+    "title": "Terms of Service",
+    "summary": "These terms govern use of the hosted md-pdf-preview service operated by the project owner. They do not replace the open-source license for the repository.",
+    "sections": {
+      "acceptance": {
+        "title": "1. Acceptance",
+        "paragraphs": [
+          "By using the hosted service, you agree to these Terms of Service and the Privacy Policy. If you do not agree, do not create an account or use the hosted service.",
+          "The operator is [DATA CONTROLLER LEGAL NAME], operating under [BUSINESS / PROJECT NAME]. Contact: [CONTACT EMAIL]."
+        ]
+      },
+      "eligibility": {
+        "title": "2. Eligibility",
+        "paragraphs": [
+          "You must be at least [MINIMUM USER AGE] years old, or have the permission and supervision required by the laws that apply to you. The operator does not knowingly provide the hosted account service to children where parental authorization or another legal condition is required. The minimum age and intended territories are OWNER INPUT REQUIRED."
+        ]
+      },
+      "service": {
+        "title": "3. The Service",
+        "paragraphs": [
+          "md-pdf-preview provides a Markdown editing, document organization, pagination preview, and optional cloud-synchronization service. Local editing can work without an account; cloud features require authentication."
+        ]
+      },
+      "free": {
+        "title": "4. Free Hosted Service",
+        "paragraphs": [
+          "The hosted service is currently free. There are no payments, subscriptions, or paid service levels. The operator may introduce or remove features in accordance with applicable law and the change process below."
+        ]
+      },
+      "accounts": {
+        "title": "5. Accounts",
+        "paragraphs": [
+          "You must provide accurate information and keep your account credentials confidential. You are responsible for activity performed through your account unless it resulted from the operator's failure to provide reasonable security. Notify [CONTACT EMAIL] if you suspect unauthorized access.",
+          "Email registration requires verification. The operator may use rate limits and other reasonable controls to prevent abuse."
+        ]
+      },
+      "authentication": {
+        "title": "6. Google and GitHub Authentication",
+        "paragraphs": [
+          "You may use Google or GitHub authentication. Those providers have their own terms and privacy policies. The hosted service requests only the permissions described in the Privacy Policy and does not obtain repository, Gmail, Drive, Calendar, or similar unrelated access."
+        ]
+      },
+      "acceptableUse": {
+        "title": "7. Acceptable Use and Security",
+        "paragraphs": [
+          "Use the service lawfully and do not interfere with another user's workspace or the service's operation."
+        ],
+        "bullets": [
+          "Do not bypass authentication, access another user's account, or probe private endpoints.",
+          "Do not upload malware, credentials, unlawful material, or content you are not authorized to process.",
+          "Do not overload, scrape, reverse engineer for abuse, or evade rate limits or security controls.",
+          "Do not use the hosted service to test attacks; report vulnerabilities through the published security contact."
+        ]
+      },
+      "userContent": {
+        "title": "8. Your Content",
+        "paragraphs": [
+          "You retain your rights in documents and other content you create or synchronize. You give the operator only the limited permission needed to host, store, transmit, and display that content as part of the service. You are responsible for having the rights and permissions needed for the content you submit.",
+          "Do not use the hosted service as the only backup for important work."
+        ]
+      },
+      "intellectualProperty": {
+        "title": "9. Intellectual Property",
+        "paragraphs": [
+          "The hosted service, branding, and materials supplied by the operator remain protected by applicable intellectual-property laws. These Terms grant a limited right to use the hosted service and do not transfer ownership."
+        ]
+      },
+      "openSource": {
+        "title": "10. Open-Source Distinction",
+        "paragraphs": [
+          "The source code in the repository is separately licensed under the MIT License. The MIT License governs copying, modification, and redistribution of the source code and its notice requirements.",
+          "These Terms govern use of the hosted instance operated by the project owner. Running a self-hosted copy does not automatically make its operator subject to these hosted-service Terms; a self-hosted operator must provide its own terms and privacy information where required."
+        ]
+      },
+      "thirdParties": {
+        "title": "11. Third-Party Services",
+        "paragraphs": [
+          "The service depends on infrastructure and authentication providers including Cloudflare, PostgreSQL hosting, Resend, Google, and GitHub as described in the Privacy Policy. A provider may have separate terms, limits, or outages."
+        ]
+      },
+      "availability": {
+        "title": "12. Availability and Backups",
+        "paragraphs": [
+          "The operator will make reasonable efforts to keep the service available but does not promise uninterrupted operation, permanent availability, or a particular performance level. Maintenance, provider failures, security events, and changes may cause downtime. You are responsible for keeping independent backups of important content."
+        ]
+      },
+      "changesService": {
+        "title": "13. Changes to the Service",
+        "paragraphs": [
+          "The operator may add, change, suspend, or remove features for operational, security, legal, or product reasons. Material changes that significantly affect use will be communicated where reasonably practicable."
+        ]
+      },
+      "suspension": {
+        "title": "14. Suspension and Termination",
+        "paragraphs": [
+          "The operator may suspend or terminate access when reasonably necessary to address abuse, security, legal requirements, provider restrictions, or a material breach of these Terms. The operator will consider the circumstances and applicable legal requirements, and will not exclude mandatory consumer protections.",
+          "You may stop using the service at any time."
+        ]
+      },
+      "deletion": {
+        "title": "15. Account Deletion",
+        "paragraphs": [
+          "The current service does not provide a self-service account-deletion control. Request deletion by contacting [CONTACT EMAIL]. Individual cloud documents can be deleted through the workspace controls. The operator will handle account, storage, log, and backup deletion under the procedure described in the Privacy Policy; immediate deletion cannot be promised where backups or legal retention apply."
+        ]
+      },
+      "warranties": {
+        "title": "16. Disclaimers",
+        "paragraphs": [
+          "To the maximum extent permitted by applicable law, the hosted service is provided without a promise that it will be uninterrupted, error-free, or suitable for every purpose. Nothing in these Terms excludes or limits a warranty, statutory right, or remedy that cannot lawfully be excluded, including mandatory EU or Italian consumer rights."
+        ]
+      },
+      "liability": {
+        "title": "17. Liability",
+        "paragraphs": [
+          "To the extent permitted by law, the operator is not responsible for indirect or unforeseeable loss arising from use of the free service. This limitation does not apply to liability that cannot be limited under mandatory law, including liability for intent, gross negligence where non-excludable, death or personal injury, or statutory consumer protections."
+        ]
+      },
+      "changesTerms": {
+        "title": "18. Changes to These Terms",
+        "paragraphs": [
+          "The operator may update these Terms when the service or legal requirements change. The current version, effective date, and last-updated date will be published at this URL. Material changes will be communicated where reasonably practicable. Nothing in an update asks you to waive mandatory rights."
+        ]
+      },
+      "law": {
+        "title": "19. Applicable Law and Jurisdiction",
+        "paragraphs": [
+          "These Terms are governed by the law of [COUNTRY OF ESTABLISHMENT], subject to mandatory consumer protections that apply in your country of residence. Courts of [JURISDICTION] will have jurisdiction to the extent permitted by applicable law. The operator must replace these owner-input placeholders before production."
+        ]
+      },
+      "contact": {
+        "title": "20. Contact",
+        "paragraphs": [
+          "Questions about the hosted service or these Terms: [CONTACT EMAIL]. Operator: [DATA CONTROLLER LEGAL NAME], [REGISTERED ADDRESS IF APPLICABLE]."
+        ]
+      }
+    }
+  },
+  "cookies": {
+    "title": "Cookie Policy",
+    "summary": "This notice lists the cookies and browser storage mechanisms detected in the current application and explains why they are used.",
+    "sections": {
+      "notice": {
+        "title": "Current Approach",
+        "paragraphs": [
+          "The application currently uses only technical authentication mechanisms and storage needed for features that you request, such as keeping a session, completing OAuth sign-in, saving a local workspace, and remembering interface preferences.",
+          "No advertising, profiling, or optional analytics technology was found in the repository. Because the current mechanisms are necessary for authentication, security, or an explicitly requested feature, this application does not show a consent banner asking you to accept necessary storage. If optional tracking is introduced, it must be blocked until valid granular consent is collected, with equally accessible accept and reject choices and a way to withdraw consent."
+        ]
+      },
+      "categories": {
+        "title": "Storage Categories",
+        "paragraphs": [
+          "A cookie is a small value stored by the browser. LocalStorage, sessionStorage, and IndexedDB are different browser storage technologies, but they are listed here because they can perform a similar user-facing function."
+        ],
+        "bullets": [
+          "Strictly necessary / technical: required for authentication, OAuth security, security controls, or an explicitly requested application feature.",
+          "Preferences: remembers a choice such as theme, zoom, layout, or temporary scroll position. These are not used to identify you across unrelated services.",
+          "Analytics: measures use beyond what is needed to provide the requested feature. None is currently detected.",
+          "Marketing / profiling: tracks people for advertising or audience profiling. None is currently detected."
+        ]
+      },
+      "control": {
+        "title": "Managing Storage",
+        "paragraphs": [
+          "You can remove cookies and browser storage through your browser settings. Removing the session cookie will sign you out; removing IndexedDB will delete the local workspace; removing preference storage will reset interface choices. Technical storage may be recreated when you use the related feature.",
+          "There is currently no optional-cookie consent preference to withdraw because no optional cookies or trackers are configured."
+        ]
+      },
+      "changes": {
+        "title": "Changes",
+        "paragraphs": [
+          "This table will be updated when the application adds, removes, or changes a storage mechanism. The effective and last-updated dates at the top of this page identify the current version."
+        ]
+      },
+      "contact": {
+        "title": "Contact",
+        "paragraphs": [
+          "Questions about cookies or browser storage: [CONTACT EMAIL]. The operator is [DATA CONTROLLER LEGAL NAME]."
+        ]
+      }
+    },
+    "table": {
+      "title": "Cookies and Equivalent Storage Detected",
+      "columns": {
+        "name": "Name / identifier",
+        "provider": "Provider",
+        "purpose": "Purpose",
+        "category": "Category",
+        "duration": "Duration"
+      },
+      "rows": [
+        {
+          "name": "better-auth.session_token (production may add a __Secure- prefix)",
+          "provider": "Hosted application / Better Auth",
+          "purpose": "Maintains the authenticated session using an HTTP-only same-site cookie.",
+          "category": "Strictly necessary / technical",
+          "duration": "Up to 7 days by default, or until sign-out/expiry"
+        },
+        {
+          "name": "better-auth.oauth_state",
+          "provider": "Hosted application / Better Auth",
+          "purpose": "Protects the Google and GitHub OAuth callback against request forgery.",
+          "category": "Strictly necessary / technical",
+          "duration": "Approximately 10 minutes or until the OAuth flow ends"
+        },
+        {
+          "name": "NEXT_LOCALE",
+          "provider": "Hosted application / next-intl",
+          "purpose": "Remembers the language selected in the locale switcher.",
+          "category": "Preferences",
+          "duration": "Session cookie, normally until the browser session ends"
+        },
+        {
+          "name": "md-pdf-preview (IndexedDB database)",
+          "provider": "Hosted application",
+          "purpose": "Stores local workspace folders, documents, and metadata when cloud sync is not used.",
+          "category": "Strictly necessary / requested feature",
+          "duration": "Until the local data is deleted or browser site data is cleared"
+        },
+        {
+          "name": "theme (localStorage)",
+          "provider": "Hosted application / next-themes",
+          "purpose": "Remembers the selected visual theme.",
+          "category": "Preferences",
+          "duration": "Until localStorage is cleared"
+        },
+        {
+          "name": "md-pdf-preview:zoom-preferences (localStorage)",
+          "provider": "Hosted application",
+          "purpose": "Remembers editor and preview zoom choices.",
+          "category": "Preferences",
+          "duration": "Until localStorage is cleared"
+        },
+        {
+          "name": "md-pdf-preview:desktop-sidebar-collapsed (localStorage)",
+          "provider": "Hosted application",
+          "purpose": "Remembers whether the desktop sidebar is collapsed.",
+          "category": "Preferences",
+          "duration": "Until localStorage is cleared"
+        },
+        {
+          "name": "md-pdf-preview:scroll:* (sessionStorage)",
+          "provider": "Hosted application",
+          "purpose": "Restores a document preview scroll position during the current browser session.",
+          "category": "Preferences",
+          "duration": "Normally until the tab or browser session ends"
+        }
+      ]
+    }
+  }
+}

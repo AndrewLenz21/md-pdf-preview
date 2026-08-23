@@ -106,7 +106,9 @@ export function SignInForm() {
       if (resendError) {
         if (isKnownErrorCode(resendError, "DAILY_REGISTRATION_LIMIT_REACHED")) {
           setResendError(t("dailyLimit"));
-        } else if (isKnownErrorCode(resendError, "VERIFICATION_EMAIL_COOLDOWN")) {
+        } else if (
+          isKnownErrorCode(resendError, "VERIFICATION_EMAIL_COOLDOWN")
+        ) {
           setResendError(t("cooldown"));
         } else {
           setResendError(resendError.message ?? t("error"));
@@ -215,6 +217,23 @@ export function SignInForm() {
       >
         {loading ? t("loading") : redirecting ? t("redirecting") : t("submit")}
       </button>
+      <p className="mt-4 text-center text-xs leading-5 text-muted-foreground">
+        {t("legalPrefix")}{" "}
+        <Link
+          href="/terms"
+          className="underline underline-offset-4 hover:text-foreground"
+        >
+          {t("terms")}
+        </Link>{" "}
+        {t("legalAnd")}{" "}
+        <Link
+          href="/privacy"
+          className="underline underline-offset-4 hover:text-foreground"
+        >
+          {t("privacy")}
+        </Link>
+        .
+      </p>
       <p className="mt-5 text-center text-sm text-muted-foreground">
         {t("newAccount")}{" "}
         <Link
