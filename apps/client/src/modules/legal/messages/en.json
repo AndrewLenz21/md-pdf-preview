@@ -110,28 +110,28 @@
       "processors": {
         "title": "Processors and Other Recipients",
         "paragraphs": [
-          "The following services are verifiable from the repository or deployment configuration. The exact legal entity, plan, data-centre region, and contractual transfer terms for the hosted deployment require owner confirmation before production."
+          "The following services and infrastructure are verifiable for the hosted deployment. Exact legal entities, service plans, contractual terms, and some transfer details may vary by provider configuration."
         ],
         "bullets": [
           "Cloudflare Workers/OpenNext: hosts or delivers the Next.js application and may process request metadata at the network edge. Cloudflare R2 stores cloud document objects and related storage metadata.",
-          "PostgreSQL: stores account, session, authentication, email-delivery, workspace metadata, and operational log records. The database hosting provider and region are OWNER INPUT REQUIRED.",
+          "PostgreSQL: stores account, session, authentication, email-delivery, workspace metadata, and operational log records. The hosted service uses Supabase as its managed PostgreSQL provider. The production database is hosted on AWS in the eu-west-1 region (Europe – Ireland).",
           "Resend: sends email-verification messages and processes the recipient email, name, verification link, delivery metadata, and webhook events.",
           "Google: receives OAuth requests and returns identity claims only when you select Google sign-in.",
           "GitHub: receives OAuth requests and returns profile and email data only when you select GitHub sign-in.",
-          "OWNER INPUT REQUIRED: confirm the production hosting account, PostgreSQL provider, R2 location, email-provider agreement, and any additional CDN, observability, backup, or support providers."
+          "The hosted service currently uses Cloudflare for application delivery and R2 object storage, Supabase for managed PostgreSQL, Resend for verification emails, and Google or GitHub when users choose those authentication methods."
         ]
       },
       "transfers": {
         "title": "International Transfers",
         "paragraphs": [
-          "The repository does not prove that all processing remains inside the European Economic Area. Cloudflare, Resend, Google, GitHub, and the selected PostgreSQL provider may process data in countries outside the EEA depending on the account, region, and service configuration.",
-          "Before production, the Controller must document the transfer mechanism applicable to each provider, such as an adequacy decision, the EU-US Data Privacy Framework where applicable, Standard Contractual Clauses, and any supplementary safeguards. The applicable provider locations and mechanisms are OWNER INPUT REQUIRED."
+          "The repository does not prove that all processing remains inside the European Economic Area. Cloudflare, Resend, Google, GitHub, and Supabase may process data in countries outside the EEA depending on the account, region, and service configuration.",
+          "The specific international transfer mechanisms and supplementary safeguards applicable to each provider are still being finalized for the hosted deployment."
         ]
       },
       "retention": {
         "title": "Retention",
         "paragraphs": [
-          "The codebase provides some expiry behavior but does not define a complete deletion or cleanup schedule. The following is the most specific description supported by the implementation; where no automated period exists, the Controller must set and publish one."
+          "The hosted service has several concrete retention and deletion mechanisms, but not every category has automated deletion. The following describes the current behavior; backup existence, location, retention, and deletion details are still being finalized for the hosted deployment."
         ],
         "bullets": [
           "Local browser data: until you delete it, clear site data, use private browsing, or the browser removes it.",
@@ -139,8 +139,8 @@
           "Sessions: the configured session expiry is up to 7 days by default, with earlier deletion on sign-out or account deletion.",
           "OAuth tokens and account links: while needed for the linked authentication account, subject to provider revocation and account deletion procedures.",
           "Verification records and email-delivery records: verification records have an expiry field; PostgreSQL email-delivery records are automatically deleted after 30 days.",
-          "Operational request logs: PostgreSQL request logs are automatically deleted after 30 days. R2 error-log object retention remains OWNER INPUT REQUIRED.",
-          "Backups: backup existence, location, and deletion schedule are not represented in the repository and are OWNER INPUT REQUIRED."
+          "Operational logs: PostgreSQL request logs are automatically deleted after 30 days. Diagnostic log objects stored under the Cloudflare R2 logs/ prefix are also configured to expire automatically after 30 days.",
+          "Backups: backup existence, location, retention, and deletion schedule are still being finalized for the hosted deployment; this policy does not promise a backup deletion timeframe."
         ]
       },
       "rights": {
@@ -164,8 +164,8 @@
       "deletion": {
         "title": "Account and Data Deletion",
         "paragraphs": [
-          "The current frontend has no self-service account-deletion control. To request account deletion or exercise another privacy right, contact privacy@bitnexuslab.com and include enough information to identify the account without sending a password or OAuth token.",
-          "Deletion of a cloud workspace item removes its PostgreSQL metadata and associated R2 objects through the current workspace service. Account deletion, backups, operational logs, and email-delivery records require an operator procedure; deletion is therefore not represented as instantaneous. The Controller must replace this placeholder with the production procedure and target time before launch."
+          "The current application does not yet provide a self-service account-deletion control. You may request deletion of your account and associated cloud data by contacting privacy@bitnexuslab.com. After reasonably verifying the request, the Controller will process it without undue delay and normally within 30 days, subject to applicable GDPR requirements and any legal obligation requiring limited information to be retained.",
+          "Active cloud workspace data associated with the account will be deleted from the production service. Document objects associated with deleted workspace items are removed from Cloudflare R2. PostgreSQL request logs and email-delivery records are not kept indefinitely and expire under their existing 30-day retention policy. R2 diagnostic logs expire after 30 days. Some information may need to be retained when required by law or necessary for the establishment, exercise, or defence of legal claims. No specific deletion timing is promised for backups because their configuration remains unresolved."
         ]
       },
       "security": {

@@ -20,7 +20,7 @@ When you create an account or sign in and use Cloud features, the deployment may
 - Verification email delivery information when email verification is enabled.
 - Operational request and error logs needed to run and protect the service.
 
-The hosted deployment stores workspace metadata in PostgreSQL and document contents in Cloudflare R2. Authentication and email delivery may use the providers configured by the deployment operator.
+The hosted deployment stores workspace metadata in PostgreSQL and document contents in Cloudflare R2. The hosted service uses Cloudflare for application delivery and R2 object storage, Supabase as its managed PostgreSQL provider, Resend for verification emails, and Google or GitHub when users choose those authentication methods. The production PostgreSQL database is hosted on AWS in the `eu-west-1` region (Europe – Ireland).
 
 ## Use of Information
 
@@ -28,11 +28,13 @@ Information is used to authenticate users, provide workspace synchronization, de
 
 ## Retention and Deletion
 
-Local data remains in the browser until the user or browser removes it. PostgreSQL request logs and email-delivery records are retained for 30 days and then automatically deleted. Cloud documents remain until they are deleted through the application or by the operator's retention policy. Self-hosted operators are responsible for defining and communicating account and backup retention policies.
+The hosted service has several concrete retention and deletion mechanisms. Local browser workspace data remains until the user or browser removes it. PostgreSQL request logs and email-delivery records are retained for 30 days and then automatically deleted. Diagnostic log objects stored under the Cloudflare R2 `logs/` prefix are configured to expire automatically after 30 days. Sessions expire according to the configured session policy, currently up to approximately 7 days. Cloud workspace documents remain until the user deletes them or they are deleted under the applicable account or data-deletion procedure. Backup existence, location, retention, and deletion details are still being finalized for the hosted deployment; this policy does not promise a backup deletion timeframe.
+
+The current hosted application does not yet provide a self-service account-deletion control. You may request deletion of your account and associated cloud data by contacting [privacy@bitnexuslab.com](mailto:privacy@bitnexuslab.com). After reasonably verifying the request, the Controller will process it without undue delay and normally within 30 days, subject to applicable GDPR requirements and any legal obligation requiring limited information to be retained. Active cloud workspace data associated with the account will be deleted from the production service. Document objects associated with deleted workspace items are removed from Cloudflare R2. PostgreSQL request logs and email-delivery records expire under their existing 30-day retention policy, and R2 diagnostic logs expire after 30 days. Some information may need to be retained when required by law or necessary for the establishment, exercise, or defence of legal claims. No specific deletion timing is promised for backups because their configuration remains unresolved. Self-hosted operators are responsible for defining and communicating their own account and backup retention policies.
 
 ## Third-Party Services
 
-The hosted deployment may use Cloudflare, PostgreSQL hosting, Resend, Google, and GitHub depending on which features are enabled. Those services process information under their own privacy policies.
+The hosted deployment uses Cloudflare, Supabase, Resend, Google, and GitHub depending on which features are enabled. Those services process information under their own privacy policies. Specific international transfer mechanisms, supplementary safeguards, and provider-specific contractual details are still being finalized for the hosted deployment.
 
 ## Changes
 

@@ -110,37 +110,37 @@
       "processors": {
         "title": "Encargados y otros destinatarios",
         "paragraphs": [
-          "Los siguientes servicios se pueden verificar en el repositorio o la configuración. La entidad jurídica, plan, región y condiciones contractuales concretas requieren confirmación del propietario antes de producción."
+          "Los siguientes servicios e infraestructuras se pueden verificar para el servicio alojado. Las entidades jurídicas, planes de servicio, condiciones contractuales y algunos detalles de transferencias pueden variar según la configuración de cada proveedor."
         ],
         "bullets": [
           "Cloudflare Workers/OpenNext: aloja o entrega la aplicación y puede tratar metadatos de petición en el borde. Cloudflare R2 almacena objetos de documentos y metadatos de almacenamiento.",
-          "PostgreSQL: almacena cuenta, sesión, autenticación, emails, metadatos del espacio y registros operativos. Proveedor y región de la base de datos: OWNER INPUT REQUIRED.",
+          "PostgreSQL: almacena cuenta, sesión, autenticación, emails, metadatos del espacio y registros operativos. El servicio alojado utiliza Supabase como proveedor administrado de PostgreSQL. La base de datos de producción está alojada en AWS en la región eu-west-1 (Europa – Irlanda).",
           "Resend: envía verificaciones y trata email, nombre, enlace de verificación, metadatos de entrega y webhooks.",
           "Google: recibe peticiones OAuth y devuelve claims de identidad solo al elegir Google.",
           "GitHub: recibe peticiones OAuth y devuelve perfil y email solo al elegir GitHub.",
-          "OWNER INPUT REQUIRED: confirmar hosting, proveedor PostgreSQL, ubicación de R2, acuerdo de email y proveedores adicionales de CDN, observabilidad, copias o soporte."
+          "El servicio alojado utiliza actualmente Cloudflare para la entrega de la aplicación y el almacenamiento de objetos R2, Supabase para PostgreSQL administrado, Resend para emails de verificación y Google o GitHub cuando los usuarios eligen esos métodos de autenticación."
         ]
       },
       "transfers": {
         "title": "Transferencias internacionales",
         "paragraphs": [
-          "El repositorio no demuestra que todo el tratamiento permanezca dentro del EEE. Cloudflare, Resend, Google, GitHub y el proveedor PostgreSQL elegido pueden tratar datos fuera del EEE según la cuenta, región y configuración.",
-          "Antes de producción, el Responsable debe documentar el mecanismo aplicable a cada proveedor: decisión de adecuación, Marco de Privacidad de Datos UE-EE. UU. cuando proceda, cláusulas contractuales tipo y garantías adicionales. Las ubicaciones y mecanismos concretos son OWNER INPUT REQUIRED."
+          "El repositorio no demuestra que todo el tratamiento permanezca dentro del EEE. Cloudflare, Resend, Google, GitHub y Supabase pueden tratar datos fuera del EEE según la cuenta, región y configuración.",
+          "Los mecanismos concretos de transferencia internacional y las garantías adicionales aplicables a cada proveedor todavía se están finalizando para el servicio alojado."
         ]
       },
       "retention": {
         "title": "Conservación",
         "paragraphs": [
-          "El código contiene algunas caducidades, pero no un calendario completo de borrado. Esta es la descripción más específica que permite la implementación; cuando no exista un plazo automático, el Responsable debe definirlo y publicarlo."
+          "El servicio alojado cuenta con varios mecanismos concretos de conservación y borrado, pero no todas las categorías tienen eliminación automática. Esta es la descripción del comportamiento actual; los detalles sobre existencia, ubicación, conservación y borrado de las copias de seguridad todavía se están finalizando para el servicio alojado."
         ],
         "bullets": [
           "Datos locales: hasta que los borres, limpies los datos del sitio, uses navegación privada o el navegador los elimine.",
           "Cuenta y espacio en la nube: mientras la cuenta esté activa y hasta que borres los datos o el Responsable los elimine conforme a una política documentada. Los objetos R2 se eliminan al borrar el elemento correspondiente.",
           "Sesiones: hasta 7 días por defecto, con borrado anterior al cerrar sesión o eliminar la cuenta.",
           "Tokens OAuth y enlaces de cuenta: mientras sean necesarios para la cuenta vinculada, conforme a revocación del proveedor y al procedimiento de eliminación.",
-          "Registros de verificación y email: los primeros tienen campo de caducidad; los registros de entrega de email en PostgreSQL se eliminan automáticamente tras 30 días.",
-          "Logs operativos: los logs de peticiones en PostgreSQL se eliminan automáticamente tras 30 días. La retención de objetos de errores en R2 sigue siendo OWNER INPUT REQUIRED.",
-          "Copias de seguridad: existencia, ubicación y calendario de borrado no constan en el repositorio y son OWNER INPUT REQUIRED."
+          "Registros de verificación y email: los primeros tienen campo de caducidad; los registros de entrega de email en PostgreSQL se eliminan automáticamente después de 30 días.",
+          "Registros operativos: los registros de solicitudes almacenados en PostgreSQL se eliminan automáticamente después de 30 días. Los objetos de diagnóstico almacenados bajo el prefijo logs/ de Cloudflare R2 también están configurados para expirar automáticamente después de 30 días.",
+          "Copias de seguridad: la existencia, ubicación, conservación y calendario de borrado todavía se están finalizando para el servicio alojado; esta política no promete un plazo de eliminación de copias de seguridad."
         ]
       },
       "rights": {
@@ -164,8 +164,8 @@
       "deletion": {
         "title": "Eliminación de cuenta y datos",
         "paragraphs": [
-          "El frontend actual no tiene un control de eliminación de cuenta. Para solicitarlo o ejercer otro derecho, escribe a privacy@bitnexuslab.com sin enviar contraseñas ni tokens OAuth.",
-          "Eliminar un elemento cloud elimina sus metadatos PostgreSQL y objetos R2 asociados. La eliminación de cuenta, copias, logs y registros de email requiere un procedimiento del operador; no se presenta como instantánea. El propietario debe sustituir este marcador por el procedimiento de producción."
+          "La aplicación actual todavía no ofrece un control de eliminación autoservicio de la cuenta. Puedes solicitar la eliminación de tu cuenta y de los datos cloud asociados escribiendo a privacy@bitnexuslab.com. Tras verificar razonablemente la solicitud, el Responsable la tramitará sin demora indebida y normalmente en un plazo de 30 días, sujeto a los requisitos aplicables del RGPD y a cualquier obligación legal que exija conservar información limitada.",
+          "Los datos activos del espacio cloud asociados a la cuenta se eliminarán del servicio de producción. Los objetos de documentos asociados a elementos del espacio eliminados se eliminarán de Cloudflare R2. Los registros de solicitudes de PostgreSQL y los registros de entrega de email no se conservan indefinidamente y caducan conforme a su política vigente de 30 días. Los logs de diagnóstico de R2 caducan después de 30 días. Parte de la información puede conservarse cuando lo exija la ley o sea necesaria para formular, ejercer o defender reclamaciones legales. No se promete un plazo de eliminación para las copias de seguridad porque su configuración sigue sin estar confirmada."
         ]
       },
       "security": {
