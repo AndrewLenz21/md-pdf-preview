@@ -1,263 +1,263 @@
-# Atlas Norte: Bitacora de una ciudad caminable
+# Atlas Norte: A Walkable City Field Journal
 
-![Vista aerea de una ciudad junto al agua](https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=1800&q=85)
+![Aerial view of a city by the water](https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=1800&q=85)
 
-> Un documento de prueba para validar tipografia, imagenes, tablas anchas, listas, bloques de codigo y saltos de pagina.
+> A test document for validating typography, images, wide tables, lists, code blocks, and page breaks.
 >
-> **Fecha:** Agosto 2026<br>
-> **Autor:** Equipo Atlas<br>
-> **Estado:** Borrador visual
+> **Date:** August 2026<br>
+> **Author:** Atlas Team<br>
+> **Status:** Visual draft
 
 ---
 
-## Resumen ejecutivo
+## Executive summary
 
-Atlas Norte es una iniciativa editorial y urbana que observa como las personas recorren una ciudad durante una semana. El objetivo no es medir solamente distancias: queremos entender que lugares generan pausas, conversaciones, compras espontaneas y trayectos que las personas desean repetir.
+Atlas Norte is an editorial and urban initiative that observes how people move through a city over one week. The goal is not only to measure distance: we want to understand which places create pauses, conversations, spontaneous purchases, and routes people want to repeat.
 
-Durante siete dias se registraron recorridos a pie, transporte publico, bicicleta y micro movilidad. Se combinaron entrevistas cortas, fotografias de campo, notas de sonido y conteos manuales en puntos seleccionados.
+For seven days, we recorded walking, public transit, cycling, and micromobility routes. We combined short interviews, field photographs, sound notes, and manual counts at selected points.
 
-| Indicador | Semana 1 | Semana 2 | Variacion | Objetivo |
+| Indicator | Week 1 | Week 2 | Change | Target |
 | --- | ---: | ---: | ---: | ---: |
-| Personas observadas | 1,284 | 1,639 | +27.6% | 1,500 |
-| Recorridos completos | 86 | 119 | +38.4% | 100 |
-| Tiempo promedio caminando | 34 min | 41 min | +20.5% | 45 min |
-| Comercios visitados | 142 | 187 | +31.7% | 170 |
-| Incidencias reportadas | 23 | 16 | -30.4% | Menos de 20 |
-| Fotos catalogadas | 318 | 507 | +59.4% | 450 |
+| People observed | 1,284 | 1,639 | +27.6% | 1,500 |
+| Complete routes | 86 | 119 | +38.4% | 100 |
+| Average walking time | 34 min | 41 min | +20.5% | 45 min |
+| Businesses visited | 142 | 187 | +31.7% | 170 |
+| Reported incidents | 23 | 16 | -30.4% | Fewer than 20 |
+| Catalogued photos | 318 | 507 | +59.4% | 450 |
 
-La principal conclusion inicial es sencilla: las calles con sombra, cruces cortos, fachadas activas y bancos bien ubicados aumentan la permanencia. Una ruta no se vuelve memorable por ser la mas rapida, sino por ofrecer pequeñas razones para detenerse.
-
----
-
-## 1. La pregunta inicial
-
-La investigacion comenzo con una pregunta aparentemente simple:
-
-> ¿Que hace que una persona elija caminar una cuadra mas, incluso cuando podria tomar una ruta directa?
-
-La respuesta aparecio en fragmentos. Una panaderia abierta temprano. Un arbol que protege del sol. Una libreria con una mesa exterior. Un semaforo que no obliga a esperar demasiado. Un muro intervenido con color. Ningun elemento por si solo explica el recorrido, pero juntos forman una experiencia.
-
-![Calle urbana con peatones](https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&w=1600&q=85)
-
-### Hipotesis de trabajo
-
-1. La comodidad percibida pesa mas que la distancia real.
-2. Los recorridos con actividad comercial ligera se sienten mas seguros.
-3. Las personas recuerdan puntos de referencia, no nombres de calles.
-4. La pausa es una parte necesaria del desplazamiento urbano.
-5. Las rutas que permiten elegir generan una mayor sensacion de control.
+The initial conclusion is simple: streets with shade, short crossings, active facades, and well-placed benches increase the time people stay. A route becomes memorable not because it is the fastest, but because it offers small reasons to stop.
 
 ---
 
-## 2. Area de estudio
+## 1. The initial question
 
-El area de estudio cubre seis barrios conectados por una avenida principal, dos parques de escala media, una estacion de transporte publico y un corredor comercial de aproximadamente 2.8 kilometros.
+The research began with an apparently simple question:
 
-| Zona | Caracter principal | Flujo peatonal | Sombra | Comercio | Observacion |
+> What makes a person choose to walk one more block, even when a direct route is available?
+
+The answer appeared in fragments. A bakery open early. A tree that protects from the sun. A bookstore with an outdoor table. A traffic light that does not force a long wait. A wall covered in color. No single element explains the route, but together they form an experience.
+
+![Urban street with pedestrians](https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&w=1600&q=85)
+
+### Working hypotheses
+
+1. Perceived comfort matters more than actual distance.
+2. Routes with light commercial activity feel safer.
+3. People remember landmarks, not street names.
+4. Pausing is a necessary part of urban movement.
+5. Routes that allow choices create a stronger sense of control.
+
+---
+
+## 2. Study area
+
+The study area covers six neighborhoods connected by a main avenue, two medium-sized parks, a public transit station, and a commercial corridor approximately 2.8 kilometers long.
+
+| Area | Main character | Pedestrian flow | Shade | Commerce | Observation |
 | --- | --- | ---: | ---: | ---: | --- |
-| Mercado Central | Alimentos y encuentro | Alto | Media | Alta | Mayor actividad entre 08:00 y 13:00 |
-| Parque del Este | Recreacion y descanso | Medio | Alta | Baja | Uso intenso los fines de semana |
-| Avenida Nueve | Transporte y oficinas | Alto | Baja | Media | Cruces extensos y ruido constante |
-| Barrio Taller | Oficios y viviendas | Medio | Media | Media | Fachadas activas y veredas estrechas |
-| Ribera Sur | Paseo y restaurantes | Medio | Alta | Alta | Mayor permanencia al atardecer |
-| Estacion Norte | Conexion modal | Muy alto | Baja | Baja | Punto critico de congestion |
+| Central Market | Food and gathering | High | Medium | High | Most active between 08:00 and 13:00 |
+| East Park | Recreation and rest | Medium | High | Low | Heavy use on weekends |
+| Ninth Avenue | Transit and offices | High | Low | Medium | Long crossings and constant noise |
+| Workshop District | Craft and housing | Medium | Medium | Medium | Active facades and narrow sidewalks |
+| South Riverside | Promenade and restaurants | Medium | High | High | Longer stays at sunset |
+| North Station | Modal connection | Very high | Low | Low | Congestion hotspot |
 
-### Mapa narrativo
+### Narrative map
 
 ```text
-[Parque del Este] ---- [Barrio Taller] ---- [Mercado Central]
+[East Park] -------- [Workshop District] ---- [Central Market]
        |                      |                    |
        |                      |                    |
-[Ribera Sur] ----------- [Avenida Nueve] ---- [Estacion Norte]
+[South Riverside] ----- [Ninth Avenue] ---- [North Station]
 ```
 
-El mapa no pretende representar una escala exacta. Sirve para mostrar la relacion entre nodos, trayectos y cambios de ritmo. El Parque del Este funciona como pausa; la Estacion Norte como acelerador; el Mercado Central como destino y punto de reencuentro.
+The map is not intended to represent exact scale. It shows the relationship between nodes, routes, and changes of pace. East Park works as a pause; North Station acts as an accelerator; Central Market is both a destination and a meeting point.
 
 ---
 
-## 3. Diario de campo
+## 3. Field journal
 
-### Dia 1: Llegar antes que la ciudad
+### Day 1: Arriving before the city
 
-La primera jornada comenzo a las 06:20. Las calles todavia estaban medio vacias, pero los comercios de comida ya habian empezado a organizar sus veredas. La ciudad se percibia mas ancha: sin autos estacionados en doble fila y sin filas frente a las paradas.
+The first day began at 06:20. The streets were still half empty, but food businesses had already started organizing their sidewalks. The city felt wider: no cars parked in double rows and no lines in front of the stops.
 
-![Cafeteria y calle en la manana](https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1600&q=85)
+![Cafe and street in the morning](https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1600&q=85)
 
-Se registraron tres comportamientos repetidos:
+Three repeated behaviors were recorded:
 
-- Personas que caminaban con una bebida caliente redujeron su velocidad al cruzar el parque.
-- Repartidores en bicicleta preferian calles secundarias aunque fueran ligeramente mas largas.
-- Adultos mayores evitaban una esquina con desnivel, incluso cuando el semaforo estaba en verde.
+- People walking with a hot drink slowed down while crossing the park.
+- Bicycle couriers preferred side streets even when they were slightly longer.
+- Older adults avoided a corner with a steep change in level, even when the light was green.
 
-| Hora | Punto | Evento observado | Duracion | Nota |
+| Time | Point | Observed event | Duration | Note |
 | --- | --- | --- | ---: | --- |
-| 06:45 | Mercado Central | Apertura de puestos | 18 min | La vereda se transforma en extension del comercio |
-| 07:10 | Parque del Este | Grupo de caminata | 34 min | Ruta circular, conversacion constante |
-| 07:42 | Avenida Nueve | Cruce congestionado | 11 min | Semaforo insuficiente para el flujo |
-| 08:05 | Estacion Norte | Llegada simultanea de buses | 16 min | Acumulacion en acceso peatonal |
-| 08:30 | Barrio Taller | Apertura de talleres | 22 min | Olor, sonido y actividad hacen visible la calle |
+| 06:45 | Central Market | Stalls opening | 18 min | The sidewalk becomes an extension of the businesses |
+| 07:10 | East Park | Walking group | 34 min | Circular route, continuous conversation |
+| 07:42 | Ninth Avenue | Congested crossing | 11 min | Signal timing is insufficient for the flow |
+| 08:05 | North Station | Buses arriving together | 16 min | Accumulation at the pedestrian entrance |
+| 08:30 | Workshop District | Workshops opening | 22 min | Smell, sound, and activity make the street visible |
 
-### Dia 2: El valor de una esquina
+### Day 2: The value of a corner
 
-El segundo dia se concentro en cuatro esquinas. Dos estaban junto a paraderos, una frente a un colegio y otra al costado de una plaza pequeña. La diferencia mas evidente fue la posibilidad de esperar sin sentirse expuesto.
+The second day focused on four corners. Two were next to transit stops, one was in front of a school, and another was beside a small plaza. The clearest difference was the ability to wait without feeling exposed.
 
-> Una buena esquina no solo permite doblar: permite mirar, esperar, encontrarse y decidir.
+> A good corner does more than let you turn: it lets you look, wait, meet, and decide.
 
-| Esquina | Banco | Arboles | Visibilidad | Tiempo promedio de espera | Evaluacion |
+| Corner | Bench | Trees | Visibility | Average wait time | Evaluation |
 | --- | ---: | ---: | ---: | ---: | --- |
-| A. Nueve / Norte | No | 0 | Alta | 94 s | Critica |
-| Mercado / Lima | Si | 3 | Media | 41 s | Funcional |
-| Taller / Sur | No | 2 | Baja | 58 s | Mejorable |
-| Parque / Ribera | Si | 7 | Alta | 36 s | Excelente |
+| Ninth / North | No | 0 | High | 94 s | Critical |
+| Market / Lima | Yes | 3 | Medium | 41 s | Functional |
+| Workshop / South | No | 2 | Low | 58 s | Needs improvement |
+| Park / Riverside | Yes | 7 | High | 36 s | Excellent |
 
 ---
 
-## 4. Galeria de momentos
+## 4. Gallery of moments
 
-### Luz de la tarde
+### Afternoon light
 
-![Personas caminando al atardecer](https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1600&q=85)
+![People walking at sunset](https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1600&q=85)
 
-La Ribera Sur concentra la mayor cantidad de pausas al final del dia. Las personas no solo atraviesan el corredor: se sientan, esperan, conversan, toman fotografias y observan el agua.
+South Riverside concentrates the largest number of pauses at the end of the day. People do not simply cross the corridor: they sit, wait, talk, take photographs, and watch the water.
 
-### Escala humana
+### Human scale
 
-![Edificios y calle con bicicletas](https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=1600&q=85)
+![Buildings and street with bicycles](https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=1600&q=85)
 
-Una calle de edificios altos puede seguir sintiendose cercana cuando sus primeros niveles tienen puertas, vitrinas, arboles, toldos y objetos a una escala reconocible.
+A street lined with tall buildings can still feel close when its lower levels have doors, windows, trees, awnings, and objects at a recognizable scale.
 
-### Movimiento lento
+### Slow movement
 
-![Bicicleta en una calle urbana](https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&w=1600&q=85)
+![Bicycle on an urban street](https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&w=1600&q=85)
 
-La infraestructura no necesita ser compleja para cambiar una decision. Una linea clara, una interseccion calmada y un lugar seguro para estacionar una bicicleta pueden convertir un trayecto ocasional en un habito.
+Infrastructure does not need to be complex to change a decision. A clear line, a calm intersection, and a safe place to park a bicycle can turn an occasional route into a habit.
 
 ---
 
-## 5. Matriz de experiencia
+## 5. Experience matrix
 
-Cada recorrido fue evaluado con una escala de 1 a 5. El puntaje no representa una verdad absoluta; es una herramienta para comparar patrones y priorizar intervenciones.
+Each route was evaluated on a scale from 1 to 5. The score is not an absolute truth; it is a tool for comparing patterns and prioritizing interventions.
 
-| Ruta | Seguridad | Confort | Interes visual | Accesibilidad | Comercio | Sombra | Puntaje total | Prioridad |
+| Route | Safety | Comfort | Visual interest | Accessibility | Commerce | Shade | Total score | Priority |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| Parque - Mercado | 4 | 5 | 5 | 4 | 4 | 5 | 27 | Mantener |
-| Mercado - Estacion | 3 | 2 | 3 | 3 | 5 | 1 | 17 | Alta |
-| Taller - Parque | 4 | 3 | 4 | 3 | 3 | 3 | 20 | Media |
-| Ribera - Mercado | 5 | 5 | 5 | 4 | 5 | 4 | 28 | Mantener |
-| Estacion - Avenida | 2 | 1 | 2 | 2 | 2 | 1 | 10 | Urgente |
-| Avenida - Taller | 3 | 2 | 3 | 3 | 3 | 2 | 16 | Alta |
-| Parque - Ribera | 5 | 4 | 5 | 4 | 3 | 5 | 26 | Mantener |
+| Park - Market | 4 | 5 | 5 | 4 | 4 | 5 | 27 | Maintain |
+| Market - Station | 3 | 2 | 3 | 3 | 5 | 1 | 17 | High |
+| Workshop - Park | 4 | 3 | 4 | 3 | 3 | 3 | 20 | Medium |
+| Riverside - Market | 5 | 5 | 5 | 4 | 5 | 4 | 28 | Maintain |
+| Station - Avenue | 2 | 1 | 2 | 2 | 2 | 1 | 10 | Urgent |
+| Avenue - Workshop | 3 | 2 | 3 | 3 | 3 | 2 | 16 | High |
+| Park - Riverside | 5 | 4 | 5 | 4 | 3 | 5 | 26 | Maintain |
 
-### Lectura de resultados
+### Reading the results
 
-- Las rutas cercanas a parques obtienen mejores resultados en confort y sombra.
-- Los ejes de transporte concentran el mayor flujo, pero tienen peores puntajes de permanencia.
-- El comercio activo mejora el interes visual, aunque no siempre resuelve problemas de accesibilidad.
-- Los cruces largos reducen la evaluacion general incluso cuando el resto del trayecto funciona bien.
+- Routes near parks receive better comfort and shade scores.
+- Transit corridors concentrate the most flow but have the lowest stay scores.
+- Active commerce improves visual interest, although it does not always solve accessibility problems.
+- Long crossings reduce the overall evaluation even when the rest of the route works well.
 
 ---
 
-## 6. Personas y recorridos
+## 6. People and routes
 
-### Perfil A: La ruta cotidiana
+### Profile A: The everyday route
 
-**Nombre ficticio:** Elena<br>
-**Edad:** 34<br>
-**Trayecto:** Estacion Norte -> Mercado Central -> Oficina<br>
-**Frecuencia:** Cinco veces por semana
+**Fictional name:** Elena<br>
+**Age:** 34<br>
+**Route:** North Station -> Central Market -> Office<br>
+**Frequency:** Five times per week
 
-Elena elige salir diez minutos antes para comprar fruta. No considera este desvio una perdida de tiempo: es parte de su rutina. Sin embargo, evita la Avenida Nueve cuando llueve porque las veredas se inundan cerca de dos accesos.
+Elena leaves ten minutes early to buy fruit. She does not consider this detour a waste of time: it is part of her routine. However, she avoids Ninth Avenue when it rains because the sidewalks flood near two entrances.
 
-### Perfil B: El paseo deliberado
+### Profile B: The deliberate walk
 
-**Nombre ficticio:** Marco<br>
-**Edad:** 61<br>
-**Trayecto:** Parque del Este -> Ribera Sur -> Parque del Este<br>
-**Frecuencia:** Tres veces por semana
+**Fictional name:** Marco<br>
+**Age:** 61<br>
+**Route:** East Park -> South Riverside -> East Park<br>
+**Frequency:** Three times per week
 
-Marco camina para conversar con un amigo. La distancia puede variar, pero mantiene dos condiciones: necesita sombra y lugares para sentarse. Cuando una banca esta ocupada, suele prolongar el recorrido hasta encontrar otra.
+Marco walks to talk with a friend. The distance can vary, but he maintains two conditions: he needs shade and places to sit. When a bench is occupied, he usually extends the route until he finds another one.
 
-### Perfil C: La entrega eficiente
+### Profile C: The efficient delivery
 
-**Nombre ficticio:** Valeria<br>
-**Edad:** 27<br>
-**Trayecto:** Barrio Taller -> Mercado Central -> Avenida Nueve<br>
-**Frecuencia:** Variable
+**Fictional name:** Valeria<br>
+**Age:** 27<br>
+**Route:** Workshop District -> Central Market -> Ninth Avenue<br>
+**Frequency:** Variable
 
-Valeria reparte pedidos en bicicleta. Prioriza continuidad, visibilidad y evitar pendientes. Prefiere un trayecto de ocho minutos por calles secundarias antes que uno de seis minutos junto a autos detenidos.
+Valeria delivers orders by bicycle. She prioritizes continuity, visibility, and avoiding steep slopes. She prefers an eight-minute route through side streets over a six-minute route beside stopped cars.
 
-| Perfil | Modo principal | Motivacion | Principal barrera | Elemento valorado |
+| Profile | Main mode | Motivation | Main barrier | Valued element |
 | --- | --- | --- | --- | --- |
-| Elena | A pie + bus | Rutina y compras | Veredas inundadas | Comercio de proximidad |
-| Marco | A pie | Salud y conversacion | Falta de bancos | Sombra |
-| Valeria | Bicicleta | Trabajo | Cruces inseguros | Continuidad |
-| Sofia | A pie | Estudios | Iluminacion nocturna | Actividad en fachadas |
-| Diego | Bus + a pie | Trabajo | Esperas largas | Informacion clara |
+| Elena | Walking + bus | Routine and shopping | Flooded sidewalks | Local commerce |
+| Marco | Walking | Health and conversation | Lack of benches | Shade |
+| Valeria | Bicycle | Work | Unsafe crossings | Continuity |
+| Sofia | Walking | Studies | Night lighting | Active facades |
+| Diego | Bus + walking | Work | Long waits | Clear information |
 
 ---
 
-## 7. Hallazgos fotograficos
+## 7. Photographic findings
 
-![Arquitectura urbana y cielo](https://images.unsplash.com/photo-1486325212027-8081e485255e?auto=format&fit=crop&w=1600&q=85)
+![Urban architecture and sky](https://images.unsplash.com/photo-1486325212027-8081e485255e?auto=format&fit=crop&w=1600&q=85)
 
-### Fachadas activas
+### Active facades
 
-Las fachadas activas no dependen necesariamente de grandes vitrinas. Una puerta abierta, un taller visible, una ventana con plantas o una mesa exterior pueden indicar que una calle esta habitada.
+Active facades do not necessarily depend on large windows. An open door, a visible workshop, a window with plants, or an outdoor table can indicate that a street is inhabited.
 
-### Sombra continua
+### Continuous shade
 
-La sombra funciona como infraestructura climatica. En dias calurosos, las personas cambian de vereda para seguir la linea de arboles incluso si eso implica cruzar una calle adicional.
+Shade works as climate infrastructure. On hot days, people change sidewalks to follow the line of trees, even when that means crossing another street.
 
-### Bordes habitables
+### Habitable edges
 
-Los mejores bordes no separan con dureza. Permiten transiciones entre lo privado y lo publico: una escalera, un jardin bajo, una banca, un toldo o una ventana abierta.
+The best edges do not create hard separation. They allow transitions between private and public space: a step, a low garden, a bench, an awning, or an open window.
 
-| Elemento | Cantidad registrada | Impacto percibido | Recomendacion |
+| Element | Recorded amount | Perceived impact | Recommendation |
 | --- | ---: | --- | --- |
-| Arboles maduros | 186 | Muy alto | Proteger y ampliar cobertura |
-| Bancas utilizables | 42 | Alto | Agregar en rutas de espera |
-| Cruces elevados | 3 | Alto | Replicar en puntos criticos |
-| Vitrinas activas | 97 | Medio | Incentivar uso de primer nivel |
-| Veredas con obstaculos | 64 | Muy negativo | Retirar elementos invasivos |
-| Rampas accesibles | 18 | Alto | Completar red continua |
+| Mature trees | 186 | Very high | Protect and expand coverage |
+| Usable benches | 42 | High | Add them along waiting routes |
+| Raised crossings | 3 | High | Replicate at critical points |
+| Active windows | 97 | Medium | Encourage first-floor use |
+| Sidewalk obstacles | 64 | Very negative | Remove invasive elements |
+| Accessible ramps | 18 | High | Complete the continuous network |
 
 ---
 
-## 8. Propuesta de intervencion
+## 8. Intervention proposal
 
-### Acciones de corto plazo
+### Short-term actions
 
-- [ ] Pintar cruces peatonales de alta visibilidad en Avenida Nueve.
-- [ ] Instalar dos bancos bajo arboles cerca de la Estacion Norte.
-- [ ] Retirar publicidad temporal que bloquea la vereda en Mercado Central.
-- [ ] Mejorar la señalizacion del acceso al Parque del Este.
-- [ ] Reparar los desniveles identificados en Barrio Taller.
-- [ ] Crear una zona de espera sombreada junto a la parada principal.
+- [ ] Paint high-visibility pedestrian crossings on Ninth Avenue.
+- [ ] Install two benches under trees near North Station.
+- [ ] Remove temporary advertising blocking the sidewalk at Central Market.
+- [ ] Improve signage for the East Park entrance.
+- [ ] Repair the level changes identified in the Workshop District.
+- [ ] Create a shaded waiting area beside the main stop.
 
-### Acciones de mediano plazo
+### Medium-term actions
 
-1. Reducir el radio de giro vehicular en las dos intersecciones mas peligrosas.
-2. Crear continuidad ciclista entre Barrio Taller y Mercado Central.
-3. Aumentar la superficie permeable en los puntos de inundacion.
-4. Incorporar iluminacion peatonal de escala baja en el corredor Ribera Sur.
-5. Activar fachadas vacias con programas culturales y comercio temporal.
+1. Reduce the vehicle turning radius at the two most dangerous intersections.
+2. Create bicycle continuity between the Workshop District and Central Market.
+3. Increase permeable surface area at flood-prone points.
+4. Add low-scale pedestrian lighting along South Riverside.
+5. Activate empty facades through cultural programs and temporary commerce.
 
-### Estimacion inicial
+### Initial estimate
 
-| Intervencion | Costo estimado | Tiempo | Impacto esperado | Dependencia |
+| Intervention | Estimated cost | Time | Expected impact | Dependency |
 | --- | ---: | ---: | --- | --- |
-| Cruces de alta visibilidad | Bajo | 2 semanas | Alto | Coordinacion vial |
-| Bancas y sombra | Bajo | 3 semanas | Medio | Mantenimiento urbano |
-| Reparacion de veredas | Medio | 6 semanas | Alto | Obra publica |
-| Ciclovia conectada | Alto | 4 meses | Muy alto | Estudios tecnicos |
-| Iluminacion peatonal | Medio | 2 meses | Alto | Red electrica |
-| Drenaje puntual | Medio | 8 semanas | Alto | Diagnostico hidraulico |
+| High-visibility crossings | Low | 2 weeks | High | Traffic coordination |
+| Benches and shade | Low | 3 weeks | Medium | Urban maintenance |
+| Sidewalk repairs | Medium | 6 weeks | High | Public works |
+| Connected cycle path | High | 4 months | Very high | Technical studies |
+| Pedestrian lighting | Medium | 2 months | High | Electrical network |
+| Targeted drainage | Medium | 8 weeks | High | Hydraulic assessment |
 
 ---
 
-## 9. Registro tecnico
+## 9. Technical record
 
-El siguiente bloque simula contenido tecnico con lineas largas, sangrias y sintaxis.
+The following block simulates technical content with long lines, indentation, and syntax.
 
 ```ts
 type RouteObservation = {
@@ -280,39 +280,39 @@ function calculateRouteScore(observations: RouteObservation[]) {
 }
 ```
 
-### Notas metodologicas
+### Methodology notes
 
-1. Los conteos se realizaron en franjas de quince minutos.
-2. Las entrevistas fueron voluntarias y no recolectaron datos personales.
-3. Las fotografias se usaron para registrar condiciones espaciales, no para identificar personas.
-4. Los puntajes de experiencia se discutieron al cierre de cada jornada.
-5. Las rutas se repitieron en horarios distintos para evitar conclusiones basadas en un solo momento del dia.
-
----
-
-## 10. Conclusiones
-
-La ciudad caminable no aparece por accidente. Es el resultado de muchas decisiones pequeñas que se sostienen entre si: una vereda continua, un arbol adulto, un cruce breve, una banca limpia, una fachada abierta, una ruta visible y un espacio donde esperar sin sentirse fuera de lugar.
-
-![Paseo urbano nocturno](https://images.unsplash.com/photo-1519608487953-e999c86e7454?auto=format&fit=crop&w=1800&q=85)
-
-La recomendacion principal es priorizar las conexiones cotidianas. Las personas no viven la ciudad como un plano abstracto. La viven en minutos, sombras, sonidos, esquinas, conversaciones y decisiones repetidas.
-
-> Diseñar para caminar es diseñar para que quedarse tambien sea posible.
+1. Counts were performed in fifteen-minute intervals.
+2. Interviews were voluntary and did not collect personal data.
+3. Photographs documented spatial conditions and were not used to identify people.
+4. Experience scores were discussed at the end of each day.
+5. Routes were repeated at different times to avoid conclusions based on a single moment.
 
 ---
 
-## Anexo A: Inventario resumido
+## 10. Conclusions
 
-| ID | Elemento | Zona | Estado | Accion sugerida | Responsable | Fecha objetivo |
+A walkable city does not happen by accident. It is the result of many small decisions that support one another: a continuous sidewalk, a mature tree, a short crossing, a clean bench, an open facade, a visible route, and a place to wait without feeling out of place.
+
+![Urban promenade at night](https://images.unsplash.com/photo-1519608487953-e999c86e7454?auto=format&fit=crop&w=1800&q=85)
+
+The main recommendation is to prioritize everyday connections. People do not experience the city as an abstract map. They experience it through minutes, shade, sounds, corners, conversations, and repeated decisions.
+
+> Designing for walking means designing so that staying is possible too.
+
+---
+
+## Appendix A: Summary inventory
+
+| ID | Element | Area | Status | Suggested action | Owner | Target date |
 | --- | --- | --- | --- | --- | --- | --- |
-| AT-001 | Cruce peatonal | Avenida Nueve | Deficiente | Repintar y elevar | Movilidad | 2026-09-15 |
-| AT-002 | Banca | Parque del Este | Bueno | Mantener | Parques | 2026-10-01 |
-| AT-003 | Rampa | Mercado Central | Deficiente | Reconstruir | Obra publica | 2026-09-30 |
-| AT-004 | Arbol | Ribera Sur | Bueno | Podar | Ambiente | 2026-09-10 |
-| AT-005 | Paradero | Estacion Norte | Regular | Agregar sombra | Transporte | 2026-10-20 |
-| AT-006 | Ciclovia | Barrio Taller | Inexistente | Evaluar trazado | Movilidad | 2026-11-15 |
-| AT-007 | Luminaria | Ribera Sur | Regular | Reemplazar | Energia | 2026-10-08 |
-| AT-008 | Vereda | Avenida Nueve | Deficiente | Nivelar superficie | Obra publica | 2026-10-30 |
-| AT-009 | Señal urbana | Parque del Este | Regular | Mejorar legibilidad | Cultura | 2026-09-22 |
-| AT-010 | Fachada activa | Mercado Central | Buena | Documentar caso | Equipo Atlas | 2026-09-05 |
+| AT-001 | Pedestrian crossing | Ninth Avenue | Poor | Repaint and raise | Mobility | 2026-09-15 |
+| AT-002 | Bench | East Park | Good | Maintain | Parks | 2026-10-01 |
+| AT-003 | Ramp | Central Market | Poor | Rebuild | Public works | 2026-09-30 |
+| AT-004 | Tree | South Riverside | Good | Prune | Environment | 2026-09-10 |
+| AT-005 | Transit stop | North Station | Fair | Add shade | Transit | 2026-10-20 |
+| AT-006 | Cycle path | Workshop District | Missing | Evaluate route | Mobility | 2026-11-15 |
+| AT-007 | Street light | South Riverside | Fair | Replace | Energy | 2026-10-08 |
+| AT-008 | Sidewalk | Ninth Avenue | Poor | Level surface | Public works | 2026-10-30 |
+| AT-009 | Urban sign | East Park | Fair | Improve legibility | Culture | 2026-09-22 |
+| AT-010 | Active facade | Central Market | Good | Document as a case study | Atlas Team | 2026-09-05 |

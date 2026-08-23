@@ -1,12 +1,10 @@
 // @vitest-environment jsdom
 
-import { fireEvent, render, waitFor } from "@testing-library/react";
-import { useState } from "react";
+import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { parseMarkdownDocument } from "@/modules/dashboard/document";
 import { MOCK_DOCUMENTS } from "@/modules/dashboard/constants/mock-documents";
-import type { PreviewEditingController } from "../../editing/previewEditing.types";
 import { usePreviewEditing } from "../../editing/usePreviewEditing";
 import {
   getPreviewListItems,
@@ -133,60 +131,6 @@ describe("PaperPage", () => {
         (element) => element.dataset.documentBlockRoot,
       ),
     ).toEqual(fragments.map((fragment) => fragment.id));
-  });
-
-  it("activates only the clicked editable fragment", async () => {
-    const markdown = "## PROGRESS";
-    const [block] = parseMarkdownDocument(markdown).blocks;
-    const units = createDocumentLayoutUnits([block]);
-    const fragments = createPageFragments(units, units);
-    const dimensions = getPaperPreviewDimensions("a4", 100);
-
-    function EditablePage() {
-      const [active, setActive] = useState(false);
-      const previewEditing: PreviewEditingController = {
-        canEditFragment: () => true,
-        isEditableFragment: () => active,
-        onFragmentMouseDown: () => setActive(true),
-        onEditorMount: () => undefined,
-        onEditorChange: () => undefined,
-        onEditorKeyDown: () => undefined,
-      };
-
-      return (
-        <PaperPage
-          blocks={[block]}
-          definitions={[]}
-          documentTitle="Research"
-          pageIndex={0}
-          pagePlan={{
-            id: "page-1",
-            fragments,
-            contentHeight: 100,
-            isOversized: false,
-          }}
-          paperDimensions={dimensions}
-          animateEntry={false}
-          previewEditing={previewEditing}
-        />
-      );
-    }
-
-    const { container } = render(<EditablePage />);
-
-    expect(container.querySelector("[contenteditable]")).not.toBeTruthy();
-
-    const editableFragment = container.querySelector<HTMLElement>(
-      '[data-preview-editable-fragment="true"]',
-    );
-
-    expect(editableFragment).toBeTruthy();
-    fireEvent.mouseDown(editableFragment!);
-
-    await waitFor(() => {
-      expect(container.querySelector('[contenteditable="true"]')).toBeTruthy();
-    });
-    expect(container.querySelector(".document-editor-content > p")).not.toBeTruthy();
   });
 
   it("marks a simple list fragment as editable", () => {

@@ -97,6 +97,7 @@ export function DocumentEditor({
   onEditorMount,
   onEditorUpdate,
   onEditorKeyDown,
+  editable = true,
 }: {
   markdown: string;
   zoom: number;
@@ -112,6 +113,7 @@ export function DocumentEditor({
     editor: Editor,
     flushSerialization: () => void,
   ) => void;
+  editable?: boolean;
 }) {
   const onMarkdownChangeRef = useRef(onMarkdownChange);
   const lastSerializedMarkdownRef = useRef(markdown);
@@ -146,20 +148,21 @@ export function DocumentEditor({
             return false;
           },
         },
-        handlePaste: (_view, event) => {
-          const pastedText = event.clipboardData?.getData("text/plain") ?? "";
-          const content = markdownPasteContent(pastedText);
-          const currentEditor = editorInstanceRef.current;
+          handlePaste: (_view, event) => {
+            const pastedText = event.clipboardData?.getData("text/plain") ?? "";
+            const content = markdownPasteContent(pastedText);
+            const currentEditor = editorInstanceRef.current;
 
-          if (!content || !currentEditor) {
-            return false;
-          }
+            if (!content || !currentEditor || !currentEditor.isEditable) {
+              return false;
+            }
 
           event.preventDefault();
           currentEditor.commands.insertContent(content);
           return true;
         },
       },
+      editable,
       onUpdate: ({ editor: currentEditor }) => {
         if (variant === "document") {
           ensureDocumentTrailingParagraph(currentEditor);
@@ -262,6 +265,17 @@ export function DocumentEditor({
   }, [editor, editorRef]);
 
   useEffect(() => {
+    if (!editor) {
+      return;
+    }
+
+    editor.setEditable(editable);
+    if (!editable) {
+      editor.commands.blur();
+    }
+  }, [editable, editor]);
+
+  useEffect(() => {
     if (!editor || markdown === lastSerializedMarkdownRef.current) {
       return;
     }
@@ -295,7 +309,9 @@ export function DocumentEditor({
       }
       onKeyDownCapture={(event) => {
         if (editor) {
-          onEditorKeyDown?.(event, editor, flushSerializationRef.current);
+          if (editable) {
+            onEditorKeyDown?.(event, editor, flushSerializationRef.current);
+          }
         }
       }}
     >
@@ -314,8 +330,8 @@ export function DocumentEditor({
         {editor ? (
           <>
             <EditorContent editor={editor} />
-            <SlashCommandMenu editor={editor} />
-            <SelectionToolbar editor={editor} />
+            {editable ? <SlashCommandMenu editor={editor} /> : null}
+            {editable ? <SelectionToolbar editor={editor} /> : null}
           </>
         ) : (
           fallback

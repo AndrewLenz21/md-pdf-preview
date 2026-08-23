@@ -7,6 +7,7 @@ afterEach(() => {
     activeSource: "local",
     selectedDocumentId: null,
     selectedDocumentSource: null,
+    workspaceTransfer: null,
   });
 });
 
@@ -36,5 +37,21 @@ describe("workspace session selection", () => {
       selectedDocumentId: null,
       selectedDocumentSource: null,
     });
+  });
+
+  it("tracks the destination while a workspace transfer is active", () => {
+    useWorkspaceSessionStore.getState().setWorkspaceTransfer({
+      source: "local",
+      destination: "cloud",
+    });
+
+    expect(useWorkspaceSessionStore.getState().workspaceTransfer).toEqual({
+      source: "local",
+      destination: "cloud",
+    });
+
+    useWorkspaceSessionStore.getState().setWorkspaceTransfer(null);
+
+    expect(useWorkspaceSessionStore.getState().workspaceTransfer).toBeNull();
   });
 });

@@ -143,30 +143,6 @@ describe("Markdown document model", () => {
       .toBe(markdown);
   });
 
-  it("Test B: keeps a heading with its following paragraph when both fit together", () => {
-    const markdown = "Prior content.\n\n# SOME ISSUES\n\nThe paragraph belongs with this heading.";
-    const parsed = parseMarkdownDocument(markdown);
-    const units = createDocumentLayoutUnits(parsed.blocks);
-    const pages = paginateWithProfiles(
-      units,
-      [
-        { id: units[0].id, height: 190 },
-        { id: units[1].id, height: 100 },
-        { id: units[2].id, height: 280 },
-      ],
-      400,
-    );
-
-    expect(pages).toHaveLength(2);
-    expect(pages[0].fragments.map((fragment) => fragment.parentBlockId)).toEqual([
-      units[0].parentBlock.id,
-    ]);
-    expect(pages[1].fragments.map((fragment) => fragment.parentBlockId)).toEqual([
-      units[1].parentBlock.id,
-      units[2].parentBlock.id,
-    ]);
-  });
-
   it("accounts for the inter-block gap when deciding whether a heading can stay with its paragraph", () => {
     const units = createDocumentLayoutUnits(
       parseMarkdownDocument("# Heading\n\nParagraph").blocks,

@@ -60,6 +60,7 @@ export function FolderEditorDialog({
         <div className="flex items-end gap-3">
           <FolderIconSelector
             icon={icon}
+            color={color}
             mobile={mobile}
             onChange={onIconChange}
             onOpenChange={setIconPickerOpen}

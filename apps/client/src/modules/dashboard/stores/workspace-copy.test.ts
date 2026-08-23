@@ -7,6 +7,7 @@ import {
   useCloudWorkspaceStore,
 } from "./cloud-workspace.store";
 import { useLocalWorkspaceStore } from "./local-workspace.store";
+import { useWorkspaceSessionStore } from "./workspace-session.store";
 import {
   MAX_CLOUD_TRANSFER_ITEMS,
   copyWorkspaceItemBetweenSources,
@@ -71,6 +72,10 @@ beforeEach(() => {
     contentErrorByDocumentId: {},
   });
   useLocalWorkspaceStore.setState({ items: [] });
+  useWorkspaceSessionStore.setState({
+    activeSource: "local",
+    workspaceTransfer: null,
+  });
 });
 
 describe("copyWorkspaceItemBetweenSources", () => {
@@ -282,5 +287,9 @@ describe("copyWorkspaceItemBetweenSources", () => {
     expect(useCloudWorkspaceStore.getState().error?.message).toContain(
       "Large session document",
     );
+    expect(useWorkspaceSessionStore.getState()).toMatchObject({
+      activeSource: "local",
+      workspaceTransfer: null,
+    });
   });
 });

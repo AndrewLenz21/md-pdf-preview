@@ -65,11 +65,43 @@ function inlineContent(node: MarkdownNode): JSONContent[] {
   }
 }
 
-function paragraphContent(node: MarkdownNode): JSONContent {
-  return {
-    type: "paragraph",
-    content: node.children?.flatMap(inlineContent),
+function hasVisibleContent(content: JSONContent[]) {
+  return content.some(
+    (item) => item.type !== "text" || (item.text ?? "").trim().length > 0,
+  );
+}
+
+function splitInlineBlocks(content: JSONContent[]): JSONContent[] {
+  const blocks: JSONContent[] = [];
+  let paragraph: JSONContent[] = [];
+
+  const flushParagraph = () => {
+    if (hasVisibleContent(paragraph)) {
+      blocks.push({ type: "paragraph", content: paragraph });
+    }
+
+    paragraph = [];
   };
+
+  content.forEach((item) => {
+    if (item.type === "image") {
+      flushParagraph();
+      blocks.push(item);
+      return;
+    }
+
+    paragraph.push(item);
+  });
+
+  flushParagraph();
+
+  return blocks;
+}
+
+function paragraphBlocks(node: MarkdownNode): JSONContent[] {
+  const blocks = splitInlineBlocks(node.children?.flatMap(inlineContent) ?? []);
+
+  return blocks.length > 0 ? blocks : [{ type: "paragraph" }];
 }
 
 function tableContent(node: MarkdownNode): JSONContent {
@@ -81,27 +113,33 @@ function tableContent(node: MarkdownNode): JSONContent {
       type: "tableRow",
       content: (row.children ?? []).map((cell) => ({
         type: rowIndex === 0 ? "tableHeader" : "tableCell",
-        content: [paragraphContent(cell)],
+        content: paragraphBlocks(cell),
       })),
     })),
   };
 }
 
-function blockContent(node: MarkdownNode): JSONContent | null {
+function blockContent(node: MarkdownNode): JSONContent[] | null {
   switch (node.type) {
     case "paragraph":
-      return paragraphContent(node);
+      return paragraphBlocks(node);
     case "heading":
-      return {
-        type: "heading",
-        attrs: { level: Math.min(Math.max(node.depth ?? 1, 1), 6) },
-        content: node.children?.flatMap(inlineContent),
-      };
+      return [
+        {
+          type: "heading",
+          attrs: { level: Math.min(Math.max(node.depth ?? 1, 1), 6) },
+          content: node.children?.flatMap(inlineContent),
+        },
+      ];
     case "blockquote":
-      return {
-        type: "blockquote",
-        content: node.children?.map(blockContent).filter(Boolean) as JSONContent[],
-      };
+      return [
+        {
+          type: "blockquote",
+          content: node.children?.flatMap(
+            (child) => blockContent(child) ?? [],
+          ),
+        },
+      ];
     case "list": {
       const isTaskList =
         node.children?.some(
@@ -111,55 +149,71 @@ function blockContent(node: MarkdownNode): JSONContent | null {
       const content = node.children?.map((item) => ({
         type: itemType,
         attrs: isTaskList ? { checked: item.checked === true } : undefined,
-        content: item.children?.map(blockContent).filter(Boolean) as JSONContent[],
+        content: item.children?.flatMap(
+          (child) => blockContent(child) ?? [],
+        ),
       }));
 
-      return {
-        type: isTaskList ? "taskList" : node.ordered ? "orderedList" : "bulletList",
-        attrs: node.ordered ? { start: node.start ?? 1 } : undefined,
-        content,
-      };
+      return [
+        {
+          type: isTaskList
+            ? "taskList"
+            : node.ordered
+              ? "orderedList"
+              : "bulletList",
+          attrs: node.ordered ? { start: node.start ?? 1 } : undefined,
+          content,
+        },
+      ];
     }
     case "code":
-      return {
-        type: "codeBlock",
-        attrs: { language: node.lang ?? null },
-        content: node.value ? [{ type: "text", text: node.value }] : undefined,
-      };
+      return [
+        {
+          type: "codeBlock",
+          attrs: { language: node.lang ?? null },
+          content: node.value ? [{ type: "text", text: node.value }] : undefined,
+        },
+      ];
     case "thematicBreak":
-      return { type: "horizontalRule" };
+      return [{ type: "horizontalRule" }];
     case "table":
-      return tableContent(node);
+      return [tableContent(node)];
     default:
       return null;
   }
 }
 
-function blockToContent(block: DocumentBlock): JSONContent {
+function blockToContent(block: DocumentBlock): JSONContent[] {
   if (block.kind === "callout" && block.callout) {
     const innerBlocks = parseMarkdownDocument(block.callout.innerMarkdown).blocks;
 
-    return {
-      type: "callout",
-      attrs: {
-        icon: block.callout.icon ?? null,
-        variant: block.callout.variant,
+    return [
+      {
+        type: "callout",
+        attrs: {
+          icon: block.callout.icon ?? null,
+          variant: block.callout.variant,
+        },
+        content: innerBlocks.flatMap(blockToContent),
       },
-      content: innerBlocks.map(blockToContent),
-    };
+    ];
   }
 
   if (!block.editable) {
-    return {
-      type: "sourceBlock",
-      attrs: { source: block.source, kind: block.kind },
-    };
+    return [
+      {
+        type: "sourceBlock",
+        attrs: { source: block.source, kind: block.kind },
+      },
+    ];
   }
 
-  return blockContent(block.node as MarkdownNode) ?? {
-    type: "sourceBlock",
-    attrs: { source: block.source, kind: block.kind },
-  };
+  return blockContent(block.node as MarkdownNode) ?? [
+    {
+      type: "sourceBlock",
+      attrs: { source: block.source, kind: block.kind },
+    },
+  ];
 }
 
 function getBlankSpaceContent(
@@ -207,7 +261,7 @@ function documentContent(markdown: string, blocks: DocumentBlock[]) {
   content.push(...leadingSpace);
 
   blocks.forEach((block, index) => {
-    content.push(blockToContent(block));
+    content.push(...blockToContent(block));
 
     const nextBlock = blocks[index + 1];
     const gap = nextBlock

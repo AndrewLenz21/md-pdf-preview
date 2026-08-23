@@ -55,4 +55,61 @@ describe("Markdown to Tiptap conversion", () => {
     });
     expect(divider).toEqual({ type: "horizontalRule" });
   });
+
+  it("converts an image-only paragraph into a standalone image block", () => {
+    const document = markdownToTiptapDocument(
+      "![Vista aerea](https://example.com/city.jpg)",
+    );
+
+    expect(document.content).toEqual([
+      {
+        type: "image",
+        attrs: {
+          src: "https://example.com/city.jpg",
+          alt: "Vista aerea",
+          title: null,
+        },
+      },
+    ]);
+  });
+
+  it("splits a paragraph around an inline image into text and image blocks", () => {
+    const document = markdownToTiptapDocument(
+      "Before ![Vista aerea](https://example.com/city.jpg) after",
+    );
+
+    expect(document.content).toEqual([
+      {
+        type: "paragraph",
+        content: [{ type: "text", text: "Before " }],
+      },
+      {
+        type: "image",
+        attrs: {
+          src: "https://example.com/city.jpg",
+          alt: "Vista aerea",
+          title: null,
+        },
+      },
+      {
+        type: "paragraph",
+        content: [{ type: "text", text: " after" }],
+      },
+    ]);
+  });
+
+  it("keeps the image title attribute", () => {
+    const document = markdownToTiptapDocument(
+      '![Vista aerea](https://example.com/city.jpg "Ciudad")',
+    );
+
+    expect(document.content?.[0]).toMatchObject({
+      type: "image",
+      attrs: {
+        src: "https://example.com/city.jpg",
+        alt: "Vista aerea",
+        title: "Ciudad",
+      },
+    });
+  });
 });

@@ -39,6 +39,65 @@ describe("DocumentEditor", () => {
     expect(document.querySelector(".document-page-gap")).toBeNull();
   });
 
+  it("renders a Markdown image as a standalone image block", () => {
+    const editorRef = { current: null as Editor | null };
+
+    render(
+      <DocumentEditor
+        markdown={"![Vista aerea](https://example.com/city.jpg)"}
+        zoom={100}
+        editorRef={editorRef}
+      />,
+    );
+
+    const editor = editorRef.current;
+    expect(editor).toBeTruthy();
+
+    const types = (editor?.state.doc.content.content ?? []).map(
+      (node) => node.type.name,
+    );
+
+    expect(types).toEqual(["image", "paragraph"]);
+  });
+
+  it("serializes an image block back to Markdown", () => {
+    vi.useFakeTimers();
+    const editorRef = { current: null as Editor | null };
+    const onMarkdownChange = vi.fn();
+
+    render(
+      <DocumentEditor
+        markdown={"Initial paragraph."}
+        zoom={100}
+        editorRef={editorRef}
+        onMarkdownChange={onMarkdownChange}
+      />,
+    );
+
+    const editor = editorRef.current;
+    expect(editor).toBeTruthy();
+    editor?.commands.setContent({
+      type: "doc",
+      content: [
+        {
+          type: "image",
+          attrs: {
+            src: "https://example.com/city.jpg",
+            alt: "Vista aerea",
+            title: null,
+          },
+        },
+      ],
+    });
+    vi.advanceTimersByTime(100);
+
+    const serialized = onMarkdownChange.mock.calls.at(-1)?.[0] ?? "";
+
+    expect(serialized).toContain(
+      "![Vista aerea](https://example.com/city.jpg)",
+    );
+  });
+
   it("renders callouts as semantic editable blocks", () => {
     render(
       <DocumentEditor

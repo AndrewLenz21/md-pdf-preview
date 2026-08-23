@@ -193,6 +193,7 @@ function ModeContent({
   documentEditorRef,
   paperDimensions,
   onContentChange,
+  editable,
 }: {
   mode: DocumentEditorMode;
   documentTitle: string;
@@ -202,6 +203,7 @@ function ModeContent({
   documentEditorRef: React.RefObject<Editor | null>;
   paperDimensions: PaperPreviewDimensions | null;
   onContentChange: (content: string) => void;
+  editable: boolean;
 }) {
   switch (mode) {
     case "markdown":
@@ -212,6 +214,7 @@ function ModeContent({
           zoom={zoom}
           textareaRef={markdownEditorRef}
           onMarkdownChange={onContentChange}
+          readOnly={!editable}
         />
       );
     case "document":
@@ -221,6 +224,7 @@ function ModeContent({
           zoom={zoom}
           editorRef={documentEditorRef}
           onMarkdownChange={onContentChange}
+          editable={editable}
         />
       );
     case "preview":
@@ -249,6 +253,7 @@ export function DocumentPreview({
   embedded = false,
   showToolbar = true,
   disableScrollSync = false,
+  editable = true,
   onEditingActionsChange,
   scrollContainerRef,
   pageBreakMarkers,
@@ -263,6 +268,7 @@ export function DocumentPreview({
   embedded?: boolean;
   showToolbar?: boolean;
   disableScrollSync?: boolean;
+  editable?: boolean;
   onEditingActionsChange?: (actions: EditingActions | null) => void;
   scrollContainerRef?: MutableRefObject<HTMLDivElement | null>;
   pageBreakMarkers?: number[];
@@ -313,7 +319,9 @@ export function DocumentPreview({
     null,
   );
   const handleContentChange = (nextMarkdown: string) => {
-    onContentChange(nextMarkdown);
+    if (editable) {
+      onContentChange(nextMarkdown);
+    }
   };
 
   useEffect(() => {
@@ -323,6 +331,11 @@ export function DocumentPreview({
   }, [mode, markdown, onContentChange]);
 
   useEffect(() => {
+    if (!editable) {
+      onEditingActionsChange?.(null);
+      return;
+    }
+
     const actions = createEditingActions({
       modeRef,
       markdownRef,
@@ -335,7 +348,7 @@ export function DocumentPreview({
     onEditingActionsChange?.(actions);
 
     return () => onEditingActionsChange?.(null);
-  }, [onEditingActionsChange]);
+  }, [editable, onEditingActionsChange]);
 
   useEffect(() => {
     if (
@@ -543,7 +556,7 @@ export function DocumentPreview({
           mode={mode}
           onModeChange={onModeChange}
           onMobileClear={onMobileClear}
-          editingActions={editingActions}
+           editingActions={editable ? editingActions : null}
         />
       ) : null}
       <div
@@ -573,6 +586,7 @@ export function DocumentPreview({
               documentEditorRef={documentEditorRef}
               paperDimensions={paperDimensions}
               onContentChange={handleContentChange}
+              editable={editable}
             />
           </div>
         </div>

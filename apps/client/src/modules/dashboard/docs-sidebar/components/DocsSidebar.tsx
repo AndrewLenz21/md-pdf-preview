@@ -33,6 +33,7 @@ import {
   transferWorkspaceItemBetweenSources,
 } from "@/modules/dashboard/stores/workspace-transfer";
 import { AuthActions } from "@/modules/navigation/components/AuthActions";
+import { Logo } from "@/shared/components/Logo";
 
 import { DocumentSourceToggle } from "./DocumentSourceToggle";
 import { FolderTree } from "./FolderTree";
@@ -157,6 +158,9 @@ export function DocsSidebar({
     useState<DocumentSource | null>(null);
   const [cloudDropBlocked, setCloudDropBlocked] = useState(false);
   const activeSource = useWorkspaceSessionStore((state) => state.activeSource);
+  const workspaceTransfer = useWorkspaceSessionStore(
+    (state) => state.workspaceTransfer,
+  );
   const selectedDocumentId = useWorkspaceSessionStore(
     (state) => state.selectedDocumentId,
   );
@@ -373,14 +377,17 @@ export function DocsSidebar({
     (source === "local"
       ? toggleLocalFolderExpanded
       : toggleCloudFolderExpanded)(folderId);
-  const displaySource = dragPreviewSource ?? activeSource;
+  const displaySource =
+    workspaceTransfer?.destination ?? dragPreviewSource ?? activeSource;
   const canUseCloud = !sessionPending && Boolean(session?.user);
   const isCloudUnauthenticated = displaySource === "cloud" && !canUseCloud;
+  const isWorkspaceTransferActive = workspaceTransfer !== null;
   const cloudBusy =
     cloudIsHydrating ||
     cloudOperation !== null ||
     cloudIsSaving;
   const cloudStatusVisible =
+    !isWorkspaceTransferActive &&
     canUseCloud &&
     (displaySource === "cloud" || cloudError !== null) &&
     (cloudIsHydrating ||
@@ -455,8 +462,6 @@ export function DocsSidebar({
           if (item.kind === "document" && selectedDocumentId === item.id) {
             selectDocumentInSession(transferredItemId, target.source);
           }
-
-          setActiveSourceInSession(target.source);
         }
       });
 
@@ -465,7 +470,7 @@ export function DocsSidebar({
     onTargetChange: (_item, target) => {
       if (target?.source === "cloud" && !canUseCloud) {
         setCloudDropBlocked(true);
-        setDragPreviewSource("cloud");
+        setDragPreviewSource(activeSource === "cloud" ? "local" : null);
         return;
       }
 
@@ -485,6 +490,9 @@ export function DocsSidebar({
       dropTarget.source === displaySource &&
       (dropTarget.source !== "cloud" || canUseCloud),
   );
+  const sourceBusy =
+    isWorkspaceTransferActive ||
+    (displaySource === "cloud" && cloudBusy);
 
   const handleDelete = (id: string) => {
     void deleteDocument(displaySource, id)
@@ -734,8 +742,11 @@ export function DocsSidebar({
             aria-label="Back to Markdown Preview landing page"
             className="flex items-center gap-2.5 rounded-md transition-opacity hover:opacity-80"
           >
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">
-              M
+            <span
+              aria-hidden="true"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border bg-card shadow-sm"
+            >
+              <Logo className="h-6 w-6" />
             </span>
             <div>
               <p className="text-sm font-semibold text-foreground">Workspace</p>
@@ -784,13 +795,27 @@ export function DocsSidebar({
               >
                 {displaySource === "local" ? "Session Files" : "Cloud Files"}
               </span>
+              {isWorkspaceTransferActive ? (
+                <span
+                  role="status"
+                  aria-label="Transferring workspace items"
+                  title="Transferring workspace items"
+                  className="text-muted-foreground"
+                >
+                  <Loader2
+                    aria-hidden="true"
+                    className="h-3.5 w-3.5 animate-spin"
+                    strokeWidth={1.8}
+                  />
+                </span>
+              ) : null}
             </div>
             <DocumentSourceToggle
               source={displaySource}
               onChange={setActiveSource}
               dragging={draggingItem !== null}
               cloudBlocked={cloudDropBlocked}
-              disabled={cloudBusy}
+              disabled={isWorkspaceTransferActive || cloudBusy}
             />
           </div>
         </div>
@@ -803,11 +828,6 @@ export function DocsSidebar({
               <span className="flex items-center gap-2">
                 <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
                 Loading cloud files...
-              </span>
-            ) : cloudOperation === "transfer" ? (
-              <span className="flex items-center gap-2">
-                <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
-                Transferring workspace items...
               </span>
             ) : cloudOperation !== null ? (
               <span className="flex items-center gap-2">
@@ -830,8 +850,9 @@ export function DocsSidebar({
         ) : null}
       </div>
       <div
-        className={`docs-sidebar-scroll min-h-0 flex-1 overflow-y-auto px-3 pb-5 pt-2 ${displaySource === "cloud" && cloudBusy ? "pointer-events-none opacity-60" : ""}`}
-        aria-busy={displaySource === "cloud" && cloudBusy}
+        className={`docs-sidebar-scroll min-h-0 flex-1 overflow-y-auto px-3 pb-5 pt-2 ${sourceBusy ? "pointer-events-none opacity-60" : ""}`}
+        aria-busy={sourceBusy}
+        inert={sourceBusy || undefined}
       >
         <FolderTree
           items={sourceItems}

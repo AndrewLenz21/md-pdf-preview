@@ -128,6 +128,9 @@ export function DashboardWorkspace() {
   const selectedDocumentSource = useWorkspaceSessionStore(
     (state) => state.selectedDocumentSource,
   );
+  const isWorkspaceTransferActive = useWorkspaceSessionStore(
+    (state) => state.workspaceTransfer !== null,
+  );
   const selectDocumentInStore = useWorkspaceSessionStore(
     (state) => state.selectDocument,
   );
@@ -632,6 +635,7 @@ export function DashboardWorkspace() {
                       scheduleContentUpdate(selectedDocument.id, content)
                     }
                     onEditingActionsChange={setDesktopEditingActions}
+                    editable={!isWorkspaceTransferActive}
                     scrollContainerRef={desktopDocumentScrollRef}
                     pageBreakMarkers={documentPageBreakMarkers}
                     modeTransitionDirection={modeTransitionDirection}
@@ -657,10 +661,11 @@ export function DashboardWorkspace() {
                         showToolbar={false}
                         scrollScope="desktop"
                         onModeChange={changeEditorMode}
-                        onContentChange={(content) =>
-                          scheduleContentUpdate(selectedDocument.id, content)
-                        }
-                        scrollContainerRef={desktopPreviewScrollRef}
+                         onContentChange={(content) =>
+                           scheduleContentUpdate(selectedDocument.id, content)
+                         }
+                         editable={!isWorkspaceTransferActive}
+                         scrollContainerRef={desktopPreviewScrollRef}
                       />
                     </div>
                     {isPreviewMode ? (
@@ -699,10 +704,11 @@ export function DashboardWorkspace() {
                 scrollScope="mobile"
                 onModeChange={changeEditorMode}
                 onMobileClear={() => changeMobileSection("files")}
-                onContentChange={(content) =>
-                  scheduleContentUpdate(selectedDocument.id, content)
-                }
-                modeTransitionDirection={modeTransitionDirection}
+                  onContentChange={(content) =>
+                    scheduleContentUpdate(selectedDocument.id, content)
+                  }
+                  editable={!isWorkspaceTransferActive}
+                  modeTransitionDirection={modeTransitionDirection}
                 pageBreakMarkers={mobilePageBreakMarkers}
                 scrollContainerRef={mobileDocumentScrollRef}
               />
@@ -726,6 +732,7 @@ export function DashboardWorkspace() {
             scrollScope="mobile"
             disableScrollSync
             showToolbar={false}
+            editable={false}
             onModeChange={() => undefined}
             onContentChange={() => undefined}
             scrollContainerRef={mobilePageBreakPreviewRef}

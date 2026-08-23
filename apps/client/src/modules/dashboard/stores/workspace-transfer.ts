@@ -17,6 +17,7 @@ import {
   uploadWorkspaceDocument,
   workspaceApi,
 } from "../services/workspace-api";
+import { useWorkspaceSessionStore } from "./workspace-session.store";
 
 type WorkspaceTransferResult = {
   sourceItems: WorkspaceItem[];
@@ -297,8 +298,14 @@ export async function transferWorkspaceItemBetweenSources({
     return false;
   }
 
+  useWorkspaceSessionStore.getState().setWorkspaceTransfer({
+    source,
+    destination,
+  });
+  useWorkspaceSessionStore.getState().setActiveSource(destination);
   setCloudTransferOperation("transfer");
   cloudState.setCloudError(null);
+  let transferSucceeded = false;
 
   try {
     if (source === "cloud" && destination === "local") {
@@ -340,7 +347,9 @@ export async function transferWorkspaceItemBetweenSources({
             ),
           ),
         );
-      return mappedItems.transferredItemId ?? false;
+      const transferredItemId = mappedItems.transferredItemId ?? false;
+      transferSucceeded = Boolean(transferredItemId);
+      return transferredItemId;
     }
 
     const initialSourceItems = useLocalWorkspaceStore.getState().items;
@@ -460,7 +469,9 @@ export async function transferWorkspaceItemBetweenSources({
       .getState()
       .setItems([...useCloudWorkspaceStore.getState().items, ...createdItems]);
     useLocalWorkspaceStore.getState().setItems(nextLocalItems);
-    return remoteIds.get(itemId) ?? false;
+    const transferredItemId = remoteIds.get(itemId) ?? false;
+    transferSucceeded = Boolean(transferredItemId);
+    return transferredItemId;
   } catch (error) {
     const apiError = toWorkspaceApiError(error);
     useCloudWorkspaceStore.getState().setCloudError(apiError);
@@ -468,6 +479,10 @@ export async function transferWorkspaceItemBetweenSources({
     return false;
   } finally {
     setCloudTransferOperation(null);
+    if (!transferSucceeded) {
+      useWorkspaceSessionStore.getState().setActiveSource(source);
+    }
+    useWorkspaceSessionStore.getState().setWorkspaceTransfer(null);
   }
 }
 

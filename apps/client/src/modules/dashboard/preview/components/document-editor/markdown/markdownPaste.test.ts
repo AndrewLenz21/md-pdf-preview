@@ -34,4 +34,26 @@ describe("Markdown paste detection", () => {
     expect(content?.[1]?.content?.[0]?.attrs).toEqual({ checked: false });
     expect(content?.[2]?.attrs).toEqual({ language: "jsx" });
   });
+
+  it("converts pasted Markdown images into standalone image blocks", () => {
+    const content = markdownPasteContent(
+      [
+        "# Atlas Norte",
+        "",
+        "![Vista aerea](https://example.com/city.jpg)",
+        "",
+        "---",
+      ].join("\n"),
+    );
+
+    expect(content?.map((node) => node.type)).toEqual([
+      "heading",
+      "image",
+      "horizontalRule",
+    ]);
+    expect(content?.[1]?.attrs).toMatchObject({
+      src: "https://example.com/city.jpg",
+      alt: "Vista aerea",
+    });
+  });
 });

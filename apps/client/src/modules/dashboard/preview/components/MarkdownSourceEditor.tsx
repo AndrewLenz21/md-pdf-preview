@@ -50,12 +50,14 @@ export function MarkdownSourceEditor({
   zoom,
   textareaRef,
   onMarkdownChange,
+  readOnly = false,
 }: {
   documentTitle: string;
   markdown: string;
   zoom: number;
   textareaRef: RefObject<HTMLTextAreaElement | null>;
   onMarkdownChange: (markdown: string) => void;
+  readOnly?: boolean;
 }) {
   const zoomFactor = zoom / 100;
   const activeSource = useWorkspaceSessionStore((state) => state.activeSource);
@@ -102,6 +104,7 @@ export function MarkdownSourceEditor({
           value={draftMarkdown}
           rows={1}
           maxLength={hasCharacterLimit ? MAX_MARKDOWN_CHARACTERS : undefined}
+          readOnly={readOnly}
           onChange={(event) => {
             const nextMarkdown = event.currentTarget.value;
 
