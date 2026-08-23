@@ -38,6 +38,16 @@ import type { LongPressDragItem } from "./longPressDrag";
 const TREE_INDENT = 8;
 const TREE_LAYOUT_ITEM_SELECTOR = "[data-tree-layout-id]";
 const TREE_LAYOUT_EASING = "cubic-bezier(0.22, 1, 0.36, 1)";
+const CLOUD_WORKSPACE_ROOT: WorkspaceFolderItem = {
+  id: "cloud-workspace-root",
+  type: "folder",
+  parent_id: null,
+  name: "Workspace",
+  created_at: "1970-01-01T00:00:00.000Z",
+  updated_at: "1970-01-01T00:00:00.000Z",
+  color: "primary",
+  icon: "folder",
+};
 
 type TreeItemPosition = {
   left: number;
@@ -332,8 +342,8 @@ export function FolderTree({
   onDelete: (id: string) => void;
   onMove: (id: string, folderId: string | null) => void;
   onToggleFavorite: (id: string) => void;
-  onCreateDocument: (folderId: string) => void;
-  onCreateFolder: (parentId: string) => void;
+  onCreateDocument: (folderId: string | null) => void;
+  onCreateFolder: (parentId: string | null) => void;
   onCreateRootDocument?: () => void;
   onCreateRootFolder?: () => void;
   rootDropActive: boolean;
@@ -342,7 +352,10 @@ export function FolderTree({
   onToggleFolder: (folderId: string) => void;
   cloudUnauthenticated: boolean;
   mobile: boolean;
-  onOpenFolderActions: (folder: WorkspaceFolderItem) => void;
+  onOpenFolderActions: (
+    folder: WorkspaceFolderItem,
+    createParentId?: string | null,
+  ) => void;
   draggingItem: LongPressDragItem | null;
   dropTargetFolderId: string | null;
   onDragPointerDown: (
@@ -353,12 +366,22 @@ export function FolderTree({
 }) {
   const treeRef = useRef<HTMLDivElement>(null);
   const rootFolders = getChildFolders(items, null);
-  const folderOptions: DocumentFolderOption[] = rootFolders.flatMap(
-    (folder) => [
-      { id: folder.id, label: folder.name, depth: 0 },
-      ...flattenFolders(items, folder.id, 1),
-    ],
-  );
+  const isVirtualCloudRoot = source === "cloud" && !cloudUnauthenticated;
+  const folderOptions: DocumentFolderOption[] = isVirtualCloudRoot
+    ? [
+        { id: null, label: CLOUD_WORKSPACE_ROOT.name, depth: 0 },
+        ...rootFolders.flatMap((folder) => [
+          { id: folder.id, label: folder.name, depth: 1 },
+          ...flattenFolders(items, folder.id, 2),
+        ]),
+      ]
+    : rootFolders.flatMap((folder) => [
+        { id: folder.id, label: folder.name, depth: 0 },
+        ...flattenFolders(items, folder.id, 1),
+      ]);
+  const foldersToRender = isVirtualCloudRoot
+    ? [CLOUD_WORKSPACE_ROOT]
+    : rootFolders;
   const visibleDocuments = items.filter(
     (item): item is WorkspaceDocumentItem =>
       isWorkspaceDocument(item) && !item.deleted_at,
@@ -383,7 +406,9 @@ export function FolderTree({
       data-dnd-root-drop="true"
       data-dnd-source={source}
     >
-      {!visibleDocuments.length && !items.some(isWorkspaceFolder) ? (
+      {!isVirtualCloudRoot &&
+      !visibleDocuments.length &&
+      !items.some(isWorkspaceFolder) ? (
         <EmptyWorkspaceState
           cloudUnauthenticated={cloudUnauthenticated}
           isDropTarget={rootDropActive}
@@ -393,36 +418,42 @@ export function FolderTree({
         />
       ) : (
         <>
-          {rootDocuments.map((document) => (
-            <DocumentItem
-              key={document.id}
-              documentId={document.id}
-              displayTitle={document.name}
-              favorite={document.favorite === true}
-              selected={document.id === selectedId}
-              onSelect={() => onSelect(document.id)}
-              onRename={(title) => onRename(document.id, title)}
-              onDelete={() => onDelete(document.id)}
-              onMove={(folderId) => onMove(document.id, folderId)}
-              onToggleFavorite={() => onToggleFavorite(document.id)}
-              folderId={null}
-              folderOptions={folderOptions}
-              mobile={mobile}
-              dragging={
-                draggingItem?.kind === "document" &&
-                draggingItem.id === document.id
-              }
-              onDragPointerDown={(event) =>
-                onDragPointerDown({ kind: "document", id: document.id }, event)
-              }
-              onDragClickCapture={onDragClickCapture}
-            />
-          ))}
-          {rootFolders.map((folder) => (
+          {!isVirtualCloudRoot
+            ? rootDocuments.map((document) => (
+                <DocumentItem
+                  key={document.id}
+                  documentId={document.id}
+                  displayTitle={document.name}
+                  favorite={document.favorite === true}
+                  selected={document.id === selectedId}
+                  onSelect={() => onSelect(document.id)}
+                  onRename={(title) => onRename(document.id, title)}
+                  onDelete={() => onDelete(document.id)}
+                  onMove={(folderId) => onMove(document.id, folderId)}
+                  onToggleFavorite={() => onToggleFavorite(document.id)}
+                  folderId={null}
+                  folderOptions={folderOptions}
+                  mobile={mobile}
+                  dragging={
+                    draggingItem?.kind === "document" &&
+                    draggingItem.id === document.id
+                  }
+                  onDragPointerDown={(event) =>
+                    onDragPointerDown(
+                      { kind: "document", id: document.id },
+                      event,
+                    )
+                  }
+                  onDragClickCapture={onDragClickCapture}
+                />
+              ))
+            : null}
+          {foldersToRender.map((folder) => (
             <FolderNode
               key={folder.id}
               folder={folder}
               depth={0}
+              isVirtualRoot={isVirtualCloudRoot}
               items={items}
               source={source}
               selectedId={selectedId}
@@ -456,6 +487,7 @@ export function FolderTree({
 function FolderNode({
   folder,
   depth,
+  isVirtualRoot = false,
   items,
   source,
   selectedId,
@@ -481,6 +513,7 @@ function FolderNode({
 }: {
   folder: WorkspaceFolderItem;
   depth: number;
+  isVirtualRoot?: boolean;
   items: WorkspaceItem[];
   source: DocumentSource;
   selectedId: string | null;
@@ -490,14 +523,17 @@ function FolderNode({
   onDelete: (id: string) => void;
   onMove: (id: string, folderId: string | null) => void;
   onToggleFavorite: (id: string) => void;
-  onCreateDocument: (folderId: string) => void;
-  onCreateFolder: (parentId: string) => void;
+  onCreateDocument: (folderId: string | null) => void;
+  onCreateFolder: (parentId: string | null) => void;
   onEditFolder: (folder: WorkspaceFolderItem) => void;
   collapsedFolderIds: string[];
   onToggleFolder: (folderId: string) => void;
   cloudUnauthenticated: boolean;
   mobile: boolean;
-  onOpenFolderActions: (folder: WorkspaceFolderItem) => void;
+  onOpenFolderActions: (
+    folder: WorkspaceFolderItem,
+    createParentId?: string | null,
+  ) => void;
   rootDropActive: boolean;
   draggingItem: LongPressDragItem | null;
   dropTargetFolderId: string | null;
@@ -510,8 +546,9 @@ function FolderNode({
   const folderItemRef = useRef<HTMLDivElement>(null);
   const [folderMenuOpen, setFolderMenuOpen] = useState(false);
   const expanded = !collapsedFolderIds.includes(folder.id);
-  const childFolders = getChildFolders(items, folder.id);
-  const childDocuments = getDocumentsInFolder(items, folder.id);
+  const childParentId = isVirtualRoot ? null : folder.id;
+  const childFolders = getChildFolders(items, childParentId);
+  const childDocuments = getDocumentsInFolder(items, childParentId);
   const hasChildren = childFolders.length > 0 || childDocuments.length > 0;
 
   useDismissableLayer({
@@ -523,7 +560,8 @@ function FolderNode({
   return (
     <div
       ref={folderItemRef}
-      data-dnd-folder-id={folder.id}
+      data-dnd-folder-id={isVirtualRoot ? undefined : folder.id}
+      data-dnd-root-drop={isVirtualRoot ? "true" : undefined}
       data-dnd-source={source}
       data-dnd-dragging={
         draggingItem?.kind === "folder" && draggingItem.id === folder.id
@@ -538,22 +576,27 @@ function FolderNode({
           data-dnd-item="folder"
           data-tree-layout-id={`folder:${folder.id}`}
           data-dnd-drop-target={
-            dropTargetFolderId === folder.id ? "true" : undefined
+            !isVirtualRoot && dropTargetFolderId === folder.id
+              ? "true"
+              : undefined
           }
-          className="group/folder flex w-full items-center"
+          className={`group/folder flex w-full items-center ${isVirtualRoot && rootDropActive ? "rounded-lg bg-primary/5 ring-1 ring-inset ring-primary/40" : ""}`}
           style={
             depth === 0
               ? undefined
               : { paddingLeft: `${depth * TREE_INDENT}px` }
           }
-          onPointerDown={(event) =>
-            onDragPointerDown({ kind: "folder", id: folder.id }, event)
+          onPointerDown={
+            isVirtualRoot
+              ? undefined
+              : (event) =>
+                  onDragPointerDown({ kind: "folder", id: folder.id }, event)
           }
         >
           <button
             type="button"
             aria-expanded={hasChildren ? expanded : undefined}
-            className={`flex min-w-0 flex-1 items-center gap-0.5 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-accent/60 hover:text-foreground ${depth === 0 ? "text-foreground" : "text-muted-foreground"}`}
+            className={`flex min-w-0 flex-1 items-center gap-0.5 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-accent/60 hover:text-foreground ${depth === 0 ? "text-foreground" : "text-muted-foreground"} ${isVirtualRoot && rootDropActive ? "text-foreground" : ""}`}
             onClick={() => {
               if (hasChildren || depth === 0) {
                 onToggleFolder(folder.id);
@@ -601,7 +644,10 @@ function FolderNode({
               className="mr-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground opacity-70 transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:opacity-0 sm:group-hover/folder:opacity-100 sm:group-focus-within/folder:opacity-100"
               onClick={() => {
                 if (mobile) {
-                  onOpenFolderActions(folder);
+                  onOpenFolderActions(
+                    folder,
+                    isVirtualRoot ? null : folder.id,
+                  );
                   return;
                 }
 
@@ -624,7 +670,7 @@ function FolderNode({
               role="menuitem"
               className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-foreground transition-colors hover:bg-accent"
               onClick={() => {
-                onCreateDocument(folder.id);
+                onCreateDocument(isVirtualRoot ? null : folder.id);
                 setFolderMenuOpen(false);
               }}
             >
@@ -636,7 +682,7 @@ function FolderNode({
               role="menuitem"
               className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-foreground transition-colors hover:bg-accent"
               onClick={() => {
-                onCreateFolder(folder.id);
+                onCreateFolder(isVirtualRoot ? null : folder.id);
                 setFolderMenuOpen(false);
               }}
             >
@@ -689,7 +735,7 @@ function FolderNode({
                 onDelete={() => onDelete(document.id)}
                 onMove={(folderId) => onMove(document.id, folderId)}
                 onToggleFavorite={() => onToggleFavorite(document.id)}
-                folderId={folder.id}
+                folderId={isVirtualRoot ? null : folder.id}
                 folderOptions={folderOptions}
                 depth={depth + 1}
                 mobile={mobile}
@@ -711,6 +757,7 @@ function FolderNode({
                 key={childFolder.id}
                 folder={childFolder}
                 depth={depth + 1}
+                isVirtualRoot={false}
                 items={items}
                 source={source}
                 selectedId={selectedId}

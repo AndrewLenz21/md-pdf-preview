@@ -44,9 +44,11 @@ function formatUpdatedAt(value: string) {
 
 function EditingActionButtons({
   editingActions,
+  includeClear = false,
   visible = true,
 }: {
   editingActions?: EditingActions | null;
+  includeClear?: boolean;
   visible?: boolean;
 }) {
   const disabled = !editingActions;
@@ -59,6 +61,17 @@ function EditingActionButtons({
       aria-hidden={!visible}
       className={`mobile-preview-toolbar-editing-actions mobile-preview-toolbar-select-actions flex items-center gap-1 ${visible ? "mobile-preview-toolbar-action-visible" : "mobile-preview-toolbar-action-hidden"}`}
     >
+      {includeClear ? (
+        <>
+          <ClearSelectionButton className="desktop-preview-toolbar-clear" />
+          <span
+            aria-hidden="true"
+            className="desktop-preview-toolbar-clear-separator text-border"
+          >
+            |
+          </span>
+        </>
+      ) : null}
       <button
         type="button"
         title="Select all"
@@ -107,7 +120,7 @@ function EditingActionButtons({
   );
 }
 
-function ClearSelectionButton() {
+function ClearSelectionButton({ className = "" }: { className?: string }) {
   const activeSource = useWorkspaceSessionStore((state) => state.activeSource);
   const selectedDocumentId = useWorkspaceSessionStore(
     (state) => state.selectedDocumentId,
@@ -125,8 +138,8 @@ function ClearSelectionButton() {
   return (
     <button
       type="button"
-      title="Clear selection"
-      aria-label="Clear selection"
+      title="Clear"
+      aria-label="Clear"
       onClick={() => {
         if (selectedDocumentId) {
           (activeSource === "local"
@@ -136,10 +149,10 @@ function ClearSelectionButton() {
 
         clearSelection();
       }}
-      className="mobile-preview-toolbar-clear-action mobile-preview-toolbar-action-visible flex h-8 items-center gap-1 rounded-md px-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40 lg:text-[11px]"
+      className={`mobile-preview-toolbar-clear-action mobile-preview-toolbar-action-visible flex h-8 items-center gap-1 rounded-md px-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-destructive/40 lg:text-[11px] ${className}`}
     >
       <X className="h-3.5 w-3.5" strokeWidth={1.8} />
-      <span>Clear</span>
+      <span className="mobile-preview-toolbar-clear-label">Clear</span>
     </button>
   );
 }
@@ -298,7 +311,9 @@ export function PreviewToolbar({
       </div>
 
       <div className="mobile-preview-toolbar-right flex shrink-0 items-center gap-2 sm:gap-3">
-        {!isPreviewMode ? <ClearSelectionButton /> : null}
+        {!isPreviewMode ? (
+          <ClearSelectionButton className="mobile-preview-toolbar-mobile-clear" />
+        ) : null}
         <div
           className={`mobile-preview-toolbar-paper paper-size-control-slot ${isPreviewMode ? "mobile-preview-toolbar-paper-action" : ""}`}
         >
@@ -326,6 +341,7 @@ export function PreviewToolbar({
         />
         <EditingActionButtons
           editingActions={editingActions}
+          includeClear={!isPreviewMode}
           visible={!isPreviewMode || splitMode}
         />
       </div>

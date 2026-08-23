@@ -711,6 +711,38 @@
     .mobile-preview-toolbar-action-hidden {
       display: none;
     }
+
+    .mobile-preview-toolbar-mobile-clear {
+      display: none !important;
+    }
+  }
+
+  @media (min-width: 1024px) and (max-width: 1279px) {
+    .mobile-preview-toolbar-mode {
+      position: relative;
+      z-index: 20;
+    }
+
+    .mobile-preview-toolbar-right {
+      white-space: nowrap;
+    }
+
+    .mobile-preview-toolbar-clear-action {
+      width: 2rem;
+      justify-content: center;
+      padding-inline: 0;
+    }
+
+    .mobile-preview-toolbar-clear-label {
+      display: none;
+    }
+  }
+
+  @media (max-width: 1023px) {
+    .desktop-preview-toolbar-clear,
+    .desktop-preview-toolbar-clear-separator {
+      display: none;
+    }
   }
 
   .paper-size-control-slot {

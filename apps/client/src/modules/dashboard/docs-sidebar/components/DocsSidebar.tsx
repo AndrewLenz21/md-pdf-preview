@@ -57,6 +57,8 @@ type FolderDialogState = {
 type FolderActionsState = {
   source: DocumentSource;
   folder: WorkspaceFolderItem;
+  createParentId: string | null;
+  isVirtualRoot: boolean;
 };
 
 type MarkdownDialogState = {
@@ -328,6 +330,14 @@ export function DocsSidebar({
     cloudIsHydrating ||
     cloudOperation !== null ||
     cloudIsSaving;
+  const cloudStatusVisible =
+    canUseCloud &&
+    (displaySource === "cloud" || cloudError !== null) &&
+    (cloudIsHydrating ||
+      (!cloudIsHydrated && !cloudError) ||
+      cloudOperation !== null ||
+      cloudIsSaving ||
+      cloudError !== null);
   const sourceItems = displaySource === "local" ? localItems : cloudItems;
   const sourceDocuments = sourceItems.filter(
     (item): item is WorkspaceDocumentItem =>
@@ -338,9 +348,10 @@ export function DocsSidebar({
     displaySource === "local"
       ? localCollapsedFolderIds
       : cloudCollapsedFolderIds;
-  const rootFolderId = sourceFolders.find(
-    (folder) => folder.parent_id === null,
-  )?.id;
+  const rootFolderId =
+    displaySource === "local"
+      ? sourceFolders.find((folder) => folder.parent_id === null)?.id
+      : null;
   const {
     draggingItem,
     dragPosition,
@@ -363,10 +374,12 @@ export function DocsSidebar({
       const destinationParentId =
         target.kind === "folder"
           ? target.folderId
-          : destinationItems.find(
-              (candidate) =>
-                isWorkspaceFolder(candidate) && candidate.parent_id === null,
-            )?.id;
+          : target.source === "local"
+            ? destinationItems.find(
+                (candidate) =>
+                  isWorkspaceFolder(candidate) && candidate.parent_id === null,
+              )?.id
+            : null;
 
       const resolvedDestinationParentId = destinationParentId ?? null;
 
@@ -475,8 +488,16 @@ export function DocsSidebar({
     });
   };
 
-  const handleOpenFolderActions = (folder: WorkspaceFolderItem) => {
-    setFolderActions({ source: displaySource, folder });
+  const handleOpenFolderActions = (
+    folder: WorkspaceFolderItem,
+    createParentId: string | null = folder.id,
+  ) => {
+    setFolderActions({
+      source: displaySource,
+      folder,
+      createParentId,
+      isVirtualRoot: createParentId === null && displaySource === "cloud",
+    });
   };
 
   const handleNewFolderFromActions = () => {
@@ -484,9 +505,9 @@ export function DocsSidebar({
       return;
     }
 
-    const { folder, source } = folderActions;
+    const { source, createParentId } = folderActions;
     setFolderActions(null);
-    handleCreateFolder(folder.id, source);
+    handleCreateFolder(createParentId, source);
   };
 
   const handleNewMarkdownFromActions = () => {
@@ -494,9 +515,9 @@ export function DocsSidebar({
       return;
     }
 
-    const { folder, source } = folderActions;
+    const { source, createParentId } = folderActions;
     setFolderActions(null);
-    handleCreateDocument(folder.id, source);
+    handleCreateDocument(createParentId, source);
   };
 
   const handleRenameFromActions = () => {
@@ -698,7 +719,7 @@ export function DocsSidebar({
             />
           </div>
         </div>
-        {canUseCloud && (displaySource === "cloud" || cloudError) ? (
+        {cloudStatusVisible ? (
           <div
             aria-live="polite"
             className="mx-2 mb-2 rounded-lg border border-border/70 bg-background/50 px-3 py-2 text-xs text-muted-foreground"
@@ -714,6 +735,11 @@ export function DocsSidebar({
                 Transferring workspace items...
               </span>
             ) : cloudIsSaving ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                Saving cloud changes...
+              </span>
+            ) : cloudOperation !== null ? (
               <span className="flex items-center gap-2">
                 <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
                 Saving cloud changes...
@@ -829,7 +855,11 @@ export function DocsSidebar({
       <FolderActionsDialog
         open={folderActions !== null}
         folderName={folderActions?.folder.name ?? "Workspace"}
-        canRenameDelete={folderActions?.folder.parent_id !== null}
+        canRenameDelete={
+          folderActions !== null &&
+          !folderActions.isVirtualRoot &&
+          folderActions.folder.parent_id !== null
+        }
         onClose={() => setFolderActions(null)}
         onNewFolder={handleNewFolderFromActions}
         onNewMarkdown={handleNewMarkdownFromActions}

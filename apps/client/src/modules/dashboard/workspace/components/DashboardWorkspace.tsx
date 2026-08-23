@@ -446,7 +446,7 @@ export function DashboardWorkspace() {
   return (
     <div
       ref={desktopWorkspaceRef}
-      className={`dashboard-workspace min-h-screen bg-muted/30 text-foreground lg:flex ${isDesktopSplit ? "lg:h-screen lg:overflow-hidden" : isMobileFilesSection ? "overflow-hidden lg:h-auto lg:overflow-visible" : "overflow-visible lg:h-auto"}`}
+      className={`dashboard-workspace min-h-screen bg-muted/30 text-foreground lg:flex lg:h-screen lg:overflow-hidden ${isMobileFilesSection ? "overflow-hidden" : "overflow-visible"}`}
     >
       {isDesktopViewport ? (
         <>
@@ -479,7 +479,7 @@ export function DashboardWorkspace() {
       ) : null}
 
       <main
-        className={`relative min-w-0 flex-1 ${!selectedDocument ? "h-[calc(100dvh-var(--mobile-dashboard-nav-height))] overflow-hidden pb-0 lg:h-auto lg:overflow-visible" : isMobileFilesSection ? "h-[calc(100dvh-var(--mobile-dashboard-nav-height))] overflow-hidden pb-0 lg:h-auto lg:overflow-visible" : isPreviewMode ? "pb-0" : "pb-20"} lg:pb-0 ${isDesktopSplit ? "lg:h-screen lg:min-h-0" : "lg:h-auto lg:min-h-screen"}`}
+        className={`relative min-w-0 flex-1 lg:flex lg:h-screen lg:min-h-0 lg:flex-col lg:overflow-hidden ${!selectedDocument ? "h-[calc(100dvh-var(--mobile-dashboard-nav-height))] overflow-hidden pb-0" : isMobileFilesSection ? "h-[calc(100dvh-var(--mobile-dashboard-nav-height))] overflow-hidden pb-0" : isPreviewMode ? "pb-0" : "pb-20"} lg:pb-0`}
       >
         {activeSource === "cloud" && cloudIsSaving ? (
           <div className="pointer-events-none absolute top-3 right-4 z-40 flex items-center gap-2 rounded-full border border-border/80 bg-background/90 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur-sm">
@@ -488,7 +488,7 @@ export function DashboardWorkspace() {
           </div>
         ) : null}
         <div
-          className={`hidden ${selectedDocument ? (isDesktopSplit ? "lg:flex h-full min-h-0 flex-col" : "lg:block") : "lg:flex h-full min-h-0 flex-col"}`}
+          className="hidden h-full min-h-0 flex-col lg:flex"
         >
           {selectedDocument ? (
             <>
@@ -500,9 +500,7 @@ export function DashboardWorkspace() {
                 splitMode={isPreviewMode}
               />
               <div
-                className={
-                  isDesktopSplit ? "flex h-0 min-h-0 min-w-0 flex-1" : "min-w-0"
-                }
+                className="flex h-0 min-h-0 min-w-0 flex-1 overflow-hidden"
               >
                 <section
                   className={`relative h-full min-h-0 min-w-0 transition-[width] duration-300 ease-out ${isDesktopSplit ? (isPreviewMode ? "w-1/2" : "w-full") : "w-full"}`}
@@ -510,7 +508,7 @@ export function DashboardWorkspace() {
                   <DocumentPreview
                     document={selectedDocument}
                     mode={isPreviewMode ? "document" : editorMode}
-                    embedded={isDesktopSplit}
+                    embedded={isDesktopViewport === true}
                     showToolbar={false}
                     scrollScope="desktop"
                     onModeChange={changeEditorMode}
@@ -539,7 +537,7 @@ export function DashboardWorkspace() {
                       <DocumentPreview
                         document={selectedDocument}
                         mode="preview"
-                        embedded
+                        embedded={isDesktopViewport === true}
                         showToolbar={false}
                         scrollScope="desktop"
                         onModeChange={changeEditorMode}
