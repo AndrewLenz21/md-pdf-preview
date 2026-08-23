@@ -8,6 +8,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react";
+import { ChevronRight } from "lucide-react";
 import { DocsSidebar } from "@/modules/dashboard/docs-sidebar";
 import { authClient } from "@/lib/auth-client";
 import {
@@ -45,6 +46,8 @@ import { attachDocumentScrollSync } from "../utils/documentScrollSync";
 const DESKTOP_SIDEBAR_DEFAULT_WIDTH = 270;
 const DESKTOP_SIDEBAR_MIN_WIDTH = 220;
 const DESKTOP_SIDEBAR_MAX_WIDTH = 600;
+const DESKTOP_SIDEBAR_COLLAPSED_STORAGE_KEY =
+  "md-pdf-preview:desktop-sidebar-collapsed";
 
 function EmptyDocumentState() {
   return (
@@ -65,6 +68,35 @@ function EmptyDocumentState() {
       </div>
     </div>
   );
+}
+
+function readDesktopSidebarCollapsed() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  try {
+    return window.localStorage.getItem(
+      DESKTOP_SIDEBAR_COLLAPSED_STORAGE_KEY,
+    ) === "true";
+  } catch {
+    return false;
+  }
+}
+
+function writeDesktopSidebarCollapsed(collapsed: boolean) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(
+      DESKTOP_SIDEBAR_COLLAPSED_STORAGE_KEY,
+      String(collapsed),
+    );
+  } catch {
+    // Sidebar state remains available for the current session.
+  }
 }
 
 export function DashboardWorkspace() {
@@ -149,6 +181,10 @@ export function DashboardWorkspace() {
   const [desktopSidebarWidth, setDesktopSidebarWidth] = useState(
     DESKTOP_SIDEBAR_DEFAULT_WIDTH,
   );
+  const [desktopSidebarCollapsed, setDesktopSidebarCollapsed] = useState(false);
+  const hasLoadedSidebarPreferenceRef = useRef(false);
+  const shouldFocusSidebarToggleRef = useRef(false);
+  const desktopSidebarToggleRef = useRef<HTMLButtonElement | null>(null);
   const [desktopEditingActions, setDesktopEditingActions] =
     useState<EditingActions | null>(null);
   const [documentPageBreakMarkers, setDocumentPageBreakMarkers] = useState<
@@ -180,6 +216,32 @@ export function DashboardWorkspace() {
     : undefined;
   const selectedDocumentIdForSidebar =
     selectedDocumentSource === activeSource ? selectedDocumentId : null;
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setDesktopSidebarCollapsed(readDesktopSidebarCollapsed());
+      hasLoadedSidebarPreferenceRef.current = true;
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, []);
+
+  useEffect(() => {
+    if (!hasLoadedSidebarPreferenceRef.current) {
+      return;
+    }
+
+    writeDesktopSidebarCollapsed(desktopSidebarCollapsed);
+  }, [desktopSidebarCollapsed]);
+
+  useEffect(() => {
+    if (!desktopSidebarCollapsed || !shouldFocusSidebarToggleRef.current) {
+      return;
+    }
+
+    shouldFocusSidebarToggleRef.current = false;
+    desktopSidebarToggleRef.current?.focus();
+  }, [desktopSidebarCollapsed]);
 
   useEffect(() => {
     if (sessionPending) {
@@ -454,6 +516,11 @@ export function DashboardWorkspace() {
   };
 
   const openDocsSidebarSettings = () => openDialog("settings");
+  const collapseDesktopSidebar = () => {
+    shouldFocusSidebarToggleRef.current = true;
+    setDesktopSidebarCollapsed(true);
+  };
+  const expandDesktopSidebar = () => setDesktopSidebarCollapsed(false);
 
   const startSidebarResize = (event: ReactPointerEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -489,14 +556,17 @@ export function DashboardWorkspace() {
       {isDesktopViewport ? (
         <>
           <aside
-            style={{ width: desktopSidebarWidth }}
-            className="h-screen min-w-0 shrink-0 overflow-hidden bg-sidebar"
+            aria-hidden={desktopSidebarCollapsed || undefined}
+            inert={desktopSidebarCollapsed || undefined}
+            style={{ width: desktopSidebarCollapsed ? 0 : desktopSidebarWidth }}
+            className={`h-screen min-w-0 shrink-0 overflow-hidden bg-sidebar transition-[width,opacity] duration-300 ease-out ${desktopSidebarCollapsed ? "pointer-events-none opacity-0" : "opacity-100"}`}
           >
             <DocsSidebar
               selectedId={selectedDocumentIdForSidebar}
               onSelect={selectDocument}
               onDelete={handleDocumentDeleted}
               onOpenSettings={openDocsSidebarSettings}
+              onCollapse={collapseDesktopSidebar}
             />
           </aside>
           <div
@@ -506,8 +576,8 @@ export function DashboardWorkspace() {
             aria-valuemin={DESKTOP_SIDEBAR_MIN_WIDTH}
             aria-valuemax={DESKTOP_SIDEBAR_MAX_WIDTH}
             aria-valuenow={Math.round(desktopSidebarWidth)}
-            tabIndex={0}
-            className="group relative flex w-2 shrink-0 cursor-col-resize touch-none items-center justify-center border-r border-border/80 bg-background/30 transition-colors hover:bg-primary/10 focus-visible:bg-primary/10"
+            tabIndex={desktopSidebarCollapsed ? -1 : 0}
+            className={`group relative flex shrink-0 cursor-col-resize touch-none items-center justify-center border-r border-border/80 bg-background/30 transition-[width,opacity,background-color] duration-300 hover:bg-primary/10 focus-visible:bg-primary/10 ${desktopSidebarCollapsed ? "pointer-events-none w-0 opacity-0" : "w-2 opacity-100"}`}
             onPointerDown={startSidebarResize}
             onKeyDown={resizeSidebarWithKeyboard}
           >
@@ -520,8 +590,20 @@ export function DashboardWorkspace() {
         className={`relative min-w-0 flex-1 lg:flex lg:h-screen lg:min-h-0 lg:flex-col lg:overflow-hidden ${!selectedDocument ? "h-[calc(100dvh-var(--mobile-dashboard-nav-height))] overflow-hidden pb-0" : isMobileFilesSection ? "h-[calc(100dvh-var(--mobile-dashboard-nav-height))] overflow-hidden pb-0" : isPreviewMode ? "pb-0" : "pb-20"} lg:pb-0`}
       >
         <div
-          className="hidden h-full min-h-0 flex-col lg:flex"
+          className="relative hidden h-full min-h-0 flex-col lg:flex"
         >
+          {desktopSidebarCollapsed ? (
+            <button
+              type="button"
+              ref={desktopSidebarToggleRef}
+              aria-label="Open sidebar"
+              title="Open sidebar"
+              className={`absolute left-3 z-30 flex h-8 w-8 items-center justify-center rounded-md border border-border/80 bg-background/90 text-muted-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${selectedDocument ? "top-[4.5rem]" : "top-3"}`}
+              onClick={expandDesktopSidebar}
+            >
+              <ChevronRight className="h-4 w-4" strokeWidth={1.7} />
+            </button>
+          ) : null}
           {selectedDocument ? (
             <>
               <PreviewToolbar

@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ChevronLeft,
   FilePlus2,
   FileText,
   Folder,
@@ -130,12 +131,14 @@ export function DocsSidebar({
   onSelect,
   onDelete,
   onOpenSettings,
+  onCollapse,
   mobile = false,
 }: {
   selectedId: string | null;
   onSelect: (id: string) => void;
   onDelete?: (id: string) => void;
   onOpenSettings?: () => void;
+  onCollapse?: () => void;
   mobile?: boolean;
 }) {
   const locale = useLocale();
@@ -749,18 +752,29 @@ export function DocsSidebar({
               </p>
             </div>
           </Link>
-          <button
-            type="button"
-            aria-label="Create new document"
-            disabled={
-              isCloudUnauthenticated ||
-              (displaySource === "cloud" && cloudBusy)
-            }
-            className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
-            onClick={handleCreateRootDocument}
-          >
-            <FilePlus2 className="h-4 w-4" strokeWidth={1.7} />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              aria-label="Create new document"
+              disabled={
+                isCloudUnauthenticated ||
+                (displaySource === "cloud" && cloudBusy)
+              }
+              className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+              onClick={handleCreateRootDocument}
+            >
+              <FilePlus2 className="h-4 w-4" strokeWidth={1.7} />
+            </button>
+            <button
+              type="button"
+              aria-label="Collapse sidebar"
+              title="Collapse sidebar"
+              className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              onClick={onCollapse}
+            >
+              <ChevronLeft className="h-4 w-4" strokeWidth={1.7} />
+            </button>
+          </div>
         </div>
       ) : null}
 
