@@ -1,11 +1,15 @@
 "use client";
 
+"use client";
+
 import { useTranslations } from "next-intl";
 
-import { Link } from "@/core/i18n";
+import { Link, usePathname } from "@/core/i18n";
 
 import { NAVIGATION_LINKS } from "../constants/navigation.constants";
 import { AuthActions } from "./AuthActions";
+import { LanguageSelector } from "./LanguageSelector";
+import { ThemeMenu } from "./ThemeMenu";
 
 export function MobileDrawer({
   open,
@@ -17,6 +21,8 @@ export function MobileDrawer({
   onOpenSettings: () => void;
 }) {
   const t = useTranslations("Navigation");
+  const pathname = usePathname();
+  const isLanding = pathname === "/";
   const closeMenuLabel = t.has("aria.closeMobileMenu")
     ? t("aria.closeMobileMenu")
     : "Close navigation menu";
@@ -27,6 +33,9 @@ export function MobileDrawer({
   const navigationSection = t.has("mobile.navigationSection")
     ? t("mobile.navigationSection")
     : "Navigation";
+  const preferencesSection = t.has("mobile.preferencesSection")
+    ? t("mobile.preferencesSection")
+    : "Preferences";
 
   return (
     <aside
@@ -86,6 +95,17 @@ export function MobileDrawer({
           ))}
         </nav>
 
+        {isLanding ? (
+          <div className="mt-6">
+            <p className="px-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+              {preferencesSection}
+            </p>
+            <div className="mt-2 space-y-1 rounded-lg border border-border p-2">
+              <ThemeMenu inline showLabel />
+              <LanguageSelector inline showLabel />
+            </div>
+          </div>
+        ) : null}
       </div>
 
       <div className="border-t border-border pt-5">

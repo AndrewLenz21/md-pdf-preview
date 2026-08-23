@@ -77,27 +77,21 @@ export function AuthActions({
     if (mobile) {
       if (isLanding) {
         return (
-          <div className="space-y-4">
-            <div className="space-y-1 rounded-lg border border-border p-2">
-              <ThemeMenu inline showLabel />
-              <LanguageSelector inline showLabel />
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Link
-                href="/auth/sign-in"
-                onClick={onClose}
-                className="flex items-center justify-center rounded-lg border border-border px-3 py-2.5 text-center text-sm font-medium text-foreground transition-colors hover:bg-accent/60"
-              >
-                {t("actions.signIn")}
-              </Link>
-              <Link
-                href="/auth/sign-up"
-                onClick={onClose}
-                className="flex items-center justify-center rounded-lg bg-primary px-3 py-2.5 text-center text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-              >
-                {t("actions.signUp")}
-              </Link>
-            </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Link
+              href="/auth/sign-in"
+              onClick={onClose}
+              className="flex items-center justify-center rounded-lg border border-border px-3 py-2.5 text-center text-sm font-medium text-foreground transition-colors hover:bg-accent/60"
+            >
+              {t("actions.signIn")}
+            </Link>
+            <Link
+              href="/auth/sign-up"
+              onClick={onClose}
+              className="flex items-center justify-center rounded-lg bg-primary px-3 py-2.5 text-center text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              {t("actions.signUp")}
+            </Link>
           </div>
         );
       }
