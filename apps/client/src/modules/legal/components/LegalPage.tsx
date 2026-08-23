@@ -10,6 +10,29 @@ export type LegalDocument = "privacy" | "terms" | "cookies";
 
 type LegalTranslation = ReturnType<typeof useTranslations>;
 
+const PRIVACY_EMAIL = "privacy@bitnexuslab.com";
+
+function renderLegalText(text: string) {
+  const parts = text.split(PRIVACY_EMAIL);
+
+  if (parts.length === 1) {
+    return text;
+  }
+
+  return parts.flatMap((part, index) => [
+    part ? <span key={`legal-text-${index}`}>{part}</span> : null,
+    index < parts.length - 1 ? (
+      <a
+        key={`legal-email-${index}`}
+        href={`mailto:${PRIVACY_EMAIL}`}
+        className="font-medium text-foreground underline underline-offset-4 hover:text-primary"
+      >
+        {PRIVACY_EMAIL}
+      </a>
+    ) : null,
+  ]);
+}
+
 function formatDate(value: string, locale: string) {
   return new Intl.DateTimeFormat(locale, {
     day: "numeric",
@@ -26,7 +49,7 @@ function TextBlocks({ t, path }: { t: LegalTranslation; path: string }) {
     <div className="space-y-4">
       {paragraphs.map((paragraph) => (
         <p key={paragraph} className="text-sm leading-7 text-muted-foreground">
-          {paragraph}
+          {renderLegalText(paragraph)}
         </p>
       ))}
     </div>
@@ -40,7 +63,7 @@ function BulletList({ t, path }: { t: LegalTranslation; path: string }) {
     <ul className="mt-4 space-y-3 pl-5 text-sm leading-7 text-muted-foreground marker:text-primary">
       {bullets.map((bullet) => (
         <li key={bullet} className="pl-1">
-          {bullet}
+          {renderLegalText(bullet)}
         </li>
       ))}
     </ul>

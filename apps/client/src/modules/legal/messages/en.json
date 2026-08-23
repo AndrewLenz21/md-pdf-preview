@@ -18,7 +18,7 @@
       "controller": {
         "title": "Data Controller",
         "paragraphs": [
-          "The Data Controller for the hosted instance is [DATA CONTROLLER LEGAL NAME], operating under [BUSINESS / PROJECT NAME]. Contact: [CONTACT EMAIL]. Address: [REGISTERED ADDRESS IF APPLICABLE]. Country of establishment: [COUNTRY OF ESTABLISHMENT]. These placeholders must be replaced by the operator before the service is put into production.",
+          "The Data Controller is Lenz Villanueva Andrew Angel Giovanny, sole proprietor trading as Bitnexus Lab, established in Italy. Privacy contact: privacy@bitnexuslab.com. Address: Milan, Italy.",
           "The open-source repository and a hosted instance are separate contexts. The operator of a self-hosted deployment is responsible for its own controller information, providers, retention rules, and privacy notice."
         ]
       },
@@ -138,8 +138,8 @@
           "Account and workspace data: while the account remains active and until you delete the relevant data or the Controller removes it under a documented policy. Cloud document objects are deleted when the corresponding workspace item is deleted by the service.",
           "Sessions: the configured session expiry is up to 7 days by default, with earlier deletion on sign-out or account deletion.",
           "OAuth tokens and account links: while needed for the linked authentication account, subject to provider revocation and account deletion procedures.",
-          "Verification records and email-delivery records: verification records have an expiry field; email-delivery rows have no cleanup job visible in the repository. A concrete retention period is OWNER INPUT REQUIRED.",
-          "Operational request logs and R2 error-log objects: the repository shows storage of successful and failed request records but no automated cleanup job or retention period. This is OWNER INPUT REQUIRED, and the period should be limited to what security and troubleshooting require.",
+          "Verification records and email-delivery records: verification records have an expiry field; PostgreSQL email-delivery records are automatically deleted after 30 days.",
+          "Operational request logs: PostgreSQL request logs are automatically deleted after 30 days. R2 error-log object retention remains OWNER INPUT REQUIRED.",
           "Backups: backup existence, location, and deletion schedule are not represented in the repository and are OWNER INPUT REQUIRED."
         ]
       },
@@ -164,7 +164,7 @@
       "deletion": {
         "title": "Account and Data Deletion",
         "paragraphs": [
-          "The current frontend has no self-service account-deletion control. To request account deletion or exercise another privacy right, contact [CONTACT EMAIL] and include enough information to identify the account without sending a password or OAuth token.",
+          "The current frontend has no self-service account-deletion control. To request account deletion or exercise another privacy right, contact privacy@bitnexuslab.com and include enough information to identify the account without sending a password or OAuth token.",
           "Deletion of a cloud workspace item removes its PostgreSQL metadata and associated R2 objects through the current workspace service. Account deletion, backups, operational logs, and email-delivery records require an operator procedure; deletion is therefore not represented as instantaneous. The Controller must replace this placeholder with the production procedure and target time before launch."
         ]
       },
@@ -172,7 +172,7 @@
         "title": "Security",
         "paragraphs": [
           "The application uses HTTP-only same-site session cookies, secure password hashing through Better Auth, OAuth state protection, rate limiting, server-side access checks, presigned storage URLs, and redaction of common secrets and document-content fields in operational logs. These measures reduce risk but cannot guarantee absolute security.",
-          "If you believe an account or document is at risk, stop sharing the affected credentials and contact [CONTACT EMAIL]."
+          "If you believe an account or document is at risk, stop sharing the affected credentials and contact privacy@bitnexuslab.com."
         ]
       },
       "changes": {
@@ -184,7 +184,7 @@
       "contact": {
         "title": "Contact",
         "paragraphs": [
-          "Privacy requests and questions: [CONTACT EMAIL]. Data Controller: [DATA CONTROLLER LEGAL NAME], [REGISTERED ADDRESS IF APPLICABLE]. Replace all bracketed owner-input fields before production."
+          "Privacy requests and questions: privacy@bitnexuslab.com. Data Controller: Lenz Villanueva Andrew Angel Giovanny, sole proprietor trading as Bitnexus Lab, established in Italy. Address: Milan, Italy."
         ]
       }
     }
@@ -197,13 +197,13 @@
         "title": "1. Acceptance",
         "paragraphs": [
           "By using the hosted service, you agree to these Terms of Service and the Privacy Policy. If you do not agree, do not create an account or use the hosted service.",
-          "The operator is [DATA CONTROLLER LEGAL NAME], operating under [BUSINESS / PROJECT NAME]. Contact: [CONTACT EMAIL]."
+          "The hosted service is operated by Bitnexus Lab di Lenz Villanueva Andrew Angel Giovanny. Privacy contact: privacy@bitnexuslab.com."
         ]
       },
       "eligibility": {
         "title": "2. Eligibility",
         "paragraphs": [
-          "You must be at least [MINIMUM USER AGE] years old, or have the permission and supervision required by the laws that apply to you. The operator does not knowingly provide the hosted account service to children where parental authorization or another legal condition is required. The minimum age and intended territories are OWNER INPUT REQUIRED."
+          "You may use the local, account-free features regardless of age, subject to applicable law. To create an account or use Cloud Sync, you must be at least 16 years old. If applicable law requires a higher minimum age, that higher age applies."
         ]
       },
       "service": {
@@ -221,7 +221,7 @@
       "accounts": {
         "title": "5. Accounts",
         "paragraphs": [
-          "You must provide accurate information and keep your account credentials confidential. You are responsible for activity performed through your account unless it resulted from the operator's failure to provide reasonable security. Notify [CONTACT EMAIL] if you suspect unauthorized access.",
+          "You must provide accurate information and keep your account credentials confidential. You are responsible for activity performed through your account unless it resulted from the operator's failure to provide reasonable security. Notify privacy@bitnexuslab.com if you suspect unauthorized access.",
           "Email registration requires verification. The operator may use rate limits and other reasonable controls to prevent abuse."
         ]
       },
@@ -291,7 +291,7 @@
       "deletion": {
         "title": "15. Account Deletion",
         "paragraphs": [
-          "The current service does not provide a self-service account-deletion control. Request deletion by contacting [CONTACT EMAIL]. Individual cloud documents can be deleted through the workspace controls. The operator will handle account, storage, log, and backup deletion under the procedure described in the Privacy Policy; immediate deletion cannot be promised where backups or legal retention apply."
+          "The current service does not provide a self-service account-deletion control. Request deletion by contacting privacy@bitnexuslab.com. Individual cloud documents can be deleted through the workspace controls. The operator will handle account, storage, log, and backup deletion under the procedure described in the Privacy Policy; immediate deletion cannot be promised where backups or legal retention apply."
         ]
       },
       "warranties": {
@@ -315,13 +315,13 @@
       "law": {
         "title": "19. Applicable Law and Jurisdiction",
         "paragraphs": [
-          "These Terms are governed by the law of [COUNTRY OF ESTABLISHMENT], subject to mandatory consumer protections that apply in your country of residence. Courts of [JURISDICTION] will have jurisdiction to the extent permitted by applicable law. The operator must replace these owner-input placeholders before production."
+          "These Terms are governed by Italian law, subject to any mandatory consumer protections that apply in your country of residence. The courts of Milan, Italy, will have jurisdiction to the extent permitted by applicable law."
         ]
       },
       "contact": {
         "title": "20. Contact",
         "paragraphs": [
-          "Questions about the hosted service or these Terms: [CONTACT EMAIL]. Operator: [DATA CONTROLLER LEGAL NAME], [REGISTERED ADDRESS IF APPLICABLE]."
+          "Questions about the hosted service or these Terms: privacy@bitnexuslab.com. Operator: Bitnexus Lab di Lenz Villanueva Andrew Angel Giovanny. Address: Milan, Italy."
         ]
       }
     }
@@ -365,7 +365,7 @@
       "contact": {
         "title": "Contact",
         "paragraphs": [
-          "Questions about cookies or browser storage: [CONTACT EMAIL]. The operator is [DATA CONTROLLER LEGAL NAME]."
+          "Questions about cookies or browser storage: privacy@bitnexuslab.com. The operator is Bitnexus Lab di Lenz Villanueva Andrew Angel Giovanny."
         ]
       }
     },

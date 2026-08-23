@@ -37,10 +37,14 @@ func BootstrapSchema(ctx context.Context, pool *pgxpool.Pool, schema string) err
 		return fmt.Errorf("set search path to %s: %w", schema, err)
 	}
 
-	for _, statement := range SchemaStatements() {
+	for _, statement := range schemaStatements(schema) {
 		if _, err := tx.Exec(ctx, statement); err != nil {
 			return fmt.Errorf("apply database schema: %w", err)
 		}
+	}
+
+	if err := configureRetentionCron(ctx, tx, schema); err != nil {
+		return fmt.Errorf("configure PostgreSQL retention: %w", err)
 	}
 
 	if err := tx.Commit(ctx); err != nil {
@@ -51,11 +55,17 @@ func BootstrapSchema(ctx context.Context, pool *pgxpool.Pool, schema string) err
 }
 
 func SchemaStatements() []string {
-	statements := make([]string, 0, len(betterAuthSchemaStatements)+len(workspaceItemsSchemaStatements)+len(loggerSchemaStatements)+len(emailDeliveriesSchemaStatements))
+	return schemaStatements(retentionDefaultSchema)
+}
+
+func schemaStatements(schema string) []string {
+	retentionStatements := retentionSchemaStatements(schema)
+	statements := make([]string, 0, len(betterAuthSchemaStatements)+len(workspaceItemsSchemaStatements)+len(loggerSchemaStatements)+len(emailDeliveriesSchemaStatements)+len(retentionStatements))
 	statements = append(statements, betterAuthSchemaStatements...)
 	statements = append(statements, emailDeliveriesSchemaStatements...)
 	statements = append(statements, workspaceItemsSchemaStatements...)
 	statements = append(statements, loggerSchemaStatements...)
+	statements = append(statements, retentionStatements...)
 	return statements
 }
 

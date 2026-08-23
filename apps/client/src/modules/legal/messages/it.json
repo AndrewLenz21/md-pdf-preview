@@ -18,7 +18,7 @@
       "controller": {
         "title": "Titolare del trattamento",
         "paragraphs": [
-          "Il Titolare del trattamento dell'istanza ospitata è [DATA CONTROLLER LEGAL NAME], che opera con il nome [BUSINESS / PROJECT NAME]. Contatto: [CONTACT EMAIL]. Indirizzo: [REGISTERED ADDRESS IF APPLICABLE]. Paese di stabilimento: [COUNTRY OF ESTABLISHMENT]. Il gestore deve sostituire questi segnaposto prima della produzione.",
+          "Il Titolare del trattamento è Lenz Villanueva Andrew Angel Giovanny, titolare della ditta individuale Bitnexus Lab, stabilita in Italia. Contatto privacy: privacy@bitnexuslab.com. Indirizzo: Milano, Italia.",
           "Il repository open source e l'istanza ospitata sono contesti separati. Il gestore di un'installazione self-hosted è responsabile delle proprie informazioni sul titolare, dei fornitori, dei tempi di conservazione e dell'informativa."
         ]
       },
@@ -138,8 +138,8 @@
           "Account e spazio cloud: finché l'account è attivo e finché i dati non vengono eliminati dall'utente o secondo una policy documentata. Gli oggetti R2 vengono eliminati con l'elemento corrispondente.",
           "Sessioni: fino a 7 giorni per impostazione predefinita, con cancellazione precedente al logout o all'eliminazione dell'account.",
           "Token OAuth e collegamenti: finché necessari all'account collegato, considerando revoca del provider e procedura di eliminazione.",
-          "Record di verifica e consegna email: i primi hanno una scadenza; non è presente una pulizia automatica per i record di consegna. Periodo concreto: OWNER INPUT REQUIRED.",
-          "Log operativi e oggetti errori R2: il repository mostra la conservazione di richieste riuscite e fallite, ma non un job di pulizia o periodo. Questo è OWNER INPUT REQUIRED.",
+          "Record di verifica e consegna email: i primi hanno una scadenza; i record di consegna email in PostgreSQL vengono eliminati automaticamente dopo 30 giorni.",
+          "Log operativi: i log delle richieste in PostgreSQL vengono eliminati automaticamente dopo 30 giorni. La conservazione degli oggetti di errore R2 resta OWNER INPUT REQUIRED.",
           "Backup: esistenza, posizione e calendario di cancellazione non risultano dal repository e sono OWNER INPUT REQUIRED."
         ]
       },
@@ -164,7 +164,7 @@
       "deletion": {
         "title": "Cancellazione dell'account e dei dati",
         "paragraphs": [
-          "L'attuale frontend non dispone di un comando per cancellare autonomamente l'account. Per richiedere la cancellazione o esercitare un diritto, scrivi a [CONTACT EMAIL] senza inviare password o token OAuth.",
+          "L'attuale frontend non dispone di un comando per cancellare autonomamente l'account. Per richiedere la cancellazione o esercitare un diritto, scrivi a privacy@bitnexuslab.com senza inviare password o token OAuth.",
           "La cancellazione di un elemento cloud elimina i metadati PostgreSQL e gli oggetti R2 associati. La cancellazione dell'account, dei backup, dei log e dei record email richiede una procedura del gestore; non è quindi rappresentata come immediata. Il proprietario deve sostituire il segnaposto con la procedura di produzione."
         ]
       },
@@ -172,7 +172,7 @@
         "title": "Sicurezza",
         "paragraphs": [
           "L'applicazione usa cookie HTTP-only e same-site, hashing sicuro delle password tramite Better Auth, protezione dello stato OAuth, rate limiting, controlli di accesso, URL presigned e redazione di segreti e campi di contenuto nei log. Queste misure riducono i rischi ma non garantiscono sicurezza assoluta.",
-          "Se ritieni che un account o documento sia a rischio, interrompi la condivisione delle credenziali interessate e contatta [CONTACT EMAIL]."
+          "Se ritieni che un account o documento sia a rischio, interrompi la condivisione delle credenziali interessate e contatta privacy@bitnexuslab.com."
         ]
       },
       "changes": {
@@ -184,7 +184,7 @@
       "contact": {
         "title": "Contatti",
         "paragraphs": [
-          "Richieste privacy: [CONTACT EMAIL]. Titolare: [DATA CONTROLLER LEGAL NAME], [REGISTERED ADDRESS IF APPLICABLE]. Sostituire tutti i campi tra parentesi prima della produzione."
+          "Richieste privacy: privacy@bitnexuslab.com. Titolare: Lenz Villanueva Andrew Angel Giovanny, titolare della ditta individuale Bitnexus Lab, stabilita in Italia. Indirizzo: Milano, Italia."
         ]
       }
     }
@@ -197,13 +197,13 @@
         "title": "1. Accettazione",
         "paragraphs": [
           "Usando il servizio ospitato accetti questi Termini e l'Informativa Privacy. Se non accetti, non creare un account e non usare il servizio.",
-          "Il gestore è [DATA CONTROLLER LEGAL NAME], con il nome [BUSINESS / PROJECT NAME]. Contatto: [CONTACT EMAIL]."
+          "Il servizio ospitato è gestito da Bitnexus Lab di Lenz Villanueva Andrew Angel Giovanny. Contatto privacy: privacy@bitnexuslab.com."
         ]
       },
       "eligibility": {
         "title": "2. Idoneità",
         "paragraphs": [
-          "Devi avere almeno [MINIMUM USER AGE] anni o l'autorizzazione richiesta dalla legge. Età minima e territori previsti sono OWNER INPUT REQUIRED."
+          "Le funzionalità locali che non richiedono un account possono essere utilizzate indipendentemente dall'età, nel rispetto della legge applicabile. Per creare un account o utilizzare Cloud Sync è necessario avere almeno 16 anni. Se la legge applicabile prevede un'età minima superiore, si applica tale requisito."
         ]
       },
       "service": {
@@ -221,7 +221,7 @@
       "accounts": {
         "title": "5. Account",
         "paragraphs": [
-          "Devi fornire informazioni corrette e proteggere le credenziali. Sei responsabile dell'attività dell'account salvo un mancato rispetto della sicurezza ragionevole da parte del gestore. Segnala accessi non autorizzati a [CONTACT EMAIL].",
+          "Devi fornire informazioni corrette e proteggere le credenziali. Sei responsabile dell'attività dell'account salvo un mancato rispetto della sicurezza ragionevole da parte del gestore. Segnala accessi non autorizzati a privacy@bitnexuslab.com.",
           "La registrazione email richiede verifica e sono applicati controlli contro gli abusi."
         ]
       },
@@ -291,7 +291,7 @@
       "deletion": {
         "title": "15. Cancellazione dell'account",
         "paragraphs": [
-          "Il servizio non offre attualmente la cancellazione autonoma dell'account. Richiedila a [CONTACT EMAIL]. I documenti cloud possono essere cancellati dai controlli dello spazio di lavoro. Backup, log e conservazioni legali possono richiedere tempo."
+          "Il servizio non offre attualmente la cancellazione autonoma dell'account. Richiedila a privacy@bitnexuslab.com. I documenti cloud possono essere cancellati dai controlli dello spazio di lavoro. Backup, log e conservazioni legali possono richiedere tempo."
         ]
       },
       "warranties": {
@@ -315,13 +315,13 @@
       "law": {
         "title": "19. Legge e giurisdizione",
         "paragraphs": [
-          "Questi Termini sono regolati dalla legge di [COUNTRY OF ESTABLISHMENT], fatte salve le protezioni inderogabili del Paese di residenza. I tribunali di [JURISDICTION] avranno giurisdizione nei limiti consentiti. Sostituire i segnaposto prima della produzione."
+          "I presenti Termini sono disciplinati dalla legge italiana, fatto salvo ogni diritto inderogabile riconosciuto al consumatore dalla legge del proprio Paese di residenza. I tribunali di Milano, Italia, saranno competenti nei limiti consentiti dalla legge applicabile."
         ]
       },
       "contact": {
         "title": "20. Contatti",
         "paragraphs": [
-          "Domande sul servizio o sui Termini: [CONTACT EMAIL]. Gestore: [DATA CONTROLLER LEGAL NAME], [REGISTERED ADDRESS IF APPLICABLE]."
+          "Domande sul servizio o sui Termini: privacy@bitnexuslab.com. Gestore: Bitnexus Lab di Lenz Villanueva Andrew Angel Giovanny. Indirizzo: Milano, Italia."
         ]
       }
     }
@@ -365,7 +365,7 @@
       "contact": {
         "title": "Contatti",
         "paragraphs": [
-          "Domande su cookie o storage: [CONTACT EMAIL]. Gestore: [DATA CONTROLLER LEGAL NAME]."
+          "Domande su cookie o storage: privacy@bitnexuslab.com. Gestore: Bitnexus Lab di Lenz Villanueva Andrew Angel Giovanny."
         ]
       }
     },

@@ -1,8 +1,8 @@
 # Terms of Use
 
-Last updated: 2026-08-23
+Last updated: 2026-08-24
 
-These terms describe use of the md-pdf-preview open-source project and its hosted demo. If you run your own deployment, you are responsible for the terms and policies that apply to that deployment.
+These terms describe use of the md-pdf-preview open-source project and the hosted service operated in Italy by Bitnexus Lab di Lenz Villanueva Andrew Angel Giovanny. If you run your own deployment, you are responsible for the terms and policies that apply to that deployment.
 
 ## Using the Project
 
@@ -30,4 +30,4 @@ These terms may be updated when the hosted demo or project changes. The current 
 
 ## Contact
 
-For questions about the open-source project, use [GitHub Issues](https://github.com/AndrewLenz21/md-pdf-preview/issues). Hosted deployments may provide additional contact channels.
+For questions about the hosted service, contact [privacy@bitnexuslab.com](mailto:privacy@bitnexuslab.com). For questions about the open-source project, use [GitHub Issues](https://github.com/AndrewLenz21/md-pdf-preview/issues). Self-hosted deployments have their own operator and contact details.

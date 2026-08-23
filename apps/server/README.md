@@ -8,7 +8,7 @@ The server is **optional**. The client runs in local-only mode (IndexedDB) witho
 
 - **Workspace API** — folders and documents: list, create, update, delete
 - **Document storage** — Cloudflare R2 presigned URLs (client uploads/downloads directly)
-- **PostgreSQL persistence** — workspace items, request logs, automatic schema migrations
+- **PostgreSQL persistence** — workspace items, request logs, automatic schema migrations, and PostgreSQL retention cleanup
 - **Security** — API-key middleware, per-user identity headers, IP-based rate limiting
 - **Logging** — structured request logging and a queue-based error logger
 - **Graceful shutdown** — clean pool and server shutdown on SIGINT/SIGTERM
@@ -54,6 +54,23 @@ npm run build --filter=server
 Health check: `curl.exe http://localhost:8080/health`
 
 > **Note:** Migrations in `src/config/postgres/migrations/` run automatically at startup. The PostgreSQL pool starts independently, so a database outage never blocks the HTTP server.
+
+### PostgreSQL operational retention
+
+The migrations retain PostgreSQL operational records for 30 days:
+
+- `request_logs`: 30 days
+- `email_deliveries`: 30 days
+
+Cleanup runs daily at 03:30 UTC through the `pg_cron` job named
+`md_pdf_preview_daily_retention_cleanup`. The migration creates the cleanup
+functions even when `pg_cron` is unavailable. In that case, run both functions
+manually using the configured `DB_SCHEMA`:
+
+```sql
+SELECT <DB_SCHEMA>.fn_request_logs_cleanup();
+SELECT <DB_SCHEMA>.fn_email_deliveries_cleanup();
+```
 
 ## 📂 Structure
 

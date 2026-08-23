@@ -1,8 +1,8 @@
 # Privacy Notice
 
-Last updated: 2026-08-23
+Last updated: 2026-08-24
 
-This notice explains how md-pdf-preview handles information in the hosted demo and in self-hosted deployments. The project is open source, so a self-hosted operator may configure additional services or policies.
+This notice explains how md-pdf-preview handles information in the hosted service and in self-hosted deployments. The hosted service is operated in Italy by Lenz Villanueva Andrew Angel Giovanny, sole proprietor trading as Bitnexus Lab. Privacy contact: [privacy@bitnexuslab.com](mailto:privacy@bitnexuslab.com). The project is open source, so a self-hosted operator may configure additional services or policies.
 
 ## Local Workspace
 
@@ -28,7 +28,7 @@ Information is used to authenticate users, provide workspace synchronization, de
 
 ## Retention and Deletion
 
-Local data remains in the browser until the user or browser removes it. Cloud documents remain until they are deleted through the application or by the operator's retention policy. Self-hosted operators are responsible for defining and communicating account and backup retention policies.
+Local data remains in the browser until the user or browser removes it. PostgreSQL request logs and email-delivery records are retained for 30 days and then automatically deleted. Cloud documents remain until they are deleted through the application or by the operator's retention policy. Self-hosted operators are responsible for defining and communicating account and backup retention policies.
 
 ## Third-Party Services
 
@@ -40,4 +40,4 @@ This notice may be updated as the application or hosted deployment changes. Upda
 
 ## Contact
 
-For general privacy questions about the open-source project, open a documentation issue in the [GitHub repository](https://github.com/AndrewLenz21/md-pdf-preview). For a hosted deployment, contact its operator through the channel published with that deployment.
+For privacy questions about the hosted service, contact [privacy@bitnexuslab.com](mailto:privacy@bitnexuslab.com). For general questions about the open-source project, open a documentation issue in the [GitHub repository](https://github.com/AndrewLenz21/md-pdf-preview). Self-hosted deployments have their own operator and privacy contact.
