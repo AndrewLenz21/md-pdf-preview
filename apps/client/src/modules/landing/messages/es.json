@@ -1,0 +1,130 @@
+{
+  "hero": {
+    "badge": "Espacio de trabajo Markdown — local-first",
+    "title1": "Escribe una vez.",
+    "title2": "Previsualiza cada página.",
+    "description": "Un lugar tranquilo para dar forma a tus documentos Markdown y ver exactamente cómo se leerán cuando salgan de la pantalla — con un motor de paginación que predice los saltos de página reales antes de imprimir.",
+    "primaryCta": "Abrir la aplicación",
+    "secondaryCta": "Ver en GitHub",
+    "footnote": "Sin necesidad de cuenta. Tus documentos se quedan en tu navegador."
+  },
+  "features": {
+    "eyebrow": "Características",
+    "title": "Todo lo que necesitas para dar forma a un documento",
+    "description": "Desde la primera tecla hasta la página impresa.",
+    "items": {
+      "fidelity": {
+        "title": "Previsualización fiel",
+        "description": "Un motor de paginación mide cada bloque — párrafos, listas, código, espacios en blanco — y predice los saltos de página exactos."
+      },
+      "modes": {
+        "title": "Tres modos de edición",
+        "description": "Código Markdown, editor visual WYSIWYG y previsualización en papel. Cambia libremente: las ediciones se mantienen sincronizadas."
+      },
+      "paperSizes": {
+        "title": "Tamaños de papel reales",
+        "description": "A4, A5, Carta y Oficio con márgenes, pies de página y espaciado precisos. Acerca y aleja."
+      },
+      "printReady": {
+        "title": "Listo para imprimir",
+        "description": "La salida de impresión del navegador coincide página a página con la previsualización."
+      },
+      "pagination": {
+        "title": "Paginación exacta",
+        "description": "Estrategias para párrafos, listas y bloques de código con marcadores de salto de página sincronizados con el desplazamiento del editor."
+      },
+      "workspaces": {
+        "title": "Espacios de trabajo",
+        "description": "Carpetas y documentos con arrastrar y soltar, renombrar, mover, eliminar, e iconos y colores por carpeta."
+      },
+      "localFirst": {
+        "title": "Local-first",
+        "description": "Los documentos se guardan en IndexedDB. Funciona completamente sin cuenta."
+      },
+      "cloudSync": {
+        "title": "Sincronización en la nube opcional",
+        "description": "Inicia sesión y mantén tu espacio de trabajo en la nube — PostgreSQL y Cloudflare R2."
+      },
+      "i18n": {
+        "title": "Internacionalizado",
+        "description": "Inglés, español e italiano."
+      },
+      "themes": {
+        "title": "Temas",
+        "description": "Claro y oscuro con transiciones suaves."
+      },
+      "responsive": {
+        "title": "Responsive",
+        "description": "Vista dividida en escritorio, navegación inferior en móvil."
+      },
+      "accessibility": {
+        "title": "Accesible",
+        "description": "Barra lateral redimensionable con teclado, controles con etiquetas ARIA, estilos focus-visible."
+      }
+    }
+  },
+  "tour": {
+    "eyebrow": "Recorrido del producto",
+    "title": "De la página en blanco a la impresión",
+    "description": "Mira el espacio de trabajo en acción.",
+    "steps": {
+      "create": {
+        "title": "Crear y previsualizar",
+        "description": "Crea un archivo Markdown y mira el mismo contenido en los modos Documento y Previsualización.",
+        "alt": "Creando un archivo Markdown y viéndolo en los modos Documento y Previsualización"
+      },
+      "organize": {
+        "title": "Organiza archivos y carpetas",
+        "description": "Mueve archivos y carpetas dentro del espacio de trabajo local Sesión con arrastrar y soltar.",
+        "alt": "Moviendo archivos y carpetas dentro del espacio de trabajo Sesión"
+      },
+      "cloud": {
+        "title": "Mueve carpetas a la Nube",
+        "description": "Los usuarios autenticados pueden mover carpetas entre Sesión y Nube.",
+        "alt": "Moviendo una carpeta entre los espacios de trabajo Sesión y Nube"
+      },
+      "desktop": {
+        "title": "Espacio de trabajo en escritorio",
+        "description": "El diseño de escritorio mantiene visibles el árbol de archivos, el editor y la previsualización en papel.",
+        "alt": "Panel de escritorio con editor y previsualización en papel"
+      },
+      "mobile": {
+        "title": "Espacio de trabajo móvil",
+        "description": "El diseño responsivo alterna secciones de archivos y previsualización con navegación inferior.",
+        "alt": "Panel móvil con navegación entre los espacios Sesión y Nube"
+      },
+      "pageBreak": {
+        "title": "Previsualización consciente de página",
+        "description": "El editor marca los posibles saltos de página mientras trabajas, manteniendo predecible el resultado impreso.",
+        "alt": "Indicador de posible salto de página en el editor"
+      }
+    }
+  },
+  "tech": {
+    "eyebrow": "Stack tecnológico",
+    "title": "Construido para la precisión",
+    "description": "Un stack pragmático, del editor a la base de datos.",
+    "items": [
+      "Next.js 16 + React 19",
+      "Editor WYSIWYG TipTap 3",
+      "Parsing unified / remark",
+      "Serialización turndown",
+      "Zustand + IndexedDB",
+      "next-intl (en, es, it)",
+      "Tailwind CSS v4",
+      "Go 1.25 + Echo",
+      "PostgreSQL + Cloudflare R2",
+      "better-auth"
+    ]
+  },
+  "footer": {
+    "tagline": "Escribe una vez. Previsualiza cada página.",
+    "description": "Un lugar tranquilo para dar forma a tus documentos Markdown — con motor de paginación incluido.",
+    "github": "Ver el código en GitHub",
+    "terms": "Términos",
+    "privacy": "Privacidad",
+    "cookies": "Cookies",
+    "license": "Licencia MIT",
+    "builtWith": "Hecho con OpenCode"
+  }
+}

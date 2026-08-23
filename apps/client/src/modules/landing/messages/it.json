@@ -1,0 +1,130 @@
+{
+  "hero": {
+    "badge": "Workspace Markdown — local-first",
+    "title1": "Scrivi una volta.",
+    "title2": "Anteprima di ogni pagina.",
+    "description": "Un luogo tranquillo per dare forma ai tuoi documenti Markdown e vedere esattamente come si leggeranno quando lasceranno lo schermo — con un motore di impaginazione che prevede le interruzioni di pagina reali prima di stampare.",
+    "primaryCta": "Apri l'app",
+    "secondaryCta": "Vedi su GitHub",
+    "footnote": "Nessun account richiesto. I tuoi documenti restano nel browser."
+  },
+  "features": {
+    "eyebrow": "Funzionalità",
+    "title": "Tutto ciò che serve per dare forma a un documento",
+    "description": "Dal primo tasto alla pagina stampata.",
+    "items": {
+      "fidelity": {
+        "title": "Anteprima fedele",
+        "description": "Un motore di impaginazione misura ogni blocco — paragrafi, liste, codice, spazi vuoti — e prevede le interruzioni di pagina esatte."
+      },
+      "modes": {
+        "title": "Tre modalità di modifica",
+        "description": "Sorgente Markdown, editor visuale WYSIWYG e anteprima su carta. Cambia liberamente: le modifiche restano sincronizzate."
+      },
+      "paperSizes": {
+        "title": "Formati carta reali",
+        "description": "A4, A5, Letter e Legal con margini, piè di pagina e spaziature accurati. Ingrandisci e riduci."
+      },
+      "printReady": {
+        "title": "Pronto per la stampa",
+        "description": "La stampa del browser corrisponde all'anteprima pagina per pagina."
+      },
+      "pagination": {
+        "title": "Impaginazione precisa",
+        "description": "Strategie per paragrafi, liste e blocchi di codice con marcatori di interruzione sincronizzati allo scorrimento dell'editor."
+      },
+      "workspaces": {
+        "title": "Workspace di documenti",
+        "description": "Cartelle e documenti con trascinamento, rinomina, spostamento, eliminazione e icone e colori per cartella."
+      },
+      "localFirst": {
+        "title": "Local-first",
+        "description": "I documenti restano in IndexedDB. Funziona completamente senza account."
+      },
+      "cloudSync": {
+        "title": "Sync cloud opzionale",
+        "description": "Accedi e conserva il tuo workspace nel cloud — PostgreSQL e Cloudflare R2."
+      },
+      "i18n": {
+        "title": "Internazionalizzato",
+        "description": "Inglese, spagnolo e italiano."
+      },
+      "themes": {
+        "title": "Temi",
+        "description": "Scuro e chiaro con transizioni fluide."
+      },
+      "responsive": {
+        "title": "Responsive",
+        "description": "Vista divisa su desktop, navigazione inferiore su mobile."
+      },
+      "accessibility": {
+        "title": "Accessibile",
+        "description": "Sidebar ridimensionabile da tastiera, controlli con etichette ARIA, stili focus-visible."
+      }
+    }
+  },
+  "tour": {
+    "eyebrow": "Tour del prodotto",
+    "title": "Dalla pagina bianca alla stampa",
+    "description": "Guarda il workspace in azione.",
+    "steps": {
+      "create": {
+        "title": "Crea e visualizza in anteprima",
+        "description": "Crea un file Markdown e vedi lo stesso contenuto nelle modalità Documento e Anteprima.",
+        "alt": "Creazione di un file Markdown e visualizzazione nelle modalità Documento e Anteprima"
+      },
+      "organize": {
+        "title": "Organizza file e cartelle",
+        "description": "Sposta file e cartelle nel workspace locale Session con il trascinamento.",
+        "alt": "Spostamento di file e cartelle nel workspace Session"
+      },
+      "cloud": {
+        "title": "Sposta cartelle nel Cloud",
+        "description": "Gli utenti autenticati possono spostare le cartelle tra Session e Cloud.",
+        "alt": "Spostamento di una cartella tra i workspace Session e Cloud"
+      },
+      "desktop": {
+        "title": "Workspace desktop",
+        "description": "Il layout desktop tiene insieme albero dei file, editor e anteprima su carta.",
+        "alt": "Dashboard desktop con editor e anteprima su carta"
+      },
+      "mobile": {
+        "title": "Workspace mobile",
+        "description": "Il layout responsive passa a sezioni file e anteprima con navigazione inferiore.",
+        "alt": "Dashboard mobile con navigazione tra workspace Session e Cloud"
+      },
+      "pageBreak": {
+        "title": "Anteprima consapevole della pagina",
+        "description": "L'editor segna le possibili interruzioni di pagina mentre lavori, per un risultato di stampa prevedibile.",
+        "alt": "Indicatore di possibile interruzione di pagina nell'editor"
+      }
+    }
+  },
+  "tech": {
+    "eyebrow": "Stack tecnologico",
+    "title": "Costruito per la precisione",
+    "description": "Uno stack pragmatico, dall'editor al database.",
+    "items": [
+      "Next.js 16 + React 19",
+      "Editor WYSIWYG TipTap 3",
+      "Parsing unified / remark",
+      "Serializzazione turndown",
+      "Zustand + IndexedDB",
+      "next-intl (en, es, it)",
+      "Tailwind CSS v4",
+      "Go 1.25 + Echo",
+      "PostgreSQL + Cloudflare R2",
+      "better-auth"
+    ]
+  },
+  "footer": {
+    "tagline": "Scrivi una volta. Anteprima di ogni pagina.",
+    "description": "Un luogo tranquillo per dare forma ai tuoi documenti Markdown — motore di impaginazione incluso.",
+    "github": "Vedi il codice sorgente su GitHub",
+    "terms": "Termini",
+    "privacy": "Privacy",
+    "cookies": "Cookie",
+    "license": "Licenza MIT",
+    "builtWith": "Creato con OpenCode"
+  }
+}

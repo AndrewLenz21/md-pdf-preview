@@ -78,6 +78,26 @@
     animation: marquee 18s linear infinite;
   }
 
+  @keyframes landing-entrance {
+    from {
+      opacity: 0;
+      filter: blur(8px);
+      transform: translate3d(0, 1rem, 0) scale(0.985);
+    }
+
+    to {
+      opacity: 1;
+      filter: blur(0);
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+  }
+
+  .landing-reveal {
+    animation: landing-entrance 800ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: var(--landing-delay, 0ms);
+    will-change: opacity, filter, transform;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .animate-marquee,
     .navigation-overlay,
@@ -93,6 +113,10 @@
     .mobile-preview-toolbar-print-action {
       animation: none;
       transition: none;
+    }
+
+    .landing-reveal {
+      animation: none;
     }
 
     .modal-shell,
