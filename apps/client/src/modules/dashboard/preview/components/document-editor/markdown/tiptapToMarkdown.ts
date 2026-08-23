@@ -4,7 +4,8 @@ import { gfm } from "turndown-plugin-gfm";
 
 function getCodeLanguage(node: Element) {
   const code = node.querySelector("code");
-  const className = code?.getAttribute("class") ?? "";
+  const className =
+    code?.getAttribute("class") ?? node.getAttribute("class") ?? "";
   const language = className.match(/(?:^|\s)language-([^\s]+)/)?.[1];
 
   return language ?? "";

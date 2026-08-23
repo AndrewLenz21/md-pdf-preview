@@ -12,6 +12,7 @@ import StarterKit from "@tiptap/starter-kit";
 
 import { Callout } from "./Callout";
 import { BlankSpace } from "./BlankSpace";
+import { CodeBlockWithLanguage } from "./CodeBlock";
 import { SourceBlock } from "./SourceBlock";
 import { TaskInput } from "./TaskInput";
 
@@ -23,8 +24,10 @@ export function createDocumentEditorExtensions({
   return [
     StarterKit.configure({
       link: false,
+      codeBlock: false,
       ...(disableTrailingNode ? { trailingNode: false } : {}),
     }),
+    CodeBlockWithLanguage,
     Link.configure({
       autolink: true,
       linkOnPaste: true,

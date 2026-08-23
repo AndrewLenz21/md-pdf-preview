@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import type { Editor } from "@tiptap/core";
 import { Slice } from "@tiptap/pm/model";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -46,6 +52,69 @@ describe("DocumentEditor", () => {
     expect(document.querySelector(".document-callout-icon")?.textContent).toBe("💡");
     expect(screen.getByText("Core idea:")).toBeTruthy();
     expect(document.querySelector("[contenteditable=\"true\"]")).toBeTruthy();
+  });
+
+  it("renders a language selector for fenced code blocks", async () => {
+    const onMarkdownChange = vi.fn();
+
+    render(
+      <DocumentEditor
+        markdown={"```javascript\nconst value = 1;\n```"}
+        zoom={100}
+        onMarkdownChange={onMarkdownChange}
+      />,
+    );
+
+    const languageSelect = (await screen.findByRole("combobox", {
+      name: "Code language",
+    })) as HTMLSelectElement;
+
+    expect(languageSelect.value).toBe("javascript");
+    fireEvent.change(languageSelect, { target: { value: "typescript" } });
+
+    await waitFor(() =>
+      expect(onMarkdownChange).toHaveBeenLastCalledWith(
+        "```typescript\nconst value = 1;\n```",
+      ),
+    );
+  });
+
+  it("offers copy and delete actions for fenced code blocks", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    const originalClipboard = navigator.clipboard;
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    });
+
+    try {
+      render(
+        <DocumentEditor
+          markdown={"```javascript\nconst value = 1;\n```"}
+          zoom={100}
+          onMarkdownChange={() => undefined}
+        />,
+      );
+
+      fireEvent.click(await screen.findByRole("button", { name: "Copy code" }));
+      await waitFor(() => expect(writeText).toHaveBeenCalledWith("const value = 1;"));
+
+      const moreOptions = document.querySelector(
+        '[aria-label="More code block options"]',
+      );
+      expect(moreOptions).toBeTruthy();
+      fireEvent.click(moreOptions!);
+      fireEvent.click(await screen.findByRole("button", { name: "Delete" }));
+
+      await waitFor(() =>
+        expect(document.querySelector(".document-code-block")).toBeNull(),
+      );
+    } finally {
+      Object.defineProperty(navigator, "clipboard", {
+        configurable: true,
+        value: originalClipboard,
+      });
+    }
   });
 
   it("renders task items as semantic checkbox controls with their checked state", () => {

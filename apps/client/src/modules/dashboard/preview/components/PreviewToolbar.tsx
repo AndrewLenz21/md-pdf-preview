@@ -43,6 +43,18 @@ function formatUpdatedAt(value: string) {
   })}`;
 }
 
+function CloudSavingStatus({ compact = false }: { compact?: boolean }) {
+  return (
+    <span
+      aria-live="polite"
+      className="flex items-center gap-1.5 text-xs text-muted-foreground"
+    >
+      <Loader2 className="h-3 w-3 animate-spin text-primary" />
+      <span>{compact ? "Saving..." : "Saving to cloud..."}</span>
+    </span>
+  );
+}
+
 function EditingActionButtons({
   editingActions,
   includeClear = false,
@@ -285,12 +297,8 @@ export function PreviewToolbar({
           {document.name}
         </p>
         {isSavingToCloud ? (
-          <p
-            aria-live="polite"
-            className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground"
-          >
-            <Loader2 className="h-3 w-3 animate-spin text-primary" />
-            <span>Saving to cloud...</span>
+          <p className="mt-0.5">
+            <CloudSavingStatus />
           </p>
         ) : (
           <p className="mt-0.5 flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
@@ -345,7 +353,11 @@ export function PreviewToolbar({
       </div>
 
       <div className="mobile-preview-toolbar-right flex shrink-0 items-center gap-2 sm:gap-3">
-        {!isPreviewMode && !isSavingToCloud ? (
+        {!isPreviewMode && isSavingToCloud ? (
+          <span className="mobile-preview-toolbar-mobile-saving">
+            <CloudSavingStatus compact />
+          </span>
+        ) : !isPreviewMode ? (
           <ClearSelectionButton
             className="mobile-preview-toolbar-mobile-clear"
             onCleared={onMobileClear}

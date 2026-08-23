@@ -723,6 +723,18 @@
       will-change: opacity, filter, transform;
     }
 
+    .mobile-preview-toolbar-mobile-saving {
+      display: inline-flex;
+      grid-column: 1;
+      grid-row: 2;
+      align-items: center;
+      justify-self: start;
+      min-height: 2rem;
+      padding-inline: 0.5rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
     .mobile-preview-toolbar-select-actions {
       justify-self: end;
     }
@@ -762,6 +774,10 @@
     }
 
     .mobile-preview-toolbar-mobile-clear {
+      display: none !important;
+    }
+
+    .mobile-preview-toolbar-mobile-saving {
       display: none !important;
     }
   }

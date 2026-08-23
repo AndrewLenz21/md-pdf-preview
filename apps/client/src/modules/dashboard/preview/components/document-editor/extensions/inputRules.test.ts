@@ -57,6 +57,16 @@ describe("Document editor input rules", () => {
     }
   });
 
+  it("creates a code block immediately after the third backtick", () => {
+    editor = new Editor({ extensions: documentEditorExtensions });
+
+    for (const character of "```") {
+      applyTextInput(character);
+    }
+
+    expect(editor.getJSON().content?.[0]?.type).toBe("codeBlock");
+  });
+
   it.each([
     ["**bold** ", "bold"],
     ["*italic* ", "italic"],
