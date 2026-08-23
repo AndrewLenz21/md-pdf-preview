@@ -51,8 +51,9 @@ func BootstrapSchema(ctx context.Context, pool *pgxpool.Pool, schema string) err
 }
 
 func SchemaStatements() []string {
-	statements := make([]string, 0, len(betterAuthSchemaStatements)+len(workspaceItemsSchemaStatements)+len(loggerSchemaStatements))
+	statements := make([]string, 0, len(betterAuthSchemaStatements)+len(workspaceItemsSchemaStatements)+len(loggerSchemaStatements)+len(emailDeliveriesSchemaStatements))
 	statements = append(statements, betterAuthSchemaStatements...)
+	statements = append(statements, emailDeliveriesSchemaStatements...)
 	statements = append(statements, workspaceItemsSchemaStatements...)
 	statements = append(statements, loggerSchemaStatements...)
 	return statements
