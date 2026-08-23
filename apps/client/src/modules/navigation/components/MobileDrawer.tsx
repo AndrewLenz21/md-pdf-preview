@@ -3,22 +3,25 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { ChevronRight, Languages, Palette } from "lucide-react";
 
 import { Link, usePathname } from "@/core/i18n";
 
 import { NAVIGATION_LINKS } from "../constants/navigation.constants";
 import { AuthActions } from "./AuthActions";
-import { LanguageSelector } from "./LanguageSelector";
-import { ThemeMenu } from "./ThemeMenu";
 
 export function MobileDrawer({
   open,
   onClose,
   onOpenSettings,
+  onOpenTheme,
+  onOpenLanguage,
 }: {
   open: boolean;
   onClose: () => void;
   onOpenSettings: () => void;
+  onOpenTheme: () => void;
+  onOpenLanguage: () => void;
 }) {
   const t = useTranslations("Navigation");
   const pathname = usePathname();
@@ -36,6 +39,10 @@ export function MobileDrawer({
   const preferencesSection = t.has("mobile.preferencesSection")
     ? t("mobile.preferencesSection")
     : "Preferences";
+  const themeLabel = t.has("theme.label") ? t("theme.label") : "Theme";
+  const languageLabel = t.has("language.label")
+    ? t("language.label")
+    : "Language";
 
   return (
     <aside
@@ -101,8 +108,38 @@ export function MobileDrawer({
               {preferencesSection}
             </p>
             <div className="mt-2 flex flex-col gap-1">
-              <ThemeMenu inline showLabel listItem />
-              <LanguageSelector inline showLabel listItem />
+              <button
+                type="button"
+                aria-haspopup="dialog"
+                className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-foreground transition-colors hover:bg-accent/60"
+                onClick={onOpenTheme}
+              >
+                <Palette
+                  className="h-4 w-4 text-muted-foreground"
+                  strokeWidth={1.7}
+                />
+                <span className="flex-1 text-left">{themeLabel}</span>
+                <ChevronRight
+                  className="h-3.5 w-3.5 text-muted-foreground"
+                  strokeWidth={1.7}
+                />
+              </button>
+              <button
+                type="button"
+                aria-haspopup="dialog"
+                className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-foreground transition-colors hover:bg-accent/60"
+                onClick={onOpenLanguage}
+              >
+                <Languages
+                  className="h-4 w-4 text-muted-foreground"
+                  strokeWidth={1.7}
+                />
+                <span className="flex-1 text-left">{languageLabel}</span>
+                <ChevronRight
+                  className="h-3.5 w-3.5 text-muted-foreground"
+                  strokeWidth={1.7}
+                />
+              </button>
             </div>
           </div>
         ) : null}

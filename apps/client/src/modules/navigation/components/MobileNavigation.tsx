@@ -77,6 +77,14 @@ export function MobileNavigation() {
     openDialog("settings");
   };
 
+  const openTheme = () => {
+    openDialog("theme");
+  };
+
+  const openLanguage = () => {
+    openDialog("language");
+  };
+
   const overlay = (
     <button
       type="button"
@@ -111,6 +119,8 @@ export function MobileNavigation() {
                 open={drawerOpen}
                 onClose={closeDrawer}
                 onOpenSettings={openSettings}
+                onOpenTheme={openTheme}
+                onOpenLanguage={openLanguage}
               />
               <PreferencesDialogHost
                 activeDialog={activeDialog}
