@@ -82,7 +82,8 @@ Coverage focuses on the hard parts: Markdown parsing, TipTap ↔ Markdown conver
 
 | Route | Description |
 | ----- | ----------- |
-| `/api/auth/*` | Better Auth handler |
+| `/api/auth/*` | Better Auth handler (sign-up / resend intercepted by `AuthEmailRouter`) |
+| `/api/webhooks/resend` | Resend webhook (delivery status updates) |
 | `/api/workspace/items` | List / create workspace items |
 | `/api/workspace/items/:id` | Get / update / delete a workspace item |
 | `/api/workspace/documents/:id/upload-url` | Get an R2 presigned upload URL |
@@ -110,6 +111,63 @@ trustedOrigins: [
 
 This preserves Better Auth's origin and redirect URL validation. Do not add
 placeholder production domains to the live configuration.
+
+## 📧 Resend — verification emails
+
+Resend sends the email-verification links for new accounts. The whole flow
+lives in `src/core/auth/email/` (repository, quota service, Resend service,
+localized templates) plus `AuthEmailRouter` and `ResendWebhookRouter` in
+`src/app/api/[[...route]]/`.
+
+### Environment variables
+
+| Variable | Description |
+| -------- | ----------- |
+| `RESEND_API_KEY` | Resend API key (server-only, never `NEXT_PUBLIC_*`) |
+| `RESEND_EMAIL_FROM` | Sender address, must be verified in Resend (e.g. `no-reply@yourdomain.com`) |
+| `RESEND_DAILY_SEND_LIMIT` | Max verification emails per UTC day (default `100`) |
+| `RESEND_WEBHOOK_SECRET` | Webhook signing secret from the Resend console (`whsec_...`). Without it the webhook endpoint answers `503` |
+
+### Daily quota
+
+The open-source deployment intentionally limits registrations to
+`RESEND_DAILY_SEND_LIMIT` verification emails per UTC day (counted as
+`>= limit`, so the 101st request is rejected). Every send first reserves a
+slot in `email_deliveries` inside a transaction serialized by a PostgreSQL
+advisory lock, so concurrent sign-ups can never exceed the limit.
+
+- When the quota is exhausted, sign-up answers `429` with
+  `DAILY_REGISTRATION_LIMIT_REACHED` and a `Retry-After` until the next UTC
+  midnight. No account is created.
+- Delivery statuses `reserved`, `accepted`, `delivered`, `bounced`, `failed`,
+  and `suppressed` consume a slot; `request_failed` (Resend rejected the
+  request) and `cancelled` free it.
+- If Resend rejects a send during sign-up, the just-created account is
+  rolled back — an account only persists when its verification email
+  actually reached the provider.
+- Sends use Resend's `Idempotency-Key` header (persisted per delivery), so a
+  retried request can never duplicate the email.
+- The "resend verification email" button has a 5-minute per-email cooldown.
+
+### Webhook
+
+Configure a webhook in the Resend console pointing to:
+
+```text
+https://<your-domain>/api/webhooks/resend
+```
+
+- **Enable only these events**: `email.delivered`, `email.bounced`,
+  `email.failed`, `email.suppressed`. They update the existing
+  `email_deliveries` row matched by the Resend message id.
+- `email.sent` is **not needed**: the `accepted` status is already recorded
+  synchronously from the API response when Resend returns the message id,
+  which is the same moment `email.sent` fires. If it is enabled anyway, the
+  endpoint ignores it with `200`.
+- Webhook calls are authenticated with the official Svix signature check
+  against `RESEND_WEBHOOK_SECRET`; invalid signatures get `400`.
+- Handling is idempotent: events never downgrade an already-terminal
+  delivery state, and unknown message ids are logged and acknowledged.
 
 ## 📄 License
 
