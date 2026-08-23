@@ -8,6 +8,10 @@ import { authPool, requiredEnvironmentVariable } from "./pool";
 
 const authSecret = requiredEnvironmentVariable("BETTER_AUTH_SECRET");
 const authUrl = requiredEnvironmentVariable("BETTER_AUTH_URL");
+const googleClientId = requiredEnvironmentVariable("GOOGLE_CLIENT_ID");
+const googleClientSecret = requiredEnvironmentVariable("GOOGLE_CLIENT_SECRET");
+const githubClientId = requiredEnvironmentVariable("GITHUB_CLIENT_ID");
+const githubClientSecret = requiredEnvironmentVariable("GITHUB_CLIENT_SECRET");
 
 if (authSecret.length < 32) {
   throw new Error("BETTER_AUTH_SECRET must contain at least 32 characters.");
@@ -23,6 +27,16 @@ export const auth = betterAuth({
     enabled: true,
     requireEmailVerification: true,
     onExistingUserSignUp: resendVerificationEmailToExistingUser,
+  },
+  socialProviders: {
+    google: {
+      clientId: googleClientId,
+      clientSecret: googleClientSecret,
+    },
+    github: {
+      clientId: githubClientId,
+      clientSecret: githubClientSecret,
+    },
   },
   emailVerification: {
     sendVerificationEmail,

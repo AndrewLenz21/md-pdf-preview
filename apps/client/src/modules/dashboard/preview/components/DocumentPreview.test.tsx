@@ -3,13 +3,13 @@
 import { cleanup, render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { LOCAL_WORKSPACE_ITEMS } from "@/modules/dashboard/constants/document-workspaces";
+import { LOCAL_WORKSPACE_ITEMS_OLD } from "@/modules/dashboard/constants/document-workspaces";
 import type { WorkspaceDocumentItem } from "@/modules/dashboard/document/model/document.types";
 
 import { DocumentPreview } from "./DocumentPreview";
 
 function getDocument(): WorkspaceDocumentItem {
-  const document = LOCAL_WORKSPACE_ITEMS.find(
+  const document = LOCAL_WORKSPACE_ITEMS_OLD.find(
     (item): item is WorkspaceDocumentItem =>
       item.type === "document" && item.id === "project-research",
   );

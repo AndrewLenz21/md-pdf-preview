@@ -8,6 +8,7 @@ import { Link } from "@/core/i18n";
 
 import { sendVerificationEmail } from "../services/sendVerificationEmail";
 import { signUp } from "../services/signUp";
+import { SocialAuthButtons } from "./SocialAuthButtons";
 
 const RESEND_COOLDOWN_SECONDS = 100;
 
@@ -178,8 +179,11 @@ export function SignUpForm() {
       className="w-full max-w-sm rounded-xl border border-border bg-card p-6 shadow-sm"
       onSubmit={handleSubmit}
     >
-      <h1 className="text-xl font-semibold text-foreground">{t("title")}</h1>
-      <div className="mt-6 space-y-4">
+      <h1 className="auth-page-title text-xl font-semibold leading-tight text-foreground">
+        {t("title")}
+      </h1>
+      <SocialAuthButtons />
+      <div className="mt-[21px] space-y-4">
         <label
           className="block text-sm font-medium text-foreground"
           htmlFor="name"

@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   CLOUD_WORKSPACE_ITEMS,
-  LOCAL_WORKSPACE_ITEMS,
+  LOCAL_WORKSPACE_ITEMS_OLD,
 } from "@/modules/dashboard/constants/document-workspaces";
 import type { WorkspaceDocumentItem } from "@/modules/dashboard/document/model/document.types";
 
@@ -35,7 +35,7 @@ function resetStores() {
   useLocalWorkspaceStore.getState().flushAllPendingContent();
   useCloudWorkspaceStore.getState().flushAllPendingContent();
   useLocalWorkspaceStore.setState({
-    items: normalizeWorkspaceItems(LOCAL_WORKSPACE_ITEMS),
+    items: normalizeWorkspaceItems(LOCAL_WORKSPACE_ITEMS_OLD),
     pendingContentByDocumentId: {},
     collapsedFolderIds: [],
     isHydrated: true,
@@ -275,7 +275,7 @@ describe("workspace item stores", () => {
     ).toBe(false);
   });
 
-  it("marks a deleted folder's documents without deleting unrelated items", () => {
+  it("deletes documents without deleting their folders", () => {
     const rootId = useLocalWorkspaceStore
       .getState()
       .items.find(
@@ -288,15 +288,41 @@ describe("workspace item stores", () => {
       .getState()
       .createDocument("Disposable document", folderId);
 
-    expect(useLocalWorkspaceStore.getState().deleteFolder(folderId!)).toBe(
-      true,
-    );
+    useLocalWorkspaceStore.getState().deleteDocument(documentId);
+
     expect(getLocalDocument(documentId)?.deleted_at).toBeTruthy();
+    expect(
+      useLocalWorkspaceStore
+        .getState()
+        .items.some((item) => item.id === folderId),
+    ).toBe(true);
     expect(getLocalDocument("project-research")?.deleted_at).toBeFalsy();
   });
 
+  it("deletes a folder and marks its documents as deleted", () => {
+    const rootId = useLocalWorkspaceStore
+      .getState()
+      .items.find(
+        (item) => isWorkspaceFolder(item) && item.parent_id === null,
+      )?.id;
+    const folderId = useLocalWorkspaceStore
+      .getState()
+      .createFolder("Disposable folder", rootId);
+    const documentId = useLocalWorkspaceStore
+      .getState()
+      .createDocument("Disposable document", folderId);
+
+    expect(useLocalWorkspaceStore.getState().deleteFolder(folderId!)).toBe(
+      true,
+    );
+    expect(
+      useLocalWorkspaceStore.getState().items.some((item) => item.id === folderId),
+    ).toBe(false);
+    expect(getLocalDocument(documentId)?.deleted_at).toBeTruthy();
+  });
+
   it("keeps seeded items unique and parented to an existing folder", () => {
-    const items = LOCAL_WORKSPACE_ITEMS;
+    const items = LOCAL_WORKSPACE_ITEMS_OLD;
     const ids = items.map((item) => item.id);
     const folderIds = new Set(
       items.filter(isWorkspaceFolder).map((item) => item.id),

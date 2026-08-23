@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   CLOUD_WORKSPACE_ITEMS,
-  LOCAL_WORKSPACE_ITEMS,
+  LOCAL_WORKSPACE_ITEMS_OLD,
 } from "@/modules/dashboard/constants/document-workspaces";
 import type { WorkspaceItem } from "@/modules/dashboard/document/model/document.types";
 import { isWorkspaceFolder } from "./workspace-items.store";
@@ -18,7 +18,7 @@ describe("transferWorkspaceItem", () => {
   it("moves a document between workspaces without creating a copy", () => {
     const result = transferWorkspaceItem({
       itemId: "project-research",
-      sourceItems: LOCAL_WORKSPACE_ITEMS,
+      sourceItems: LOCAL_WORKSPACE_ITEMS_OLD,
       destinationItems: CLOUD_WORKSPACE_ITEMS,
       destinationParentId: "cloud-folder-root",
     });
@@ -32,12 +32,12 @@ describe("transferWorkspaceItem", () => {
   });
 
   it("moves a folder with every descendant while retaining internal parents", () => {
-    const folderId = LOCAL_WORKSPACE_ITEMS.find(
+    const folderId = LOCAL_WORKSPACE_ITEMS_OLD.find(
       (item) => isWorkspaceFolder(item) && item.name === "Documents",
     )?.id;
     const result = transferWorkspaceItem({
       itemId: folderId ?? "",
-      sourceItems: LOCAL_WORKSPACE_ITEMS,
+      sourceItems: LOCAL_WORKSPACE_ITEMS_OLD,
       destinationItems: CLOUD_WORKSPACE_ITEMS,
       destinationParentId: "cloud-folder-root",
     });
@@ -58,7 +58,7 @@ describe("transferWorkspaceItem", () => {
   it("moves a document into an empty workspace root", () => {
     const result = transferWorkspaceItem({
       itemId: "project-research",
-      sourceItems: LOCAL_WORKSPACE_ITEMS,
+      sourceItems: LOCAL_WORKSPACE_ITEMS_OLD,
       destinationItems: [],
       destinationParentId: null,
     });
@@ -82,14 +82,14 @@ describe("transferWorkspaceItem", () => {
       content: "# Cloud root document\n\nContent",
       group: "documents",
     } satisfies WorkspaceItem;
-    const destinationFolder = LOCAL_WORKSPACE_ITEMS.find(
+    const destinationFolder = LOCAL_WORKSPACE_ITEMS_OLD.find(
       (item) => isWorkspaceFolder(item) && item.name === "Documents",
     );
 
     const result = transferWorkspaceItem({
       itemId: cloudRootDocument.id,
       sourceItems: [cloudRootDocument],
-      destinationItems: LOCAL_WORKSPACE_ITEMS,
+      destinationItems: LOCAL_WORKSPACE_ITEMS_OLD,
       destinationParentId: destinationFolder?.id ?? null,
     });
 
@@ -103,12 +103,12 @@ describe("transferWorkspaceItem", () => {
   });
 
   it("moves a folder and descendants into an empty workspace root", () => {
-    const folderId = LOCAL_WORKSPACE_ITEMS.find(
+    const folderId = LOCAL_WORKSPACE_ITEMS_OLD.find(
       (item) => isWorkspaceFolder(item) && item.name === "Documents",
     )?.id;
     const result = transferWorkspaceItem({
       itemId: folderId ?? "",
-      sourceItems: LOCAL_WORKSPACE_ITEMS,
+      sourceItems: LOCAL_WORKSPACE_ITEMS_OLD,
       destinationItems: [],
       destinationParentId: null,
     });
@@ -123,14 +123,14 @@ describe("transferWorkspaceItem", () => {
   });
 
   it("rejects an attempt to move a workspace root", () => {
-    const rootId = LOCAL_WORKSPACE_ITEMS.find(
+    const rootId = LOCAL_WORKSPACE_ITEMS_OLD.find(
       (item) => isWorkspaceFolder(item) && item.parent_id === null,
     )?.id;
 
     expect(
       transferWorkspaceItem({
         itemId: rootId ?? "",
-        sourceItems: LOCAL_WORKSPACE_ITEMS,
+        sourceItems: LOCAL_WORKSPACE_ITEMS_OLD,
         destinationItems: CLOUD_WORKSPACE_ITEMS,
         destinationParentId: "cloud-folder-root",
       }),
@@ -140,18 +140,18 @@ describe("transferWorkspaceItem", () => {
 
 describe("copyWorkspaceItem", () => {
   it("copies a document into a folder while retaining the source", () => {
-    const destinationFolder = LOCAL_WORKSPACE_ITEMS.find(
+    const destinationFolder = LOCAL_WORKSPACE_ITEMS_OLD.find(
       (item) => isWorkspaceFolder(item) && item.name === "Documents",
     );
     const result = copyWorkspaceItem(
-      LOCAL_WORKSPACE_ITEMS,
-      LOCAL_WORKSPACE_ITEMS,
+      LOCAL_WORKSPACE_ITEMS_OLD,
+      LOCAL_WORKSPACE_ITEMS_OLD,
       "project-research",
       destinationFolder?.id ?? null,
     );
 
     expect(result).not.toBeNull();
-    expect(result?.items).toHaveLength(LOCAL_WORKSPACE_ITEMS.length + 1);
+    expect(result?.items).toHaveLength(LOCAL_WORKSPACE_ITEMS_OLD.length + 1);
     expect(result?.items).toContainEqual(
       expect.objectContaining({
         id: "project-research",
@@ -169,21 +169,21 @@ describe("copyWorkspaceItem", () => {
   });
 
   it("copies a folder with descendants and remaps every internal parent", () => {
-    const folderId = LOCAL_WORKSPACE_ITEMS.find(
+    const folderId = LOCAL_WORKSPACE_ITEMS_OLD.find(
       (item) => isWorkspaceFolder(item) && item.name === "Documents",
     )?.id;
-    const destinationFolder = LOCAL_WORKSPACE_ITEMS.find(
+    const destinationFolder = LOCAL_WORKSPACE_ITEMS_OLD.find(
       (item) => isWorkspaceFolder(item) && item.name === "Recents",
     );
     const result = copyWorkspaceItem(
-      LOCAL_WORKSPACE_ITEMS,
-      LOCAL_WORKSPACE_ITEMS,
+      LOCAL_WORKSPACE_ITEMS_OLD,
+      LOCAL_WORKSPACE_ITEMS_OLD,
       folderId ?? "",
       destinationFolder?.id ?? null,
     );
 
     expect(result).not.toBeNull();
-    expect(result?.items.length).toBeGreaterThan(LOCAL_WORKSPACE_ITEMS.length);
+    expect(result?.items.length).toBeGreaterThan(LOCAL_WORKSPACE_ITEMS_OLD.length);
     expect(result?.items).toContainEqual(
       expect.objectContaining({
         id: result?.copiedItemId,

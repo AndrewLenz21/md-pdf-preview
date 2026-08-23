@@ -484,6 +484,13 @@
     will-change: transform, opacity;
   }
 
+  .auth-page-title {
+    font-family:
+      -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+      "Helvetica Neue", Arial, sans-serif;
+    letter-spacing: -0.025em;
+  }
+
   @keyframes dashboard-paper-page-enter {
     from {
       opacity: 0;

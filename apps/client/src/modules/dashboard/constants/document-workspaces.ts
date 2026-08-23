@@ -28,8 +28,8 @@ const LOCAL_RESEARCH_NOTES_ROUTE = `${LOCAL_RECENT_ROUTE}/${LOCAL_RESEARCH_NOTES
 const LOCAL_PLANNING_ROUTE = `${LOCAL_DOCUMENTS_ROUTE}/${LOCAL_PLANNING_FOLDER_ID}`;
 const LOCAL_NOTES_ROUTE = `${LOCAL_DOCUMENTS_ROUTE}/${LOCAL_NOTES_FOLDER_ID}`;
 
-// Legacy snapshot kept for migration and rollback reference. Runtime uses the flat items below.
-export const LOCAL_WORKSPACE_ITEMS_OLD: LegacyWorkspaceData = {
+// Legacy nested snapshot kept for migration and rollback reference.
+export const LOCAL_WORKSPACE_LEGACY_DATA: LegacyWorkspaceData = {
   documents: MOCK_DOCUMENTS,
   folders: [
     {
@@ -226,10 +226,14 @@ const LOCAL_WORKSPACE_DOCUMENT_ITEMS: WorkspaceItem[] = MOCK_DOCUMENTS.map(
   },
 );
 
-export const LOCAL_WORKSPACE_ITEMS: WorkspaceItem[] = [
+// Historical local data kept as a development and test fixture. It is not seeded at runtime.
+export const LOCAL_WORKSPACE_ITEMS_OLD: WorkspaceItem[] = [
   ...LOCAL_WORKSPACE_FOLDER_ITEMS,
   ...LOCAL_WORKSPACE_DOCUMENT_ITEMS,
 ];
+
+// New guest sessions intentionally start without sample folders or documents.
+export const LOCAL_WORKSPACE_ITEMS: WorkspaceItem[] = [];
 
 export const CLOUD_WORKSPACE_ITEMS: WorkspaceItem[] = [
   {

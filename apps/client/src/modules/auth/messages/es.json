@@ -39,5 +39,13 @@
   },
   "navigation": {
     "backHome": "Volver a MarkDown Preview"
+  },
+  "social": {
+    "google": "Google",
+    "github": "GitHub",
+    "continueWithGoogle": "Continuar con Google",
+    "continueWithGithub": "Continuar con GitHub",
+    "error": "No se pudo continuar con este proveedor.",
+    "orEmail": "o continúa con correo electrónico"
   }
 }
