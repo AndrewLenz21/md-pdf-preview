@@ -13,6 +13,7 @@
     "verificationTitle": "Controlla la tua casella di posta",
     "verificationMessage": "Abbiamo inviato un link di verifica a {email}.",
     "resend": "Reinvia email",
+    "resendIn": "Reinvia email tra {seconds}s",
     "resendLoading": "Invio in corso...",
     "resendSent": "Email di verifica inviata.",
     "existingAccount": "Hai già un account?",

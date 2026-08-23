@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Check, MailCheck } from "lucide-react";
 
@@ -8,6 +8,8 @@ import { Link } from "@/core/i18n";
 
 import { sendVerificationEmail } from "../services/sendVerificationEmail";
 import { signUp } from "../services/signUp";
+
+const RESEND_COOLDOWN_SECONDS = 100;
 
 type FormError = {
   code?: string;
@@ -32,6 +34,17 @@ export function SignUpForm() {
   const [resending, setResending] = useState(false);
   const [resendSent, setResendSent] = useState(false);
   const [resendError, setResendError] = useState<string | null>(null);
+  const [resendCountdown, setResendCountdown] = useState(0);
+
+  useEffect(() => {
+    if (resendCountdown <= 0) return;
+
+    const timeout = window.setTimeout(() => {
+      setResendCountdown((value) => Math.max(0, value - 1));
+    }, 1000);
+
+    return () => window.clearTimeout(timeout);
+  }, [resendCountdown]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -60,6 +73,7 @@ export function SignUpForm() {
       } else {
         form.reset();
         setRegisteredEmail(email);
+        setResendCountdown(RESEND_COOLDOWN_SECONDS);
       }
     } catch (signUpError) {
       setError(signUpError instanceof Error ? signUpError.message : t("error"));
@@ -93,6 +107,7 @@ export function SignUpForm() {
         }
       } else {
         setResendSent(true);
+        setResendCountdown(RESEND_COOLDOWN_SECONDS);
       }
     } catch (resendError) {
       setResendError(
@@ -120,10 +135,14 @@ export function SignUpForm() {
         <button
           type="button"
           onClick={handleResend}
-          disabled={resending}
+          disabled={resending || resendCountdown > 0}
           className="mt-6 w-full rounded-md border border-input px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent/60 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {resending ? t("resendLoading") : t("resend")}
+          {resending
+            ? t("resendLoading")
+            : resendCountdown > 0
+              ? t("resendIn", { seconds: resendCountdown })
+              : t("resend")}
         </button>
         {resendSent ? (
           <p

@@ -13,6 +13,7 @@
     "verificationTitle": "Check your inbox",
     "verificationMessage": "We've sent a verification link to {email}.",
     "resend": "Resend email",
+    "resendIn": "Resend email in {seconds}s",
     "resendLoading": "Sending...",
     "resendSent": "Verification email sent.",
     "existingAccount": "Already have an account?",
