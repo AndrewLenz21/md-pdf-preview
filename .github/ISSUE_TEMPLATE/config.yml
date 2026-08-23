@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/AndrewLenz21/md-pdf-preview/security/advisories/new
+    about: Please report security vulnerabilities privately.
+  - name: Hosted demo
+    url: https://md-pdf-preview.andrew-lenz.com
+    about: Try the hosted application before opening a usage issue.

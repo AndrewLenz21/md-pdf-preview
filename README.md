@@ -1,4 +1,14 @@
-# md-pdf-preview
+<p align="center">
+  <a href="https://md-pdf-preview.andrew-lenz.com">
+    <img src="apps/client/public/logo/v1/logo-bg-light-v2.svg" alt="md-pdf-preview logo" width="120" />
+  </a>
+</p>
+
+<h1 align="center">md-pdf-preview</h1>
+
+<p align="center">
+  <a href="https://md-pdf-preview.andrew-lenz.com"><strong>md-pdf-preview.andrew-lenz.com</strong></a>
+</p>
 
 Write once. Preview every page.
 
@@ -6,16 +16,8 @@ A calm place to shape your Markdown documents and see exactly how they will read
 
 <p align="center">
   <a href="https://github.com/AndrewLenz21/md-pdf-preview" target="_blank">
-    <strong>github.com/AndrewLenz21/md-pdf-preview</strong>
+    View the source on GitHub
   </a>
-</p>
-
-<p align="center">
-  <!--
-    🖼️ IDEAL FOR AN IMAGE OR GIF — hero screenshot: editor + paper preview side by side
-    Drop your file in docs/images/ and uncomment the line below:
-    <img src="docs/images/hero.png" alt="Editor with live page-break preview" width="800" />
-  -->
 </p>
 
 ## ✨ Features
@@ -34,6 +36,56 @@ A calm place to shape your Markdown documents and see exactly how they will read
 | **🎨 Themes** | Dark and light, with smooth transitions. |
 | **📱 Responsive** | Split desktop view, bottom navigation on mobile. |
 | **♿ Accessibility** | Keyboard-resizable sidebar, ARIA-labeled controls, focus-visible styles. |
+
+## 🖼️ Product Tour
+
+### Create and preview a document
+
+Create a Markdown file and see the same content in **Document** mode and **Preview** mode.
+
+<p align="center">
+  <img src="apps/client/public/presentation/1-new-file-md-preview.gif" alt="Creating a Markdown file and viewing it in Document and Preview modes" width="820" />
+</p>
+
+### Organize files and folders
+
+Move files and folders inside the local **Session** workspace with drag and drop.
+
+<p align="center">
+  <img src="apps/client/public/presentation/1-moving-files-folders.gif" alt="Moving files and folders inside the Session workspace" width="820" />
+</p>
+
+### Move folders to Cloud
+
+Authenticated users can move workspace folders between **Session** and **Cloud**.
+
+<p align="center">
+  <img src="apps/client/public/presentation/1-moving-folder-cloud.gif" alt="Moving a folder between Session and Cloud workspaces" width="820" />
+</p>
+
+### Desktop workspace
+
+The desktop layout keeps the file tree, editor, and paper preview visible together.
+
+<p align="center">
+  <img src="apps/client/public/presentation/Dashboard-desktop.png" alt="Desktop dashboard with editor and paper preview" width="1000" />
+</p>
+
+### Mobile workspace
+
+The responsive layout switches to focused file and preview sections with bottom navigation.
+
+<p align="center">
+  <img src="apps/client/public/presentation/Dashboard-mobile-version.png" alt="Mobile dashboard with Session and Cloud workspace navigation" width="430" />
+</p>
+
+### Page-aware preview
+
+The editor marks a possible page break while you work, helping you keep the printed result predictable.
+
+<p align="center">
+  <img src="apps/client/public/presentation/Possible-page-break.png" alt="Possible page break indicator in the document editor" width="820" />
+</p>
 
 ## 🛠️ Tech Stack
 
@@ -94,20 +146,23 @@ md-pdf-preview/
 
 ### Prerequisites
 
+- **Windows 10/11** with PowerShell
 - **Node.js** >= 18 and **npm** 11+
 - **Go** 1.25+ (only for the backend)
 - [**air**](https://github.com/air-verse/air) (only for backend hot-reload)
+
+The development scripts and examples in this repository target Windows and PowerShell.
 
 ### Quickstart — client only (local workspace)
 
 The client works standalone: no database, no backend, no account. Documents live in your browser's IndexedDB.
 
-```bash
+```powershell
 # 1. Install dependencies (from the repo root)
 npm install
 
 # 2. Configure environment variables
-cp apps/client/.env.example apps/client/.env.local
+Copy-Item apps/client/.env.example apps/client/.env.local
 
 # 3. Start the client
 npm run dev --filter=client
@@ -119,14 +174,14 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ### Full stack (cloud sync)
 
-```bash
+```powershell
 # 1. Start PostgreSQL (or use Supabase/Neon)
 
 # 2. Configure the server
-cp apps/server/.env.example apps/server/.env
+Copy-Item apps/server/.env.example apps/server/.env
 
 # 3. Configure the client with matching values
-cp apps/client/.env.example apps/client/.env.local
+Copy-Item apps/client/.env.example apps/client/.env.local
 
 # 4. Run everything
 npm run dev
@@ -137,7 +192,7 @@ npm run dev
 
 ### Useful commands
 
-```bash
+```powershell
 npm run dev             # Run all apps in development
 npm run dev:client      # Run only the Next.js client
 npm run dev:server      # Run only the Go server
@@ -148,7 +203,7 @@ npm run preview:client  # Preview the client in the Cloudflare runtime
 npm run deploy:client   # Build and deploy the client with Wrangler
 npm run lint            # ESLint + go vet
 npm run check-types     # TypeScript + Go tests
-npm run test --filter=client   # Vitest (client)
+npm run test --workspace=client   # Vitest (client)
 ```
 
 ## 🧪 Testing
@@ -158,23 +213,13 @@ The project takes pagination seriously — and so does its test suite.
 - **Client:** Vitest + Testing Library. Focus areas: Markdown parsing, TipTap ↔ Markdown conversion, pagination strategies (paragraph, list, code, blank space), measurement logic, stores, and persistence.
 - **Server:** Go tests for controllers, services, repositories, and middlewares (rate limiter, API key, logger).
 
-```bash
+```powershell
 # Client tests
-npm run test --filter=client
+npm run test --workspace=client
 
 # Server tests
-npm run check-types --filter=server
+npm run check-types --workspace=server
 ```
-
-## 🖼️ Screenshots
-
-<!--
-  🖼️ IDEAL FOR AN IMAGE OR GIF — drop files in docs/images/ and uncomment:
-
-  ![Editor mode](docs/images/editor.png)
-  ![Paper preview with page breaks](docs/images/preview.png)
-  ![Mobile preview](docs/images/mobile.png)
--->
 
 ## 🤝 Contributing
 
@@ -188,9 +233,17 @@ See [ROADMAP.md](./ROADMAP.md) for what's done, in progress, and planned.
 
 Found a vulnerability? See [SECURITY.md](./SECURITY.md) for our disclosure process.
 
+## 📚 Community and Policies
+
+- [Support](./SUPPORT.md)
+- [Changelog](./CHANGELOG.md)
+- [Privacy notice](./PRIVACY.md)
+- [Terms of use](./TERMS.md)
+- [Asset attributions](./docs/ATTRIBUTIONS.md)
+
 ## 📄 License
 
-MIT
+[MIT](./LICENSE)
 
 ## 🤖 Built with AI
 

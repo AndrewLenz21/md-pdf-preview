@@ -47,40 +47,43 @@ The pagination engine lives in `apps/client/src/modules/dashboard/preview/compon
 
 ### 📋 Prerequisites
 
+- **Windows 10/11** with PowerShell
 - **Node.js** >= 18, **npm** 11+
 - **Go** 1.25+ (backend only)
 - [**air**](https://github.com/air-verse/air) for backend hot-reload (backend only)
 
+The development scripts and examples in this repository target Windows and PowerShell.
+
 ### 🚀 Getting Started
 
-```bash
+```powershell
 # Clone the repository
 git clone https://github.com/AndrewLenz21/md-pdf-preview.git
-cd md-pdf-preview
+Set-Location md-pdf-preview
 
 # Install dependencies
 npm install
 
 # Configure the client
-cp apps/client/.env.example apps/client/.env.local
+Copy-Item apps/client/.env.example apps/client/.env.local
 
 # Run the client (local workspace, no backend needed)
 npm run dev --filter=client
 # Open http://localhost:3000
 
 # For the full stack, also configure and run the server
-cp apps/server/.env.example apps/server/.env
+Copy-Item apps/server/.env.example apps/server/.env
 npm run dev
 ```
 
 ### 🧪 Running Tests
 
-```bash
+```powershell
 # Client (Vitest)
-npm run test --filter=client
+npm run test --workspace=client
 
 # Server (Go tests)
-npm run check-types --filter=server
+npm run check-types --workspace=server
 
 # Lint + types everywhere
 npm run lint
@@ -167,7 +170,7 @@ Types: `feat`, `fix`, `refactor`, `i18n`, `test`, `docs`, `chore`, `style`, `per
 2. **Keep PRs small and focused.** One PR, one concern.
 3. **Write or update tests.** Untested pagination logic will be treated as incomplete — this is the core value of the project.
 4. **Run lint and type checks**: `npm run lint && npm run check-types`.
-5. **Verify the client tests pass**: `npm run test --filter=client`.
+5. **Verify the client tests pass**: `npm run test --workspace=client`.
 6. **Update documentation** if you change public APIs or the architecture.
 7. **Request review** from at least one maintainer.
 
