@@ -2,14 +2,18 @@ import { Hono } from "hono";
 import { handle } from "hono/vercel";
 
 import { auth } from "@/core/auth";
+import authEmailRouter from "./AuthEmailRouter";
+import resendWebhookRouter from "./ResendWebhookRouter";
 import workspaceRouter from "./WorkspaceRouter";
 
 export const runtime = "nodejs";
 
 const app = new Hono().basePath("/api");
 
+app.route("/auth", authEmailRouter);
 app.all("/auth/*", (context) => auth.handler(context.req.raw));
 app.route("/workspace", workspaceRouter);
+app.route("/webhooks/resend", resendWebhookRouter);
 
 app.onError((error, context) => {
   console.error("[ApiRouter] unhandled API error:", error);
