@@ -21,6 +21,12 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Markdown Preview",
   description: "Write documents and preview how they will look on the page.",
+  icons: {
+    icon: {
+      url: "/logo/v1/logo-bg-light-v2.svg",
+      type: "image/svg+xml",
+    },
+  },
 };
 
 export function generateStaticParams() {
