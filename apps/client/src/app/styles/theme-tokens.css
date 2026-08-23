@@ -160,6 +160,7 @@
 @custom-variant atom (&:is(.atom *));
 @custom-variant sky (&:is(.sky *));
 @custom-variant ocean (&:is(.ocean *));
+@custom-variant pink (&:is(.pink *));
 
 @theme inline {
   --color-background: var(--background);

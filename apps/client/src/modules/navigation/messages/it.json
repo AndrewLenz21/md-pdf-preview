@@ -55,6 +55,7 @@
       "atom": "Atom",
       "sky": "Cielo",
       "ocean": "Oceano",
+      "pink": "Rosa",
       "system": "Sistema"
     },
     "descriptions": {
@@ -63,6 +64,7 @@
       "atom": "Uno spazio blu-viola concentrato",
       "sky": "Uno spazio blu morbido e arioso",
       "ocean": "Uno spazio ciano e rilassante",
+      "pink": "Uno spazio caldo e rosato",
       "system": "Segui la preferenza del dispositivo"
     }
   }

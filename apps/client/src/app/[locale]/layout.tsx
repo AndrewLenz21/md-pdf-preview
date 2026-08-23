@@ -53,7 +53,7 @@ export default async function LocaleLayout({
           attribute="class"
           defaultTheme="light"
           enableSystem
-          themes={["light", "dark", "atom", "sky", "ocean"]}
+          themes={["light", "dark", "atom", "sky", "ocean", "pink"]}
         >
           <NextIntlClientProvider messages={messages}>
             {children}

@@ -55,6 +55,7 @@
       "atom": "Atom",
       "sky": "Sky",
       "ocean": "Ocean",
+      "pink": "Pink",
       "system": "System"
     },
     "descriptions": {
@@ -63,6 +64,7 @@
       "atom": "A focused blue-violet workspace",
       "sky": "A soft, airy blue workspace",
       "ocean": "A calm cyan workspace",
+      "pink": "A warm blush workspace",
       "system": "Follow your device preference"
     }
   }

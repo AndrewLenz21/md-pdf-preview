@@ -10,6 +10,7 @@ export const APP_THEME_NAMES = [
   "atom",
   "sky",
   "ocean",
+  "pink",
   "system",
 ] as const;
 

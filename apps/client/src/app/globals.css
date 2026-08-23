@@ -5,6 +5,7 @@
 @import "./styles/themes/atom.css";
 @import "./styles/themes/sky.css";
 @import "./styles/themes/ocean.css";
+@import "./styles/themes/pink.css";
 @import "../modules/dashboard/document/styles/document-content.css";
 @import "./styles/base.css";
 @import "./styles/document.css";

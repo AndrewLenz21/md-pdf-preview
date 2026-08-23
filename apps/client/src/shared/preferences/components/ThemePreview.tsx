@@ -44,6 +44,13 @@ const THEME_META: Record<AppTheme, ThemeColors> = {
     text: "oklch(0.25 0.08 200)",
     border: "oklch(0.82 0.09 195)",
   },
+  pink: {
+    background: "oklch(0.968 0.026 350)",
+    surface: "oklch(1 0 0)",
+    primary: "oklch(0.58 0.22 350)",
+    text: "oklch(0.22 0.02 340)",
+    border: "oklch(0.84 0.025 340)",
+  },
   system: {
     background: "oklch(0.92 0.01 260)",
     surface: "oklch(0.98 0 0)",
