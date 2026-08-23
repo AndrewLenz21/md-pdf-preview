@@ -63,7 +63,9 @@ function EditingActionButtons({
     >
       {includeClear ? (
         <>
-          <ClearSelectionButton className="desktop-preview-toolbar-clear" />
+          <ClearSelectionButton
+            className="desktop-preview-toolbar-clear"
+          />
           <span
             aria-hidden="true"
             className="desktop-preview-toolbar-clear-separator text-border"
@@ -120,8 +122,17 @@ function EditingActionButtons({
   );
 }
 
-function ClearSelectionButton({ className = "" }: { className?: string }) {
+function ClearSelectionButton({
+  className = "",
+  onCleared,
+}: {
+  className?: string;
+  onCleared?: () => void;
+}) {
   const activeSource = useWorkspaceSessionStore((state) => state.activeSource);
+  const selectedDocumentSource = useWorkspaceSessionStore(
+    (state) => state.selectedDocumentSource,
+  );
   const selectedDocumentId = useWorkspaceSessionStore(
     (state) => state.selectedDocumentId,
   );
@@ -134,6 +145,7 @@ function ClearSelectionButton({ className = "" }: { className?: string }) {
   const flushCloudPendingContent = useCloudWorkspaceStore(
     (state) => state.flushPendingContent,
   );
+  const selectedSource = selectedDocumentSource ?? activeSource;
 
   return (
     <button
@@ -142,12 +154,13 @@ function ClearSelectionButton({ className = "" }: { className?: string }) {
       aria-label="Clear"
       onClick={() => {
         if (selectedDocumentId) {
-          (activeSource === "local"
+          (selectedSource === "local"
             ? flushLocalPendingContent
             : flushCloudPendingContent)(selectedDocumentId);
         }
 
         clearSelection();
+        onCleared?.();
       }}
       className={`mobile-preview-toolbar-clear-action mobile-preview-toolbar-action-visible flex h-8 items-center gap-1 rounded-md px-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-destructive/40 lg:text-[11px] ${className}`}
     >
@@ -212,16 +225,22 @@ export function PreviewToolbar({
   onModeChange,
   editingActions,
   splitMode = false,
+  onMobileClear,
 }: {
   document: WorkspaceDocumentItem;
   mode: DocumentEditorMode;
   onModeChange: (mode: DocumentEditorMode) => void;
   editingActions?: EditingActions | null;
   splitMode?: boolean;
+  onMobileClear?: () => void;
 }) {
   const isPreviewMode = mode === "preview";
   const activeSource = useWorkspaceSessionStore((state) => state.activeSource);
-  const hasCharacterLimit = activeSource === "cloud";
+  const selectedDocumentSource = useWorkspaceSessionStore(
+    (state) => state.selectedDocumentSource,
+  );
+  const selectedSource = selectedDocumentSource ?? activeSource;
+  const hasCharacterLimit = selectedSource === "cloud";
   const localPendingContent = useLocalWorkspaceStore(
     (state) => state.pendingContentByDocumentId[document.id],
   );
@@ -243,7 +262,7 @@ export function PreviewToolbar({
       )?.content,
   );
   const markdownCharacterCount =
-    (activeSource === "local"
+    (selectedSource === "local"
       ? (localPendingContent ?? localDocumentContent)
       : (cloudPendingContent ?? cloudDocumentContent)
     )?.length ?? 0;
@@ -312,7 +331,10 @@ export function PreviewToolbar({
 
       <div className="mobile-preview-toolbar-right flex shrink-0 items-center gap-2 sm:gap-3">
         {!isPreviewMode ? (
-          <ClearSelectionButton className="mobile-preview-toolbar-mobile-clear" />
+          <ClearSelectionButton
+            className="mobile-preview-toolbar-mobile-clear"
+            onCleared={onMobileClear}
+          />
         ) : null}
         <div
           className={`mobile-preview-toolbar-paper paper-size-control-slot ${isPreviewMode ? "mobile-preview-toolbar-paper-action" : ""}`}

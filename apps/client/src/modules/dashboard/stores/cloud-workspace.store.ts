@@ -30,7 +30,11 @@ import {
   type WorkspaceItemsStoreState,
 } from "./workspace-items.store";
 
-export type CloudWorkspaceOperation = "hydrate" | "metadata" | "transfer";
+export type CloudWorkspaceOperation =
+  | "hydrate"
+  | "metadata"
+  | "transfer"
+  | "copy";
 
 type CloudWorkspaceStoreState = WorkspaceItemsStoreState & {
   isHydrated: boolean;

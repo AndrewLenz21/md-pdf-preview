@@ -244,6 +244,7 @@ export function DocumentPreview({
   scrollScope,
   onModeChange,
   onContentChange,
+  onMobileClear,
   modeTransitionDirection = null,
   embedded = false,
   showToolbar = true,
@@ -257,6 +258,7 @@ export function DocumentPreview({
   scrollScope: DocumentPreviewScrollScope;
   onModeChange: (mode: DocumentEditorMode) => void;
   onContentChange: (content: string) => void;
+  onMobileClear?: () => void;
   modeTransitionDirection?: "forward" | "backward" | null;
   embedded?: boolean;
   showToolbar?: boolean;
@@ -267,6 +269,10 @@ export function DocumentPreview({
 }) {
   const paperSize = useWorkspaceStore((state) => state.paperSize);
   const activeSource = useWorkspaceSessionStore((state) => state.activeSource);
+  const selectedDocumentSource = useWorkspaceSessionStore(
+    (state) => state.selectedDocumentSource,
+  );
+  const documentSource = selectedDocumentSource ?? activeSource;
   const localPendingContent = useLocalWorkspaceStore(
     (state) => state.pendingContentByDocumentId[document.id],
   );
@@ -286,7 +292,7 @@ export function DocumentPreview({
     (state) => state.loadDocumentContent,
   );
   const pendingContent =
-    activeSource === "local" ? localPendingContent : cloudPendingContent;
+    documentSource === "local" ? localPendingContent : cloudPendingContent;
   const { zoom } = useModeZoom(mode);
   const paperDimensions = getPaperDimensions(mode, paperSize, zoom);
   const storedMarkdown = pendingContent ?? document.content ?? "";
@@ -332,15 +338,19 @@ export function DocumentPreview({
   }, [onEditingActionsChange]);
 
   useEffect(() => {
-    if (activeSource !== "cloud" || cloudContentLoaded || cloudContentError) {
+    if (
+      documentSource !== "cloud" ||
+      cloudContentLoaded ||
+      cloudContentError
+    ) {
       return;
     }
 
     void loadCloudDocumentContent(document.id).catch(() => undefined);
   }, [
-    activeSource,
     cloudContentError,
     cloudContentLoaded,
+    documentSource,
     document.id,
     loadCloudDocumentContent,
   ]);
@@ -446,7 +456,7 @@ export function DocumentPreview({
   ]);
 
   if (
-    activeSource === "cloud" &&
+    documentSource === "cloud" &&
     !cloudContentLoaded &&
     (cloudContentLoading || !cloudContentError)
   ) {
@@ -461,6 +471,7 @@ export function DocumentPreview({
             document={document}
             mode={mode}
             onModeChange={onModeChange}
+            onMobileClear={onMobileClear}
             editingActions={null}
           />
         ) : null}
@@ -476,7 +487,11 @@ export function DocumentPreview({
     );
   }
 
-  if (activeSource === "cloud" && !cloudContentLoaded && cloudContentError) {
+  if (
+    documentSource === "cloud" &&
+    !cloudContentLoaded &&
+    cloudContentError
+  ) {
     return (
       <div
         className={getRootClassName(mode, usesCanvasScroll)}
@@ -488,6 +503,7 @@ export function DocumentPreview({
             document={document}
             mode={mode}
             onModeChange={onModeChange}
+            onMobileClear={onMobileClear}
             editingActions={null}
           />
         ) : null}
@@ -526,6 +542,7 @@ export function DocumentPreview({
           document={document}
           mode={mode}
           onModeChange={onModeChange}
+          onMobileClear={onMobileClear}
           editingActions={editingActions}
         />
       ) : null}

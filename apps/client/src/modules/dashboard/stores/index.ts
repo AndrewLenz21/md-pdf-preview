@@ -13,6 +13,7 @@ export {
 export { useLocalWorkspaceStore } from "./local-workspace.store";
 export { useCloudWorkspaceStore } from "./cloud-workspace.store";
 export { useWorkspaceSessionStore } from "./workspace-session.store";
+export { useWorkspaceClipboardStore } from "./workspace-clipboard.store";
 export { useDocumentDndStore } from "./document-dnd.store";
 export { useWorkspaceStore, WORKSPACE_ZOOM } from "./workspace.store";
 export { useDocumentEditorStore } from "./document-editor.store";

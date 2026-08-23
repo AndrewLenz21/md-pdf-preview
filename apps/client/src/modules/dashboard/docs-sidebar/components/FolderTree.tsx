@@ -10,6 +10,8 @@ import {
 import {
   ChevronRight,
   Cloud,
+  ClipboardPaste,
+  Copy,
   FilePlus2,
   Files,
   FolderPlus,
@@ -317,6 +319,9 @@ export function FolderTree({
   onRename,
   onDelete,
   onMove,
+  onCopy,
+  onPaste,
+  canPaste,
   onToggleFavorite,
   onCreateDocument,
   onCreateFolder,
@@ -341,6 +346,9 @@ export function FolderTree({
   onRename: (id: string, title: string) => void;
   onDelete: (id: string) => void;
   onMove: (id: string, folderId: string | null) => void;
+  onCopy: (id: string) => void;
+  onPaste: (folderId: string | null) => void;
+  canPaste: boolean;
   onToggleFavorite: (id: string) => void;
   onCreateDocument: (folderId: string | null) => void;
   onCreateFolder: (parentId: string | null) => void;
@@ -425,11 +433,12 @@ export function FolderTree({
                   documentId={document.id}
                   displayTitle={document.name}
                   favorite={document.favorite === true}
-                  selected={document.id === selectedId}
-                  onSelect={() => onSelect(document.id)}
-                  onRename={(title) => onRename(document.id, title)}
-                  onDelete={() => onDelete(document.id)}
-                  onMove={(folderId) => onMove(document.id, folderId)}
+                   selected={document.id === selectedId}
+                   onSelect={() => onSelect(document.id)}
+                   onRename={(title) => onRename(document.id, title)}
+                   onDelete={() => onDelete(document.id)}
+                   onCopy={() => onCopy(document.id)}
+                   onMove={(folderId) => onMove(document.id, folderId)}
                   onToggleFavorite={() => onToggleFavorite(document.id)}
                   folderId={null}
                   folderOptions={folderOptions}
@@ -458,10 +467,13 @@ export function FolderTree({
               source={source}
               selectedId={selectedId}
               folderOptions={folderOptions}
-              onSelect={onSelect}
-              onRename={onRename}
-              onDelete={onDelete}
-              onMove={onMove}
+               onSelect={onSelect}
+               onRename={onRename}
+               onDelete={onDelete}
+               onMove={onMove}
+               onCopy={onCopy}
+               onPaste={onPaste}
+               canPaste={canPaste}
               onToggleFavorite={onToggleFavorite}
               onCreateDocument={onCreateDocument}
               onCreateFolder={onCreateFolder}
@@ -496,6 +508,9 @@ function FolderNode({
   onRename,
   onDelete,
   onMove,
+  onCopy,
+  onPaste,
+  canPaste,
   onToggleFavorite,
   onCreateDocument,
   onCreateFolder,
@@ -522,6 +537,9 @@ function FolderNode({
   onRename: (id: string, title: string) => void;
   onDelete: (id: string) => void;
   onMove: (id: string, folderId: string | null) => void;
+  onCopy: (id: string) => void;
+  onPaste: (folderId: string | null) => void;
+  canPaste: boolean;
   onToggleFavorite: (id: string) => void;
   onCreateDocument: (folderId: string | null) => void;
   onCreateFolder: (parentId: string | null) => void;
@@ -544,17 +562,54 @@ function FolderNode({
   onDragClickCapture: (event: ReactMouseEvent<HTMLDivElement>) => void;
 }) {
   const folderItemRef = useRef<HTMLDivElement>(null);
+  const closeFolderMenuTimerRef = useRef<number | undefined>(undefined);
   const [folderMenuOpen, setFolderMenuOpen] = useState(false);
+  const [folderMenuRendered, setFolderMenuRendered] = useState(false);
+  const [folderMenuClosing, setFolderMenuClosing] = useState(false);
   const expanded = !collapsedFolderIds.includes(folder.id);
   const childParentId = isVirtualRoot ? null : folder.id;
   const childFolders = getChildFolders(items, childParentId);
   const childDocuments = getDocumentsInFolder(items, childParentId);
   const hasChildren = childFolders.length > 0 || childDocuments.length > 0;
 
+  const clearCloseFolderMenuTimer = () => {
+    if (closeFolderMenuTimerRef.current !== undefined) {
+      window.clearTimeout(closeFolderMenuTimerRef.current);
+      closeFolderMenuTimerRef.current = undefined;
+    }
+  };
+
+  const closeFolderMenu = () => {
+    clearCloseFolderMenuTimer();
+    setFolderMenuOpen(false);
+    setFolderMenuClosing(true);
+    closeFolderMenuTimerRef.current = window.setTimeout(() => {
+      setFolderMenuRendered(false);
+      setFolderMenuClosing(false);
+      closeFolderMenuTimerRef.current = undefined;
+    }, 200);
+  };
+
+  useEffect(() => {
+    return () => clearCloseFolderMenuTimer();
+  }, []);
+
+  const toggleFolderMenu = () => {
+    if (folderMenuOpen) {
+      closeFolderMenu();
+      return;
+    }
+
+    clearCloseFolderMenuTimer();
+    setFolderMenuClosing(false);
+    setFolderMenuRendered(true);
+    setFolderMenuOpen(true);
+  };
+
   useDismissableLayer({
-    enabled: folderMenuOpen,
+    enabled: folderMenuRendered,
     refs: [folderItemRef],
-    onDismiss: () => setFolderMenuOpen(false),
+    onDismiss: closeFolderMenu,
   });
 
   return (
@@ -651,19 +706,19 @@ function FolderNode({
                   return;
                 }
 
-                setFolderMenuOpen((value) => !value);
+                toggleFolderMenu();
               }}
             >
               <Plus className="h-4 w-4" strokeWidth={1.8} />
             </button>
           ) : null}
         </div>
-        {folderMenuOpen ? (
+        {folderMenuRendered ? (
           <div
             role="menu"
             aria-label={`${folder.name} actions`}
             data-dnd-ignore="true"
-            className="absolute right-1 top-[calc(100%-0.25rem)] z-50 w-48 rounded-xl border border-border bg-background p-1.5 shadow-xl"
+            className={`${folderMenuClosing ? "workspace-menu-popover-exit" : "workspace-menu-popover-enter"} absolute right-1 top-[calc(100%-0.25rem)] z-50 w-48 rounded-xl border border-border bg-background p-1.5 shadow-xl`}
           >
             <button
               type="button"
@@ -671,7 +726,7 @@ function FolderNode({
               className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-foreground transition-colors hover:bg-accent"
               onClick={() => {
                 onCreateDocument(isVirtualRoot ? null : folder.id);
-                setFolderMenuOpen(false);
+                closeFolderMenu();
               }}
             >
               <FilePlus2 className="h-3.5 w-3.5 text-muted-foreground" />
@@ -683,12 +738,39 @@ function FolderNode({
               className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-foreground transition-colors hover:bg-accent"
               onClick={() => {
                 onCreateFolder(isVirtualRoot ? null : folder.id);
-                setFolderMenuOpen(false);
+                closeFolderMenu();
               }}
             >
               <FolderPlus className="h-3.5 w-3.5 text-muted-foreground" />
               New folder
             </button>
+            <button
+              type="button"
+              role="menuitem"
+              disabled={!canPaste}
+              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-foreground transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
+              onClick={() => {
+                onPaste(isVirtualRoot ? null : folder.id);
+                closeFolderMenu();
+              }}
+            >
+              <ClipboardPaste className="h-3.5 w-3.5 text-muted-foreground" />
+              Paste here
+            </button>
+            {!isVirtualRoot ? (
+              <button
+                type="button"
+                role="menuitem"
+                className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-foreground transition-colors hover:bg-accent"
+                onClick={() => {
+                  onCopy(folder.id);
+                  closeFolderMenu();
+                }}
+              >
+                <Copy className="h-3.5 w-3.5 text-muted-foreground" />
+                Copy
+              </button>
+            ) : null}
             {depth > 0 ? (
               <>
                 <div className="my-1 border-t border-border/70" />
@@ -698,7 +780,7 @@ function FolderNode({
                   className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-foreground transition-colors hover:bg-accent"
                   onClick={() => {
                     onEditFolder(folder);
-                    setFolderMenuOpen(false);
+                    closeFolderMenu();
                   }}
                 >
                   <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
@@ -729,11 +811,12 @@ function FolderNode({
                 documentId={document.id}
                 displayTitle={document.name}
                 favorite={document.favorite === true}
-                selected={document.id === selectedId}
-                onSelect={() => onSelect(document.id)}
-                onRename={(title) => onRename(document.id, title)}
-                onDelete={() => onDelete(document.id)}
-                onMove={(folderId) => onMove(document.id, folderId)}
+                 selected={document.id === selectedId}
+                 onSelect={() => onSelect(document.id)}
+                 onRename={(title) => onRename(document.id, title)}
+                 onDelete={() => onDelete(document.id)}
+                 onCopy={() => onCopy(document.id)}
+                 onMove={(folderId) => onMove(document.id, folderId)}
                 onToggleFavorite={() => onToggleFavorite(document.id)}
                 folderId={isVirtualRoot ? null : folder.id}
                 folderOptions={folderOptions}
@@ -766,6 +849,9 @@ function FolderNode({
                 onRename={onRename}
                 onDelete={onDelete}
                 onMove={onMove}
+                onCopy={onCopy}
+                onPaste={onPaste}
+                canPaste={canPaste}
                 onToggleFavorite={onToggleFavorite}
                 onCreateDocument={onCreateDocument}
                 onCreateFolder={onCreateFolder}

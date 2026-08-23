@@ -1,6 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { WorkspaceApiError, workspaceApi } from "./workspace-api";
+import type { WorkspaceDocumentItem } from "@/modules/dashboard/document/model/document.types";
+import { MAX_MARKDOWN_CHARACTERS } from "../stores/workspace-items.store";
+import {
+  WorkspaceApiError,
+  uploadWorkspaceDocument,
+  workspaceApi,
+} from "./workspace-api";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -38,5 +44,32 @@ describe("workspace API", () => {
       message: "upstream unavailable",
     });
     expect(console.error).toHaveBeenCalled();
+  });
+});
+
+describe("uploadWorkspaceDocument", () => {
+  it("rejects oversized content before requesting an upload URL", async () => {
+    const getUploadUrl = vi.spyOn(workspaceApi, "getUploadUrl");
+    const document = {
+      id: "cloud-document",
+      type: "document",
+      parent_id: null,
+      name: "Large cloud document",
+      created_at: "2026-08-23T00:00:00.000Z",
+      updated_at: "2026-08-23T00:00:00.000Z",
+      content: "# Large cloud document",
+      group: "documents",
+    } satisfies WorkspaceDocumentItem;
+
+    await expect(
+      uploadWorkspaceDocument(
+        document,
+        "x".repeat(MAX_MARKDOWN_CHARACTERS + 1),
+      ),
+    ).rejects.toMatchObject({
+      code: "WORKSPACE_CONTENT_TOO_LARGE",
+      status: 413,
+    });
+    expect(getUploadUrl).not.toHaveBeenCalled();
   });
 });

@@ -93,6 +93,9 @@ export function DashboardWorkspace() {
   const selectedDocumentId = useWorkspaceSessionStore(
     (state) => state.selectedDocumentId,
   );
+  const selectedDocumentSource = useWorkspaceSessionStore(
+    (state) => state.selectedDocumentSource,
+  );
   const selectDocumentInStore = useWorkspaceSessionStore(
     (state) => state.selectDocument,
   );
@@ -114,12 +117,13 @@ export function DashboardWorkspace() {
   const flushCloudPendingContent = useCloudWorkspaceStore(
     (state) => state.flushPendingContent,
   );
+  const selectedSource = selectedDocumentSource ?? activeSource;
   const scheduleContentUpdate =
-    activeSource === "local"
+    selectedSource === "local"
       ? scheduleLocalContentUpdate
       : scheduleCloudContentUpdate;
   const flushPendingContent =
-    activeSource === "local"
+    selectedSource === "local"
       ? flushLocalPendingContent
       : flushCloudPendingContent;
   const initializeWorkspaceZoom = useWorkspaceStore(
@@ -165,9 +169,17 @@ export function DashboardWorkspace() {
   >({ files: 0, preview: 0 });
   const isDesktopSplit = isPreviewMode || desktopPreviewVisible;
   const isMobileFilesSection = mobileSection === "files";
+  const selectedDocumentItems =
+    selectedSource === "local" ? localItems : cloudItems;
+  const selectedDocuments = selectedDocumentItems.filter(
+    (item): item is WorkspaceDocumentItem =>
+      isWorkspaceDocument(item) && !item.deleted_at,
+  );
   const selectedDocument = selectedDocumentId
-    ? documents.find((document) => document.id === selectedDocumentId)
+    ? selectedDocuments.find((document) => document.id === selectedDocumentId)
     : undefined;
+  const selectedDocumentIdForSidebar =
+    selectedDocumentSource === activeSource ? selectedDocumentId : null;
 
   useEffect(() => {
     if (sessionPending) {
@@ -382,7 +394,7 @@ export function DashboardWorkspace() {
     }
 
     saveMobileSectionScroll(mobileSection);
-    selectDocumentInStore(id);
+    selectDocumentInStore(id, activeSource);
     setMobileTransitionDirection("forward");
     setMobileSection("preview");
   };
@@ -455,7 +467,7 @@ export function DashboardWorkspace() {
             className="h-screen min-w-0 shrink-0 overflow-hidden bg-sidebar"
           >
             <DocsSidebar
-              selectedId={selectedDocumentId}
+              selectedId={selectedDocumentIdForSidebar}
               onSelect={selectDocument}
               onDelete={handleDocumentDeleted}
               onOpenSettings={openDocsSidebarSettings}
@@ -481,7 +493,7 @@ export function DashboardWorkspace() {
       <main
         className={`relative min-w-0 flex-1 lg:flex lg:h-screen lg:min-h-0 lg:flex-col lg:overflow-hidden ${!selectedDocument ? "h-[calc(100dvh-var(--mobile-dashboard-nav-height))] overflow-hidden pb-0" : isMobileFilesSection ? "h-[calc(100dvh-var(--mobile-dashboard-nav-height))] overflow-hidden pb-0" : isPreviewMode ? "pb-0" : "pb-20"} lg:pb-0`}
       >
-        {activeSource === "cloud" && cloudIsSaving ? (
+        {selectedSource === "cloud" && cloudIsSaving ? (
           <div className="pointer-events-none absolute top-3 right-4 z-40 flex items-center gap-2 rounded-full border border-border/80 bg-background/90 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur-sm">
             <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
             Saving to cloud...
@@ -568,7 +580,7 @@ export function DashboardWorkspace() {
                 className={`dashboard-mobile-section dashboard-mobile-section-${mobileTransitionDirection}`}
               >
                 <DocsSidebar
-                  selectedId={selectedDocumentId}
+                  selectedId={selectedDocumentIdForSidebar}
                   onSelect={selectDocument}
                   onDelete={handleDocumentDeleted}
                   onOpenSettings={openDocsSidebarSettings}
@@ -581,6 +593,7 @@ export function DashboardWorkspace() {
                 mode={editorMode}
                 scrollScope="mobile"
                 onModeChange={changeEditorMode}
+                onMobileClear={() => changeMobileSection("files")}
                 onContentChange={(content) =>
                   scheduleContentUpdate(selectedDocument.id, content)
                 }

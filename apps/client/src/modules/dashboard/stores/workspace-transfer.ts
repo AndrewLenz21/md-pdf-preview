@@ -1,5 +1,7 @@
 import type { WorkspaceItem } from "@/modules/dashboard/document/model/document.types";
 import {
+  MAX_MARKDOWN_CHARACTERS,
+  createWorkspaceItemId,
   isWorkspaceDocument,
   isWorkspaceFolder,
 } from "./workspace-items.store";
@@ -20,6 +22,12 @@ type WorkspaceTransferResult = {
   sourceItems: WorkspaceItem[];
   destinationItems: WorkspaceItem[];
 };
+
+export const MAX_CLOUD_TRANSFER_ITEMS = 15;
+
+export type CloudTransferValidation =
+  | { valid: true }
+  | { valid: false; message: string };
 
 function getFolderSubtreeIds(items: WorkspaceItem[], folderId: string) {
   const folderIds = new Set<string>();
@@ -53,6 +61,51 @@ function getTransferredItems(items: WorkspaceItem[], itemId: string) {
   );
 }
 
+export function validateCloudTransfer(
+  items: WorkspaceItem[],
+  itemId: string,
+): CloudTransferValidation {
+  const sourceItem = items.find((item) => item.id === itemId);
+  const transferredItems = getTransferredItems(items, itemId);
+
+  if (!sourceItem || !transferredItems) {
+    return {
+      valid: false,
+      message:
+        "Cloud transfer blocked: the workspace item is no longer available.",
+    };
+  }
+
+  const containedItemCount = isWorkspaceFolder(sourceItem)
+    ? transferredItems.length - 1
+    : 1;
+  const oversizedDocument = transferredItems.find(
+    (item) =>
+      isWorkspaceDocument(item) &&
+      item.content.length > MAX_MARKDOWN_CHARACTERS,
+  );
+  const messages: string[] = [];
+
+  if (containedItemCount > MAX_CLOUD_TRANSFER_ITEMS) {
+    messages.push(
+      `"${sourceItem.name}" contains ${containedItemCount} items. Cloud transfers support at most ${MAX_CLOUD_TRANSFER_ITEMS} items.`,
+    );
+  }
+
+  if (oversizedDocument && isWorkspaceDocument(oversizedDocument)) {
+    messages.push(
+      `"${oversizedDocument.name}" has ${oversizedDocument.content.length.toLocaleString()} characters. Cloud files are limited to ${MAX_MARKDOWN_CHARACTERS.toLocaleString()} characters.`,
+    );
+  }
+
+  return messages.length > 0
+    ? {
+        valid: false,
+        message: `Cloud transfer blocked: ${messages.join(" ")}`,
+      }
+    : { valid: true };
+}
+
 export function transferWorkspaceItem({
   itemId,
   sourceItems,
@@ -72,7 +125,7 @@ export function transferWorkspaceItem({
 
   if (
     !item ||
-    item.parent_id === null ||
+    (isWorkspaceFolder(item) && item.parent_id === null) ||
     (destinationParentId !== null && !destinationParent)
   ) {
     return null;
@@ -125,7 +178,7 @@ function remapLocalItems(
   const sourceItem = items.find((item) => item.id === itemId);
   const transferredItems = getTransferredItems(items, itemId);
 
-  if (!sourceItem || !transferredItems || sourceItem.parent_id === null) {
+  if (!sourceItem || !transferredItems) {
     return null;
   }
 
@@ -139,16 +192,19 @@ function remapLocalItems(
     );
   });
 
-  return transferredItems.map((item) => ({
-    ...item,
-    id: idMap.get(item.id) ?? item.id,
-    parent_id:
-      item.id === itemId
-        ? destinationParentId
-        : item.parent_id === null
-          ? null
-          : idMap.get(item.parent_id) ?? item.parent_id,
-  }));
+  return {
+    items: transferredItems.map((item) => ({
+      ...item,
+      id: idMap.get(item.id) ?? item.id,
+      parent_id:
+        item.id === itemId
+          ? destinationParentId
+          : item.parent_id === null
+            ? null
+            : idMap.get(item.parent_id) ?? item.parent_id,
+    })),
+    transferredItemId: idMap.get(itemId) ?? null,
+  };
 }
 
 function getFolderDepth(items: WorkspaceItem[], item: WorkspaceItem) {
@@ -163,8 +219,61 @@ function getFolderDepth(items: WorkspaceItem[], item: WorkspaceItem) {
   return depth;
 }
 
+export function copyWorkspaceItem(
+  sourceItems: WorkspaceItem[],
+  destinationItems: WorkspaceItem[],
+  itemId: string,
+  destinationParentId: string | null,
+) {
+  const sourceItem = sourceItems.find((item) => item.id === itemId);
+  const copiedItems = getTransferredItems(sourceItems, itemId);
+  const destinationFolder = destinationItems.find(
+    (item) =>
+      isWorkspaceFolder(item) && item.id === destinationParentId,
+  );
+
+  if (
+    !sourceItem ||
+    !copiedItems ||
+    (destinationParentId !== null && !destinationFolder)
+  ) {
+    return null;
+  }
+
+  const idMap = new Map<string, string>();
+  copiedItems.forEach((item) => {
+    idMap.set(item.id, createWorkspaceItemId("copy"));
+  });
+
+  const timestamp = new Date().toISOString();
+  const clonedItems = copiedItems.map((item) => ({
+    ...item,
+    id: idMap.get(item.id) ?? item.id,
+    parent_id:
+      item.id === itemId
+        ? destinationParentId
+        : item.parent_id === null
+          ? null
+          : idMap.get(item.parent_id) ?? item.parent_id,
+    created_at: timestamp,
+    updated_at: timestamp,
+    ...(isWorkspaceDocument(item) ? { deleted_at: null } : {}),
+  }));
+
+  return {
+    items: [...destinationItems, ...clonedItems],
+    copiedItemId: idMap.get(itemId) ?? null,
+  };
+}
+
 function setCloudTransferOperation(operation: CloudWorkspaceOperation | null) {
   useCloudWorkspaceStore.getState().setCloudOperation(operation);
+}
+
+function setCloudTransferValidationError(message: string) {
+  useCloudWorkspaceStore
+    .getState()
+    .setCloudError(toWorkspaceApiError(new Error(message)));
 }
 
 export async function transferWorkspaceItemBetweenSources({
@@ -217,7 +326,7 @@ export async function transferWorkspaceItemBetweenSources({
         return false;
       }
 
-      const nextLocalItems = [...destinationItems, ...mappedItems];
+      const nextLocalItems = [...destinationItems, ...mappedItems.items];
       await persistLocalWorkspaceItems(nextLocalItems);
       useLocalWorkspaceStore.getState().setItems(nextLocalItems);
 
@@ -231,7 +340,7 @@ export async function transferWorkspaceItemBetweenSources({
             ),
           ),
         );
-      return true;
+      return mappedItems.transferredItemId ?? false;
     }
 
     const initialSourceItems = useLocalWorkspaceStore.getState().items;
@@ -250,7 +359,8 @@ export async function transferWorkspaceItemBetweenSources({
     if (
       !getTransferredItems(initialSourceItems, itemId) ||
       !initialSourceItem ||
-      initialSourceItem.parent_id === null ||
+      (isWorkspaceFolder(initialSourceItem) &&
+        initialSourceItem.parent_id === null) ||
       (destinationParentId !== null && !destinationFolder)
     ) {
       return false;
@@ -261,6 +371,12 @@ export async function transferWorkspaceItemBetweenSources({
     const transferredItems = getTransferredItems(sourceItems, itemId);
 
     if (!transferredItems) {
+      return false;
+    }
+
+    const validation = validateCloudTransfer(sourceItems, itemId);
+    if (!validation.valid) {
+      setCloudTransferValidationError(validation.message);
       return false;
     }
 
@@ -344,11 +460,203 @@ export async function transferWorkspaceItemBetweenSources({
       .getState()
       .setItems([...useCloudWorkspaceStore.getState().items, ...createdItems]);
     useLocalWorkspaceStore.getState().setItems(nextLocalItems);
-    return true;
+    return remoteIds.get(itemId) ?? false;
   } catch (error) {
     const apiError = toWorkspaceApiError(error);
     useCloudWorkspaceStore.getState().setCloudError(apiError);
     console.error("[WorkspaceTransfer] transfer failed:", error);
+    return false;
+  } finally {
+    setCloudTransferOperation(null);
+  }
+}
+
+export async function copyWorkspaceItemBetweenSources({
+  itemId,
+  source,
+  destination,
+  destinationParentId,
+}: {
+  itemId: string;
+  source: "local" | "cloud";
+  destination: "local" | "cloud";
+  destinationParentId: string | null;
+}) {
+  const cloudState = useCloudWorkspaceStore.getState();
+
+  if (
+    cloudState.operation !== null ||
+    cloudState.isHydrating ||
+    ((source === "cloud" || destination === "cloud") &&
+      !cloudState.isHydrated)
+  ) {
+    return false;
+  }
+
+  if (source === "local" && destination === "local") {
+    await useLocalWorkspaceStore.getState().flushAllPendingContent();
+    const sourceItems = useLocalWorkspaceStore.getState().items;
+    const result = copyWorkspaceItem(
+      sourceItems,
+      sourceItems,
+      itemId,
+      destinationParentId,
+    );
+
+    if (!result) {
+      return false;
+    }
+
+    await persistLocalWorkspaceItems(result.items);
+    useLocalWorkspaceStore.getState().setItems(result.items);
+    return result.copiedItemId ?? false;
+  }
+
+  setCloudTransferOperation("copy");
+  cloudState.setCloudError(null);
+
+  try {
+    if (source === "cloud") {
+      await cloudState.flushAllPendingContentAndSave();
+
+      const sourceItems = useCloudWorkspaceStore.getState().items;
+      const sourceDocuments = (
+        getTransferredItems(sourceItems, itemId) ?? []
+      ).filter(isWorkspaceDocument);
+      await Promise.all(
+        sourceDocuments.map((document) =>
+          useCloudWorkspaceStore.getState().loadDocumentContent(document.id),
+        ),
+      );
+    } else {
+      await useLocalWorkspaceStore.getState().flushAllPendingContent();
+    }
+
+    const sourceItems =
+      source === "cloud"
+        ? useCloudWorkspaceStore.getState().items
+        : useLocalWorkspaceStore.getState().items;
+    const destinationItems =
+      destination === "cloud"
+        ? useCloudWorkspaceStore.getState().items
+        : useLocalWorkspaceStore.getState().items;
+
+    if (destination === "local") {
+      const result = copyWorkspaceItem(
+        sourceItems,
+        destinationItems,
+        itemId,
+        destinationParentId,
+      );
+
+      if (!result) {
+        return false;
+      }
+
+      await persistLocalWorkspaceItems(result.items);
+      useLocalWorkspaceStore.getState().setItems(result.items);
+      return result.copiedItemId ?? false;
+    }
+
+    const sourceItem = sourceItems.find((item) => item.id === itemId);
+    const copiedItems = getTransferredItems(sourceItems, itemId);
+    const destinationFolder = destinationItems.find(
+      (item) =>
+        isWorkspaceFolder(item) && item.id === destinationParentId,
+    );
+
+    if (
+      !sourceItem ||
+      !copiedItems ||
+      (destinationParentId !== null && !destinationFolder)
+    ) {
+      return false;
+    }
+
+    const validation = validateCloudTransfer(sourceItems, itemId);
+    if (!validation.valid) {
+      setCloudTransferValidationError(validation.message);
+      return false;
+    }
+
+    const remoteIds = new Map<string, string>();
+    const createdItems: WorkspaceItem[] = [];
+    let remoteRootId: string | null = null;
+    const createOrder = [...copiedItems].sort((left, right) => {
+      if (isWorkspaceFolder(left) !== isWorkspaceFolder(right)) {
+        return isWorkspaceFolder(left) ? -1 : 1;
+      }
+
+      return getFolderDepth(copiedItems, left) - getFolderDepth(
+        copiedItems,
+        right,
+      );
+    });
+
+    try {
+      for (const item of createOrder) {
+        const parentId =
+          item.id === itemId
+            ? destinationParentId
+            : item.parent_id
+              ? (remoteIds.get(item.parent_id) ?? null)
+              : null;
+
+        if (item.id !== itemId && !parentId) {
+          throw new Error("Unable to resolve the copied workspace parent.");
+        }
+
+        const created = await workspaceApi.createItem({
+          parentId,
+          name: item.name,
+          type: item.type,
+          ...(isWorkspaceFolder(item)
+            ? { color: item.color, icon: item.icon }
+            : {}),
+        });
+        remoteIds.set(item.id, created.id);
+        remoteRootId = remoteRootId ?? created.id;
+
+        if (isWorkspaceDocument(item)) {
+          const remoteDocument = mapCloudWorkspaceItem(
+            created,
+            item.content,
+          );
+          if (!isWorkspaceDocument(remoteDocument)) {
+            throw new Error("The workspace API returned a non-document item.");
+          }
+
+          const completed = await uploadWorkspaceDocument(
+            remoteDocument,
+            item.content,
+          );
+          createdItems.push(mapCloudWorkspaceItem(completed, item.content));
+        } else {
+          createdItems.push(mapCloudWorkspaceItem(created));
+        }
+      }
+    } catch (error) {
+      if (remoteRootId) {
+        try {
+          await workspaceApi.deleteItem(remoteRootId);
+        } catch (cleanupError) {
+          console.error(
+            "[WorkspaceCopy] failed to clean up partial cloud copy:",
+            cleanupError,
+          );
+        }
+      }
+      throw error;
+    }
+
+    useCloudWorkspaceStore
+      .getState()
+      .setItems([...destinationItems, ...createdItems]);
+    return remoteIds.get(itemId) ?? false;
+  } catch (error) {
+    const apiError = toWorkspaceApiError(error);
+    useCloudWorkspaceStore.getState().setCloudError(apiError);
+    console.error("[WorkspaceCopy] copy failed:", error);
     return false;
   } finally {
     setCloudTransferOperation(null);

@@ -5,8 +5,9 @@ import type { DocumentSource } from "@/modules/dashboard/document/model/document
 type WorkspaceSessionStoreState = {
   activeSource: DocumentSource;
   selectedDocumentId: string | null;
+  selectedDocumentSource: DocumentSource | null;
   setActiveSource: (source: DocumentSource) => void;
-  selectDocument: (documentId: string) => void;
+  selectDocument: (documentId: string, source: DocumentSource) => void;
   clearSelection: () => void;
 };
 
@@ -14,10 +15,12 @@ export const useWorkspaceSessionStore = create<WorkspaceSessionStoreState>(
   (set) => ({
     activeSource: "local",
     selectedDocumentId: null,
-    setActiveSource: (activeSource) =>
-      set({ activeSource, selectedDocumentId: null }),
-    selectDocument: (selectedDocumentId) => set({ selectedDocumentId }),
-    clearSelection: () => set({ selectedDocumentId: null }),
+    selectedDocumentSource: null,
+    setActiveSource: (activeSource) => set({ activeSource }),
+    selectDocument: (selectedDocumentId, selectedDocumentSource) =>
+      set({ selectedDocumentId, selectedDocumentSource }),
+    clearSelection: () =>
+      set({ selectedDocumentId: null, selectedDocumentSource: null }),
   }),
 );
 

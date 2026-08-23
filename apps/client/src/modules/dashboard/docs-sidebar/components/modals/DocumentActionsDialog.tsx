@@ -1,4 +1,4 @@
-import { FolderInput, Pencil, Star, Trash2 } from "lucide-react";
+import { Copy, FolderInput, Pencil, Star, Trash2 } from "lucide-react";
 
 import { ModalShell } from "@/shared/components/ModalShell";
 
@@ -9,6 +9,7 @@ export function DocumentActionsDialog({
   onClose,
   onToggleFavorite,
   onRename,
+  onCopy,
   onMove,
   onDelete,
 }: {
@@ -18,6 +19,7 @@ export function DocumentActionsDialog({
   onClose: () => void;
   onToggleFavorite: () => void;
   onRename: () => void;
+  onCopy: () => void;
   onMove: () => void;
   onDelete: () => void;
 }) {
@@ -49,6 +51,14 @@ export function DocumentActionsDialog({
         >
           <Pencil className="h-4 w-4 text-muted-foreground" strokeWidth={1.7} />
           Rename
+        </button>
+        <button
+          type="button"
+          className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-semibold text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          onClick={onCopy}
+        >
+          <Copy className="h-4 w-4 text-muted-foreground" strokeWidth={1.7} />
+          Copy
         </button>
         <button
           type="button"

@@ -59,7 +59,11 @@ export function MarkdownSourceEditor({
 }) {
   const zoomFactor = zoom / 100;
   const activeSource = useWorkspaceSessionStore((state) => state.activeSource);
-  const hasCharacterLimit = activeSource === "cloud";
+  const selectedDocumentSource = useWorkspaceSessionStore(
+    (state) => state.selectedDocumentSource,
+  );
+  const hasCharacterLimit =
+    (selectedDocumentSource ?? activeSource) === "cloud";
   const [draftState, setDraftState] = useState({
     source: markdown,
     value: markdown,

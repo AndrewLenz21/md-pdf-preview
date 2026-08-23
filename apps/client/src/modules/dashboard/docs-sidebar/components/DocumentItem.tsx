@@ -1,4 +1,5 @@
 import {
+  useEffect,
   useRef,
   useState,
   type MouseEvent as ReactMouseEvent,
@@ -6,6 +7,7 @@ import {
 } from "react";
 import {
   ChevronLeft,
+  Copy,
   FileCode2,
   FolderInput,
   MoreHorizontal,
@@ -40,6 +42,7 @@ export function DocumentItem({
   onSelect,
   onRename,
   onDelete,
+  onCopy,
   onMove,
   onToggleFavorite,
   folderId,
@@ -57,6 +60,7 @@ export function DocumentItem({
   onSelect: () => void;
   onRename: (title: string) => void;
   onDelete: () => void;
+  onCopy: () => void;
   onMove: (folderId: string | null) => void;
   onToggleFavorite: () => void;
   folderId: string | null;
@@ -68,7 +72,10 @@ export function DocumentItem({
   onDragClickCapture?: (event: ReactMouseEvent<HTMLDivElement>) => void;
 }) {
   const itemRef = useRef<HTMLDivElement>(null);
+  const closeMenuTimerRef = useRef<number | undefined>(undefined);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuRendered, setMenuRendered] = useState(false);
+  const [menuClosing, setMenuClosing] = useState(false);
   const [menuView, setMenuView] = useState<"actions" | "move">("actions");
   const [renaming, setRenaming] = useState(false);
   const [draftTitle, setDraftTitle] = useState(displayTitle);
@@ -78,13 +85,31 @@ export function DocumentItem({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const isDragActive = useDocumentDndStore((state) => state.isDragging);
 
-  const closeMenu = () => {
-    setMenuOpen(false);
-    setMenuView("actions");
+  const clearCloseMenuTimer = () => {
+    if (closeMenuTimerRef.current !== undefined) {
+      window.clearTimeout(closeMenuTimerRef.current);
+      closeMenuTimerRef.current = undefined;
+    }
   };
 
+  const closeMenu = () => {
+    clearCloseMenuTimer();
+    setMenuOpen(false);
+    setMenuClosing(true);
+    closeMenuTimerRef.current = window.setTimeout(() => {
+      setMenuRendered(false);
+      setMenuClosing(false);
+      setMenuView("actions");
+      closeMenuTimerRef.current = undefined;
+    }, 200);
+  };
+
+  useEffect(() => {
+    return () => clearCloseMenuTimer();
+  }, []);
+
   useDismissableLayer({
-    enabled: menuOpen,
+    enabled: menuRendered,
     refs: [itemRef],
     onDismiss: closeMenu,
   });
@@ -105,8 +130,15 @@ export function DocumentItem({
       return;
     }
 
+    clearCloseMenuTimer();
+    setMenuClosing(false);
+    setMenuRendered(true);
     setMenuView("actions");
-    setMenuOpen((value) => !value);
+    if (menuOpen) {
+      closeMenu();
+    } else {
+      setMenuOpen(true);
+    }
   };
 
   const openRenameDialog = () => {
@@ -213,11 +245,11 @@ export function DocumentItem({
         <MoreHorizontal className="h-4 w-4" strokeWidth={1.8} />
       </button>
 
-      {menuOpen ? (
+      {menuRendered ? (
         <div
           role="menu"
           aria-label={`${displayTitle} actions`}
-          className="absolute right-1 top-[calc(100%-0.25rem)] z-50 w-52 overflow-hidden rounded-xl border border-border bg-background p-1.5 shadow-xl"
+          className={`${menuClosing ? "workspace-menu-popover-exit" : "workspace-menu-popover-enter"} absolute right-1 top-[calc(100%-0.25rem)] z-50 w-52 overflow-hidden rounded-xl border border-border bg-background p-1.5 shadow-xl`}
         >
           {menuView === "actions" ? (
             <>
@@ -248,6 +280,18 @@ export function DocumentItem({
               >
                 <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
                 Rename
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-foreground transition-colors hover:bg-accent"
+                onClick={() => {
+                  onCopy();
+                  closeMenu();
+                }}
+              >
+                <Copy className="h-3.5 w-3.5 text-muted-foreground" />
+                Copy
               </button>
               <button
                 type="button"
@@ -320,6 +364,10 @@ export function DocumentItem({
           setMobileActionsOpen(false);
         }}
         onRename={openRenameDialog}
+        onCopy={() => {
+          onCopy();
+          setMobileActionsOpen(false);
+        }}
         onMove={openMoveDialog}
         onDelete={openDeleteDialog}
       />

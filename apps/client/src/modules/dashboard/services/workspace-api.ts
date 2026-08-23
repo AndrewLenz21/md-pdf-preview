@@ -1,4 +1,5 @@
 import type { WorkspaceDocumentItem } from "@/modules/dashboard/document/model/document.types";
+import { MAX_MARKDOWN_CHARACTERS } from "../stores/workspace-items.store";
 
 export type WorkspaceApiItem = {
   id: string;
@@ -238,6 +239,14 @@ export async function uploadWorkspaceDocument(
   document: WorkspaceDocumentItem,
   content: string,
 ) {
+  if (content.length > MAX_MARKDOWN_CHARACTERS) {
+    throw new WorkspaceApiError(
+      `Cloud file "${document.name}" cannot be saved because it has ${content.length.toLocaleString()} characters. The maximum is ${MAX_MARKDOWN_CHARACTERS.toLocaleString()}.`,
+      413,
+      "WORKSPACE_CONTENT_TOO_LARGE",
+    );
+  }
+
   const contentType = "text/markdown; charset=utf-8";
   const body = new TextEncoder().encode(content);
   const contentHash = toHex(await crypto.subtle.digest("SHA-256", body));

@@ -22,11 +22,15 @@ import type {
 import {
   isWorkspaceDocument,
   isWorkspaceFolder,
+  useWorkspaceClipboardStore,
   useCloudWorkspaceStore,
   useLocalWorkspaceStore,
   useWorkspaceSessionStore,
 } from "@/modules/dashboard/stores";
-import { transferWorkspaceItemBetweenSources } from "@/modules/dashboard/stores/workspace-transfer";
+import {
+  copyWorkspaceItemBetweenSources,
+  transferWorkspaceItemBetweenSources,
+} from "@/modules/dashboard/stores/workspace-transfer";
 import { AuthActions } from "@/modules/navigation/components/AuthActions";
 
 import { DocumentSourceToggle } from "./DocumentSourceToggle";
@@ -153,6 +157,14 @@ export function DocsSidebar({
   const selectedDocumentId = useWorkspaceSessionStore(
     (state) => state.selectedDocumentId,
   );
+  const selectedDocumentSource = useWorkspaceSessionStore(
+    (state) => state.selectedDocumentSource,
+  );
+  const clipboardItem = useWorkspaceClipboardStore((state) => state.item);
+  const setClipboardItem = useWorkspaceClipboardStore((state) => state.setItem);
+  const selectDocumentInSession = useWorkspaceSessionStore(
+    (state) => state.selectDocument,
+  );
   const setActiveSourceInSession = useWorkspaceSessionStore(
     (state) => state.setActiveSource,
   );
@@ -242,13 +254,13 @@ export function DocsSidebar({
     if (
       source === activeSource ||
       (activeSource === "cloud" && cloudIsHydrating) ||
-      cloudOperation === "transfer"
+      cloudOperation !== null
     ) {
       return;
     }
 
     if (selectedDocumentId) {
-      (activeSource === "local"
+      ((selectedDocumentSource ?? activeSource) === "local"
         ? flushLocalPendingContent
         : flushCloudPendingContent)(selectedDocumentId);
     }
@@ -311,6 +323,41 @@ export function DocsSidebar({
     source === "local"
       ? Promise.resolve(moveLocalFolder(folderId, parentId))
       : moveCloudFolder(folderId, parentId);
+  const copyItem = (source: DocumentSource, itemId: string) => {
+    const item = (source === "local" ? localItems : cloudItems).find(
+      (candidate) => candidate.id === itemId,
+    );
+
+    if (!item) {
+      return;
+    }
+
+    setClipboardItem({
+      id: item.id,
+      source,
+      kind: isWorkspaceFolder(item) ? "folder" : "document",
+    });
+  };
+  const canPasteInto = (destination: DocumentSource) =>
+    clipboardItem !== null &&
+    !cloudBusy &&
+    (destination !== "cloud" || canUseCloud) &&
+    (clipboardItem.source !== "cloud" || canUseCloud);
+  const pasteItem = (
+    destination: DocumentSource,
+    destinationParentId: string | null,
+  ) => {
+    if (!clipboardItem || !canPasteInto(destination)) {
+      return;
+    }
+
+    void copyWorkspaceItemBetweenSources({
+      itemId: clipboardItem.id,
+      source: clipboardItem.source,
+      destination,
+      destinationParentId,
+    });
+  };
   const toggleFavorite = (source: DocumentSource, documentId: string) =>
     source === "local"
       ? Promise.resolve(toggleLocalFavorite(documentId))
@@ -405,8 +452,12 @@ export function DocsSidebar({
         source: item.source,
         destination: target.source,
         destinationParentId: resolvedDestinationParentId,
-      }).then((transferred) => {
-        if (transferred) {
+      }).then((transferredItemId) => {
+        if (transferredItemId) {
+          if (item.kind === "document" && selectedDocumentId === item.id) {
+            selectDocumentInSession(transferredItemId, target.source);
+          }
+
           setActiveSourceInSession(target.source);
         }
       });
@@ -498,6 +549,25 @@ export function DocsSidebar({
       createParentId,
       isVirtualRoot: createParentId === null && displaySource === "cloud",
     });
+  };
+
+  const handleCopyFromActions = () => {
+    if (!folderActions || folderActions.isVirtualRoot) {
+      return;
+    }
+
+    copyItem(folderActions.source, folderActions.folder.id);
+    setFolderActions(null);
+  };
+
+  const handlePasteFromActions = () => {
+    if (!folderActions) {
+      return;
+    }
+
+    const { source, createParentId } = folderActions;
+    setFolderActions(null);
+    pasteItem(source, createParentId);
   };
 
   const handleNewFolderFromActions = () => {
@@ -766,11 +836,14 @@ export function DocsSidebar({
         <FolderTree
           items={sourceItems}
           source={displaySource}
-          selectedId={selectedId}
-          onSelect={onSelect}
-          onRename={(id, title) => renameDocument(displaySource, id, title)}
-          onDelete={handleDelete}
-          onMove={(id, folderId) => moveDocument(displaySource, id, folderId)}
+           selectedId={selectedId}
+           onSelect={onSelect}
+           onRename={(id, title) => renameDocument(displaySource, id, title)}
+           onDelete={handleDelete}
+           onMove={(id, folderId) => moveDocument(displaySource, id, folderId)}
+           onCopy={(id) => copyItem(displaySource, id)}
+           onPaste={(folderId) => pasteItem(displaySource, folderId)}
+           canPaste={canPasteInto(displaySource)}
           onToggleFavorite={(id) => toggleFavorite(displaySource, id)}
           onCreateDocument={handleCreateDocument}
           onCreateFolder={handleCreateFolder}
@@ -860,9 +933,15 @@ export function DocsSidebar({
           !folderActions.isVirtualRoot &&
           folderActions.folder.parent_id !== null
         }
+        canCopy={folderActions !== null && !folderActions.isVirtualRoot}
+        canPaste={
+          folderActions !== null && canPasteInto(folderActions.source)
+        }
         onClose={() => setFolderActions(null)}
         onNewFolder={handleNewFolderFromActions}
         onNewMarkdown={handleNewMarkdownFromActions}
+        onCopy={handleCopyFromActions}
+        onPaste={handlePasteFromActions}
         onRename={handleRenameFromActions}
         onDelete={handleDeleteFromActions}
       />
