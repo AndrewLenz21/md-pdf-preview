@@ -1,64 +1,65 @@
 "use client";
 
 import { useState } from "react";
-import { useEffect } from "react";
-import { useTranslations } from "next-intl";
-import { Check } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import { Check, MailCheck } from "lucide-react";
 
-import { Link, useRouter } from "@/core/i18n";
+import { Link } from "@/core/i18n";
 
-import { signIn } from "../services/signIn";
+import { sendVerificationEmail } from "../services/sendVerificationEmail";
 import { signUp } from "../services/signUp";
+
+type FormError = {
+  code?: string;
+  message?: string;
+};
+
+function isKnownErrorCode(error: unknown, code: string) {
+  return (
+    error !== null &&
+    typeof error === "object" &&
+    "code" in error &&
+    (error as FormError).code === code
+  );
+}
 
 export function SignUpForm() {
   const t = useTranslations("Auth.signUp");
-  const router = useRouter();
+  const locale = useLocale();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
-  const [redirecting, setRedirecting] = useState(false);
-
-  useEffect(() => {
-    if (!redirecting) return;
-
-    const timeout = window.setTimeout(() => {
-      router.replace("/dashboard");
-    }, 650);
-
-    return () => window.clearTimeout(timeout);
-  }, [redirecting, router]);
+  const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
+  const [resending, setResending] = useState(false);
+  const [resendSent, setResendSent] = useState(false);
+  const [resendError, setResendError] = useState<string | null>(null);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = event.currentTarget;
     setLoading(true);
     setError(null);
-    setSuccess(false);
-    setRedirecting(false);
 
     try {
       const formData = new FormData(form);
       const email = String(formData.get("email") ?? "");
-      const password = String(formData.get("password") ?? "");
       const { error: signUpError } = await signUp({
         name: String(formData.get("name") ?? ""),
         email,
-        password,
+        password: String(formData.get("password") ?? ""),
+        locale,
       });
 
       if (signUpError) {
-        setError(signUpError.message ?? t("error"));
-      } else {
-        const { error: signInError } = await signIn({ email, password });
-
-        if (signInError) {
-          setError(signInError.message ?? t("error"));
-          return;
+        if (isKnownErrorCode(signUpError, "DAILY_REGISTRATION_LIMIT_REACHED")) {
+          setError(t("dailyLimit"));
+        } else if (isKnownErrorCode(signUpError, "VERIFICATION_EMAIL_SEND_FAILED")) {
+          setError(t("sendFailed"));
+        } else {
+          setError(signUpError.message ?? t("error"));
         }
-
+      } else {
         form.reset();
-        setSuccess(true);
-        setRedirecting(true);
+        setRegisteredEmail(email);
       }
     } catch (signUpError) {
       setError(signUpError instanceof Error ? signUpError.message : t("error"));
@@ -66,6 +67,92 @@ export function SignUpForm() {
       setLoading(false);
     }
   };
+
+  const handleResend = async () => {
+    if (!registeredEmail) {
+      return;
+    }
+
+    setResending(true);
+    setResendSent(false);
+    setResendError(null);
+
+    try {
+      const { error: resendError } = await sendVerificationEmail({
+        email: registeredEmail,
+        locale,
+      });
+
+      if (resendError) {
+        if (isKnownErrorCode(resendError, "DAILY_REGISTRATION_LIMIT_REACHED")) {
+          setResendError(t("dailyLimit"));
+        } else if (isKnownErrorCode(resendError, "VERIFICATION_EMAIL_COOLDOWN")) {
+          setResendError(t("cooldown"));
+        } else {
+          setResendError(resendError.message ?? t("error"));
+        }
+      } else {
+        setResendSent(true);
+      }
+    } catch (resendError) {
+      setResendError(
+        resendError instanceof Error ? resendError.message : t("error"),
+      );
+    } finally {
+      setResending(false);
+    }
+  };
+
+  if (registeredEmail) {
+    return (
+      <div className="w-full max-w-sm rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className="flex items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15">
+            <MailCheck className="h-5 w-5 text-primary" strokeWidth={2} />
+          </span>
+          <h1 className="text-xl font-semibold text-foreground">
+            {t("verificationTitle")}
+          </h1>
+        </div>
+        <p className="mt-4 text-sm text-muted-foreground">
+          {t("verificationMessage", { email: registeredEmail })}
+        </p>
+        <button
+          type="button"
+          onClick={handleResend}
+          disabled={resending}
+          className="mt-6 w-full rounded-md border border-input px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent/60 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {resending ? t("resendLoading") : t("resend")}
+        </button>
+        {resendSent ? (
+          <p
+            className="mt-4 flex items-center gap-2 text-sm text-primary"
+            role="status"
+          >
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/15">
+              <Check className="h-3.5 w-3.5" strokeWidth={2.2} />
+            </span>
+            {t("resendSent")}
+          </p>
+        ) : null}
+        {resendError ? (
+          <p className="mt-4 text-sm text-destructive" role="alert">
+            {resendError}
+          </p>
+        ) : null}
+        <p className="mt-5 text-center text-sm text-muted-foreground">
+          {t("existingAccount")}{" "}
+          <Link
+            href="/auth/sign-in"
+            className="font-medium text-foreground underline underline-offset-4 transition-colors hover:text-primary"
+          >
+            {t("existingAccountLink")}
+          </Link>
+        </p>
+      </div>
+    );
+  }
 
   return (
     <form
@@ -125,23 +212,12 @@ export function SignUpForm() {
           {error}
         </p>
       ) : null}
-      {success ? (
-        <p
-          className="mt-4 flex items-center gap-2 text-sm text-primary animate-pulse"
-          role="status"
-        >
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/15">
-            <Check className="h-3.5 w-3.5" strokeWidth={2.2} />
-          </span>
-          {t("success")} {t("redirecting")}
-        </p>
-      ) : null}
       <button
         type="submit"
-        disabled={loading || redirecting}
+        disabled={loading}
         className="mt-6 w-full rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {loading ? t("loading") : redirecting ? t("redirecting") : t("submit")}
+        {loading ? t("loading") : t("submit")}
       </button>
       <p className="mt-5 text-center text-sm text-muted-foreground">
         {t("existingAccount")}{" "}

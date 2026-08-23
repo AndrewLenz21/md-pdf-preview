@@ -1,18 +1,14 @@
 import { authClient } from "@/lib/auth-client";
 
-export async function signUp({
-  name,
+export async function sendVerificationEmail({
   email,
-  password,
   locale,
 }: {
-  name: string;
   email: string;
-  password: string;
   locale: string;
 }) {
-  return authClient.signUp.email(
-    { name, email, password },
+  return authClient.sendVerificationEmail(
+    { email, callbackURL: "/" },
     { headers: { "accept-language": locale } },
   );
 }

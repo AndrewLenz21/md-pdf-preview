@@ -2,20 +2,41 @@
 
 import { useState } from "react";
 import { useEffect } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Check } from "lucide-react";
 
 import { Link, useRouter } from "@/core/i18n";
 
+import { sendVerificationEmail } from "../services/sendVerificationEmail";
 import { signIn } from "../services/signIn";
+
+type FormError = {
+  code?: string;
+  message?: string;
+};
+
+function isKnownErrorCode(error: unknown, code: string) {
+  return (
+    error !== null &&
+    typeof error === "object" &&
+    "code" in error &&
+    (error as FormError).code === code
+  );
+}
 
 export function SignInForm() {
   const t = useTranslations("Auth.signIn");
+  const locale = useLocale();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
+  const [emailNotVerified, setEmailNotVerified] = useState(false);
+  const [lastEmail, setLastEmail] = useState("");
+  const [resending, setResending] = useState(false);
+  const [resendSent, setResendSent] = useState(false);
+  const [resendError, setResendError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!redirecting) return;
@@ -34,16 +55,26 @@ export function SignInForm() {
     setError(null);
     setSuccess(false);
     setRedirecting(false);
+    setEmailNotVerified(false);
+    setResendSent(false);
+    setResendError(null);
 
     try {
       const formData = new FormData(form);
+      const email = String(formData.get("email") ?? "");
       const { error: signInError } = await signIn({
-        email: String(formData.get("email") ?? ""),
+        email,
         password: String(formData.get("password") ?? ""),
       });
 
       if (signInError) {
-        setError(signInError.message ?? t("error"));
+        if (isKnownErrorCode(signInError, "EMAIL_NOT_VERIFIED")) {
+          setLastEmail(email);
+          setEmailNotVerified(true);
+          setError(t("emailNotVerified"));
+        } else {
+          setError(signInError.message ?? t("error"));
+        }
       } else {
         form.reset();
         setSuccess(true);
@@ -53,6 +84,41 @@ export function SignInForm() {
       setError(signInError instanceof Error ? signInError.message : t("error"));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (!lastEmail) {
+      return;
+    }
+
+    setResending(true);
+    setResendSent(false);
+    setResendError(null);
+
+    try {
+      const { error: resendError } = await sendVerificationEmail({
+        email: lastEmail,
+        locale,
+      });
+
+      if (resendError) {
+        if (isKnownErrorCode(resendError, "DAILY_REGISTRATION_LIMIT_REACHED")) {
+          setResendError(t("dailyLimit"));
+        } else if (isKnownErrorCode(resendError, "VERIFICATION_EMAIL_COOLDOWN")) {
+          setResendError(t("cooldown"));
+        } else {
+          setResendError(resendError.message ?? t("error"));
+        }
+      } else {
+        setResendSent(true);
+      }
+    } catch (resendError) {
+      setResendError(
+        resendError instanceof Error ? resendError.message : t("error"),
+      );
+    } finally {
+      setResending(false);
     }
   };
 
@@ -98,6 +164,34 @@ export function SignInForm() {
         <p className="mt-4 text-sm text-destructive" role="alert">
           {error}
         </p>
+      ) : null}
+      {emailNotVerified ? (
+        <div className="mt-4 space-y-2">
+          <button
+            type="button"
+            onClick={handleResend}
+            disabled={resending}
+            className="w-full rounded-md border border-input px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent/60 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {resending ? t("resendLoading") : t("resendVerification")}
+          </button>
+          {resendSent ? (
+            <p
+              className="flex items-center gap-2 text-sm text-primary"
+              role="status"
+            >
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/15">
+                <Check className="h-3.5 w-3.5" strokeWidth={2.2} />
+              </span>
+              {t("resendSent")}
+            </p>
+          ) : null}
+          {resendError ? (
+            <p className="text-sm text-destructive" role="alert">
+              {resendError}
+            </p>
+          ) : null}
+        </div>
       ) : null}
       {success ? (
         <p
