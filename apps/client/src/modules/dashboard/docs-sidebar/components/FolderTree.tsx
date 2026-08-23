@@ -17,6 +17,7 @@ import {
   FolderPlus,
   Pencil,
   Plus,
+  Trash2,
 } from "lucide-react";
 
 import { Link } from "@/core/i18n";
@@ -329,6 +330,7 @@ export function FolderTree({
   onCreateRootFolder,
   rootDropActive,
   onEditFolder,
+  onDeleteFolder,
   collapsedFolderIds,
   onToggleFolder,
   cloudUnauthenticated,
@@ -356,6 +358,7 @@ export function FolderTree({
   onCreateRootFolder?: () => void;
   rootDropActive: boolean;
   onEditFolder: (folder: WorkspaceFolderItem) => void;
+  onDeleteFolder: (folder: WorkspaceFolderItem) => void;
   collapsedFolderIds: string[];
   onToggleFolder: (folderId: string) => void;
   cloudUnauthenticated: boolean;
@@ -478,6 +481,7 @@ export function FolderTree({
               onCreateDocument={onCreateDocument}
               onCreateFolder={onCreateFolder}
               onEditFolder={onEditFolder}
+              onDeleteFolder={onDeleteFolder}
               collapsedFolderIds={collapsedFolderIds}
               onToggleFolder={onToggleFolder}
               cloudUnauthenticated={cloudUnauthenticated}
@@ -515,6 +519,7 @@ function FolderNode({
   onCreateDocument,
   onCreateFolder,
   onEditFolder,
+  onDeleteFolder,
   collapsedFolderIds,
   onToggleFolder,
   cloudUnauthenticated,
@@ -544,6 +549,7 @@ function FolderNode({
   onCreateDocument: (folderId: string | null) => void;
   onCreateFolder: (parentId: string | null) => void;
   onEditFolder: (folder: WorkspaceFolderItem) => void;
+  onDeleteFolder: (folder: WorkspaceFolderItem) => void;
   collapsedFolderIds: string[];
   onToggleFolder: (folderId: string) => void;
   cloudUnauthenticated: boolean;
@@ -786,6 +792,18 @@ function FolderNode({
                   <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
                   Edit folder
                 </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-destructive transition-colors hover:bg-destructive/10"
+                  onClick={() => {
+                    onDeleteFolder(folder);
+                    closeFolderMenu();
+                  }}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Delete
+                </button>
               </>
             ) : null}
           </div>
@@ -856,6 +874,7 @@ function FolderNode({
                 onCreateDocument={onCreateDocument}
                 onCreateFolder={onCreateFolder}
                 onEditFolder={onEditFolder}
+                onDeleteFolder={onDeleteFolder}
                 collapsedFolderIds={collapsedFolderIds}
                 onToggleFolder={onToggleFolder}
                 cloudUnauthenticated={cloudUnauthenticated}

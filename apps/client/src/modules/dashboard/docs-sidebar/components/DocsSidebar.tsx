@@ -388,10 +388,6 @@ export function DocsSidebar({
       cloudOperation !== null ||
       cloudError !== null);
   const sourceItems = displaySource === "local" ? localItems : cloudItems;
-  const sourceDocuments = sourceItems.filter(
-    (item): item is WorkspaceDocumentItem =>
-      isWorkspaceDocument(item) && !item.deleted_at,
-  );
   const sourceFolders = sourceItems.filter(isWorkspaceFolder);
   const collapsedFolderIds =
     displaySource === "local"
@@ -491,10 +487,6 @@ export function DocsSidebar({
   );
 
   const handleDelete = (id: string) => {
-    if (sourceDocuments.length <= 1) {
-      return;
-    }
-
     void deleteDocument(displaySource, id)
       .then((deleted) => {
         if (deleted) {
@@ -859,6 +851,9 @@ export function DocsSidebar({
           onCreateRootFolder={() => handleCreateFolder(null)}
           rootDropActive={rootDropActive}
           onEditFolder={handleEditFolder}
+          onDeleteFolder={(folder) =>
+            setDeleteFolderDialog({ source: displaySource, folder })
+          }
           collapsedFolderIds={collapsedFolderIds}
           onToggleFolder={(folderId) =>
             toggleFolderExpanded(displaySource, folderId)
