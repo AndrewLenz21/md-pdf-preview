@@ -98,7 +98,7 @@ describe("DocumentPreview page-break overlay", () => {
     expect(marker?.textContent).toContain("Possible page break");
   });
 
-  it("uses the window scroll for the non-embedded preview view", () => {
+  it("keeps horizontal preview overflow inside the non-embedded canvas", () => {
     const document = getDocument();
 
     const { container } = render(
@@ -114,9 +114,39 @@ describe("DocumentPreview page-break overlay", () => {
 
     const root = container.querySelector('[data-document-mode="preview"]');
     const canvas = root?.querySelector(".document-preview-canvas");
+    const scrollContent = root?.querySelector(
+      ".document-preview-scroll-content",
+    );
 
     expect(root?.className).not.toContain("overflow-hidden");
-    expect(canvas?.className).not.toContain("overflow-auto");
+    expect(canvas?.className).toContain("overflow-x-auto");
+    expect(scrollContent?.className).toContain("w-max");
+  });
+
+  it("contains the paper preview in an embedded scroll viewport", () => {
+    const document = getDocument();
+
+    const { container } = render(
+      <DocumentPreview
+        document={document}
+        mode="preview"
+        embedded
+        scrollScope="mobile"
+        showToolbar={false}
+        onModeChange={() => undefined}
+        onContentChange={() => undefined}
+      />,
+    );
+
+    const root = container.querySelector('[data-document-mode="preview"]');
+    const canvas = root?.querySelector(".document-preview-canvas");
+    const scrollContent = root?.querySelector(
+      ".document-preview-scroll-content",
+    );
+
+    expect(root?.className).toContain("h-full");
+    expect(canvas?.className).toContain("overflow-auto");
+    expect(scrollContent?.className).toContain("w-max");
   });
 
   it("keeps the mobile toolbar outside the preview canvas", () => {

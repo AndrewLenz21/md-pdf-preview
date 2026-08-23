@@ -205,6 +205,8 @@ export function DashboardWorkspace() {
   >({ files: 0, preview: 0 });
   const isDesktopSplit = isPreviewMode || desktopPreviewVisible;
   const isMobileFilesSection = mobileSection === "files";
+  const isMobilePaperPreview =
+    mobileSection === "preview" && editorMode === "preview";
   const selectedDocumentItems =
     selectedSource === "local" ? localItems : cloudItems;
   const selectedDocuments = selectedDocumentItems.filter(
@@ -587,7 +589,7 @@ export function DashboardWorkspace() {
       ) : null}
 
       <main
-        className={`relative min-w-0 flex-1 lg:flex lg:h-screen lg:min-h-0 lg:flex-col lg:overflow-hidden ${!selectedDocument ? "h-[calc(100dvh-var(--mobile-dashboard-nav-height))] overflow-hidden pb-0" : isMobileFilesSection ? "h-[calc(100dvh-var(--mobile-dashboard-nav-height))] overflow-hidden pb-0" : isPreviewMode ? "pb-0" : "pb-20"} lg:pb-0`}
+        className={`relative min-w-0 flex-1 lg:flex lg:h-screen lg:min-h-0 lg:flex-col lg:overflow-hidden ${!selectedDocument ? "h-[calc(100dvh-var(--mobile-dashboard-nav-height))] overflow-hidden pb-0" : isMobileFilesSection ? "h-[calc(100dvh-var(--mobile-dashboard-nav-height))] overflow-hidden pb-0" : isMobilePaperPreview ? "h-[calc(100dvh-var(--mobile-dashboard-nav-height))] overflow-hidden pb-0" : isPreviewMode ? "pb-0" : "pb-20"} lg:pb-0`}
       >
         <div
           className="relative hidden h-full min-h-0 flex-col lg:flex"
@@ -674,7 +676,7 @@ export function DashboardWorkspace() {
         </div>
         {isDesktopViewport === false ? (
           <div
-            className={`relative min-h-0 lg:hidden ${isMobileFilesSection || !selectedDocument ? "h-full overflow-hidden" : ""}`}
+            className={`relative min-h-0 lg:hidden ${isMobileFilesSection || !selectedDocument || isMobilePaperPreview ? "h-full overflow-hidden" : ""}`}
           >
             {mobileSection === "files" ? (
               <div
@@ -693,6 +695,7 @@ export function DashboardWorkspace() {
               <DocumentPreview
                 document={selectedDocument}
                 mode={editorMode}
+                embedded={isMobilePaperPreview}
                 scrollScope="mobile"
                 onModeChange={changeEditorMode}
                 onMobileClear={() => changeMobileSection("files")}

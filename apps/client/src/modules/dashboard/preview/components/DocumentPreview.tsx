@@ -118,7 +118,7 @@ function getRootClassName(mode: DocumentEditorMode, contained: boolean) {
   switch (mode) {
     case "preview":
       return contained
-        ? "document-preview-root document-preview-paper-root relative flex h-[calc(100dvh-5rem)] min-h-0 flex-col overflow-hidden lg:h-full"
+        ? "document-preview-root document-preview-paper-root relative flex h-full min-h-0 flex-col overflow-hidden"
         : "document-preview-root document-preview-paper-root relative min-h-[calc(100dvh-5rem)] overflow-visible";
     case "markdown":
       return contained
@@ -136,7 +136,7 @@ function getCanvasClassName(mode: DocumentEditorMode, contained: boolean) {
     case "preview":
       return contained
         ? "document-preview-canvas min-h-0 flex-1 overflow-auto bg-muted/40 pt-5"
-        : "document-preview-canvas overflow-visible bg-muted/40 pt-5";
+        : "document-preview-canvas min-w-0 max-w-full overflow-x-auto bg-muted/40 pt-5";
     case "markdown":
       return contained
         ? "document-preview-canvas document-continuous-canvas min-h-0 flex-1 overflow-auto"
@@ -562,7 +562,7 @@ export function DocumentPreview({
 
         <div ref={stageRef} className={getStageClassName(mode)}>
           <div
-            className={`w-full ${modeTransitionDirection ? `dashboard-mobile-section dashboard-mobile-section-${modeTransitionDirection}` : ""}`}
+            className={`${mode === "preview" ? "document-preview-scroll-content min-w-full w-max" : "w-full"} ${modeTransitionDirection ? `dashboard-mobile-section dashboard-mobile-section-${modeTransitionDirection}` : ""}`}
           >
             <ModeContent
               mode={mode}
