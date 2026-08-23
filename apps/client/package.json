@@ -60,7 +60,7 @@
     "jsdom": "^29.1.1",
     "patch-package": "^8.0.1",
     "tailwindcss": "^4",
-    "typescript": "^5",
+    "typescript": "^7",
     "vitest": "^4.1.10",
     "wrangler": "^4.125.0"
   }
