@@ -19,10 +19,10 @@ vi.mock("next-intl", () => ({
         return (value as Record<string, unknown>)[segment];
       }, intlState.messages);
 
-    return Object.assign(
-      (key: string) => String(resolve(key) ?? key),
-      { raw: (key: string) => resolve(key) },
-    );
+    return Object.assign((key: string) => String(resolve(key) ?? key), {
+      has: (key: string) => resolve(key) !== undefined,
+      raw: (key: string) => resolve(key),
+    });
   },
 }));
 
@@ -104,8 +104,6 @@ describe("LandingPage", () => {
     expect(
       screen.getByRole("heading", { name: "Anteprima fedele" }),
     ).toBeTruthy();
-    expect(
-      screen.getByRole("link", { name: /Apri l'app/i }),
-    ).toBeTruthy();
+    expect(screen.getByRole("link", { name: /Apri l'app/i })).toBeTruthy();
   });
 });
