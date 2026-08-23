@@ -71,6 +71,11 @@ export type WorkspaceDocumentItem = WorkspaceItemBase & {
   content: string;
   favorite?: boolean;
   deleted_at?: string | null;
+  content_revision?: number;
+  content_type?: string | null;
+  size_bytes?: number | null;
+  storage_status?: "pending" | "ready" | "failed" | null;
+  sort_order?: number;
 };
 
 export type WorkspaceItem = WorkspaceFolderItem | WorkspaceDocumentItem;

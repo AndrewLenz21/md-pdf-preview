@@ -3,12 +3,12 @@ package server
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/andrew/md-pdf-preview/server/src/config/logging"
 	"github.com/andrew/md-pdf-preview/server/src/config/middlewares"
 	logger_service "github.com/andrew/md-pdf-preview/server/src/services/logger"
 	"github.com/labstack/echo/v4"
@@ -31,13 +31,13 @@ func NewServer() {
 
 func StartServer() {
 	if applicationServer == nil {
-		fmt.Println("[http] startup failed: Echo server is not initialized")
+		logging.Println("❌ [http] startup failed: Echo server is not initialized")
 		return
 	}
 
-	fmt.Printf("[http] Echo server listening on %s\n", Address())
+	logging.Printf("🌐 [http] Echo server listening on %s", Address())
 	if err := applicationServer.Start(Address()); err != nil && !errors.Is(err, ErrServerClosed) {
-		fmt.Printf("[http] server stopped unexpectedly: %v\n", err)
+		logging.Printf("❌ [http] server stopped unexpectedly: %v", err)
 	}
 }
 
@@ -65,13 +65,13 @@ func StopServer(timeout time.Duration) {
 	shutdownErr := applicationServer.Shutdown(ctx)
 	if requestLogger != nil {
 		if err := requestLogger.Stop(ctx); err != nil {
-			fmt.Printf("[logger] graceful shutdown failed: %v\n", err)
+			logging.Printf("❌ [logger] graceful shutdown failed: %v", err)
 		}
 	}
 	if shutdownErr != nil {
-		fmt.Printf("[http] graceful shutdown failed: %v\n", shutdownErr)
+		logging.Printf("❌ [http] graceful shutdown failed: %v", shutdownErr)
 		return
 	}
 
-	fmt.Println("[http] Echo server stopped")
+	logging.Println("🛑 [http] Echo server stopped")
 }

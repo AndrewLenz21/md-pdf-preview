@@ -2,10 +2,10 @@ package postgres
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"time"
 
+	"github.com/andrew/md-pdf-preview/server/src/config/logging"
 	"github.com/andrew/md-pdf-preview/server/src/config/postgres/migrations"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -20,18 +20,18 @@ var (
 func CreateConnectionPool() {
 	databaseConfig, err := LoadConfig()
 	if err != nil {
-		fmt.Printf("❌ [postgres] startup failed: %v\n", err)
+		logging.Printf("❌ [postgres] startup failed: %v", err)
 		return
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	fmt.Printf("🐘 [postgres] creating connection pool for schema %s\n", databaseConfig.DatabaseSchema)
+	logging.Printf("🐘 [postgres] creating connection pool for schema %s", databaseConfig.DatabaseSchema)
 
 	poolConfig, err := pgxpool.ParseConfig(databaseConfig.DatabaseURL)
 	if err != nil {
-		fmt.Printf("❌ [postgres] startup failed: parse database configuration: %v\n", err)
+		logging.Printf("❌ [postgres] startup failed: parse database configuration: %v", err)
 		return
 	}
 
@@ -40,19 +40,19 @@ func CreateConnectionPool() {
 
 	databasePool, err := pgxpool.NewWithConfig(ctx, poolConfig)
 	if err != nil {
-		fmt.Printf("❌ [postgres] startup failed: open database pool: %v\n", err)
+		logging.Printf("❌ [postgres] startup failed: open database pool: %v", err)
 		return
 	}
 
 	if err := databasePool.Ping(ctx); err != nil {
 		databasePool.Close()
-		fmt.Printf("❌ [postgres] startup failed: database ping failed: %v\n", err)
+		logging.Printf("❌ [postgres] startup failed: database ping failed: %v", err)
 		return
 	}
 
 	if err := migrations.BootstrapSchema(ctx, databasePool, databaseConfig.DatabaseSchema); err != nil {
 		databasePool.Close()
-		fmt.Printf("❌ [postgres] startup failed: database bootstrap failed: %v\n", err)
+		logging.Printf("❌ [postgres] startup failed: database bootstrap failed: %v", err)
 		return
 	}
 
@@ -60,13 +60,13 @@ func CreateConnectionPool() {
 	if poolClosed {
 		poolMutex.Unlock()
 		databasePool.Close()
-		fmt.Println("⚠️ [postgres] startup cancelled during shutdown")
+		logging.Println("⚠️ [postgres] startup cancelled during shutdown")
 		return
 	}
 
 	pool = databasePool
 	poolMutex.Unlock()
-	fmt.Printf("✅ [postgres] pool connected; schema %s and Better Auth tables are ready\n", databaseConfig.DatabaseSchema)
+	logging.Printf("✅ [postgres] pool connected; schema %s and Better Auth tables are ready", databaseConfig.DatabaseSchema)
 }
 
 func GetPool() (*pgxpool.Pool, bool) {
@@ -88,10 +88,10 @@ func CloseConnectionPool() {
 	poolMutex.Unlock()
 
 	if databasePool == nil {
-		fmt.Println("⚠️ [postgres] pool was not initialized")
+		logging.Println("⚠️ [postgres] pool was not initialized")
 		return
 	}
 
 	databasePool.Close()
-	fmt.Println("🐘 [postgres] pool closed")
+	logging.Println("🐘 [postgres] pool closed")
 }

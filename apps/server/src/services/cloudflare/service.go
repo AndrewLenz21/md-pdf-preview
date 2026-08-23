@@ -166,10 +166,15 @@ func (service *Service) PutLoggerObject(ctx context.Context, key string, body []
 		storage.BucketName,
 		key,
 		body,
-		"application/json",
-		"gzip",
+		"application/gzip",
+		"",
 	); err != nil {
-		return fmt.Errorf("put logger object in R2: %w", err)
+		return fmt.Errorf(
+			"put logger object in R2 (bucket=%q, key=%q): %w",
+			storage.BucketName,
+			key,
+			err,
+		)
 	}
 
 	return nil

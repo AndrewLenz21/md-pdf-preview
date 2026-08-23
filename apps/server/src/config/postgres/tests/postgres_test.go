@@ -20,6 +20,8 @@ func TestWorkspaceItemsSchemaProtectsTreeInvariants(t *testing.T) {
 		"CHECK (char_length(btrim(name)) > 0)",
 		"fn_workspace_item_create",
 		"fn_workspace_item_update",
+		"fn_workspace_document_upload_complete",
+		"fn_workspace_item_collect_r2_keys",
 		"fn_workspace_item_delete",
 	}
 
@@ -27,6 +29,17 @@ func TestWorkspaceItemsSchemaProtectsTreeInvariants(t *testing.T) {
 		if !strings.Contains(schema, fragment) {
 			t.Errorf("workspace schema is missing %q", fragment)
 		}
+	}
+}
+
+func TestWorkspaceDeleteRemovesRowsPhysically(t *testing.T) {
+	schema := strings.Join(migrations.SchemaStatements(), "\n")
+
+	if !strings.Contains(schema, "DELETE FROM workspace_items item") {
+		t.Fatal("workspace item deletion must physically delete rows")
+	}
+	if strings.Contains(schema, "SET deleted_at = CURRENT_TIMESTAMP") {
+		t.Fatal("workspace item deletion must not soft delete rows")
 	}
 }
 

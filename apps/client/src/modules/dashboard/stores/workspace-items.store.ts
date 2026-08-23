@@ -59,6 +59,11 @@ type WorkspaceItemsStoreOptions = {
     previousItems: WorkspaceItem[],
     nextItems: WorkspaceItem[],
   ) => void | Promise<void>;
+  onContentCommitted?: (
+    documentId: string,
+    content: string,
+    document: WorkspaceDocumentItem,
+  ) => void | Promise<void>;
 };
 
 export function isWorkspaceDocument(
@@ -124,7 +129,7 @@ export function getWorkspaceRoute(items: WorkspaceItem[], itemId: string) {
   return `/${names.reverse().join("/")}`;
 }
 
-function createItemId(prefix: string) {
+export function createWorkspaceItemId(prefix: string) {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return crypto.randomUUID();
   }
@@ -320,6 +325,17 @@ export function createWorkspaceItemsState<T extends WorkspaceItemsStoreState>(
             ),
           }) as Partial<T>,
       );
+      const committedDocument = get().items.find(
+        (item): item is WorkspaceDocumentItem =>
+          isWorkspaceDocument(item) && item.id === documentId,
+      );
+      if (committedDocument) {
+        void options.onContentCommitted?.(
+          documentId,
+          content,
+          committedDocument,
+        );
+      }
     };
 
     return {
@@ -358,7 +374,7 @@ export function createWorkspaceItemsState<T extends WorkspaceItemsStoreState>(
 
         const timestamp = now();
         const folder: WorkspaceFolderItem = {
-          id: createItemId("folder"),
+          id: createWorkspaceItemId("folder"),
           type: "folder",
           parent_id: parentId,
           name,
@@ -423,7 +439,7 @@ export function createWorkspaceItemsState<T extends WorkspaceItemsStoreState>(
         const trimmedTitle = title?.trim();
         const timestamp = now();
         const document: WorkspaceDocumentItem = {
-          id: createItemId("document"),
+          id: createWorkspaceItemId("document"),
           type: "document",
           parent_id: parentId,
           name: trimmedTitle || UNTITLED_DOCUMENT_TITLE,
@@ -480,17 +496,20 @@ export function createWorkspaceItemsState<T extends WorkspaceItemsStoreState>(
         if (
           !folder ||
           folder.parent_id === null ||
-          !parentId ||
-          !get().items.some(
-            (item) => isWorkspaceFolder(item) && item.id === parentId,
-          )
+          (parentId !== null &&
+            !get().items.some(
+              (item) => isWorkspaceFolder(item) && item.id === parentId,
+            ))
         ) {
           return false;
         }
 
         const movedFolderIds = getDescendantFolderIds(get().items, folderId);
 
-        if (movedFolderIds.has(parentId) || folder.parent_id === parentId) {
+        if (
+          parentId !== null &&
+          (movedFolderIds.has(parentId) || folder.parent_id === parentId)
+        ) {
           return false;
         }
 

@@ -8,6 +8,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react";
+import { Loader2 } from "lucide-react";
 
 import { DocsSidebar } from "@/modules/dashboard/docs-sidebar";
 import { authClient } from "@/lib/auth-client";
@@ -70,6 +71,17 @@ export function DashboardWorkspace() {
   const activeSource = useWorkspaceSessionStore((state) => state.activeSource);
   const localItems = useLocalWorkspaceStore((state) => state.items);
   const cloudItems = useCloudWorkspaceStore((state) => state.items);
+  const hydrateCloudWorkspace = useCloudWorkspaceStore(
+    (state) => state.hydrate,
+  );
+  const cloudIsHydrated = useCloudWorkspaceStore((state) => state.isHydrated);
+  const cloudUserId = useCloudWorkspaceStore((state) => state.userId);
+  const cloudIsHydrating = useCloudWorkspaceStore(
+    (state) => state.isHydrating,
+  );
+  const cloudError = useCloudWorkspaceStore((state) => state.error);
+  const cloudIsSaving = useCloudWorkspaceStore((state) => state.isSaving);
+  const resetCloudWorkspace = useCloudWorkspaceStore((state) => state.reset);
   const hydrateLocalWorkspace = useLocalWorkspaceStore(
     (state) => state.hydrate,
   );
@@ -157,20 +169,50 @@ export function DashboardWorkspace() {
     ? documents.find((document) => document.id === selectedDocumentId)
     : undefined;
 
-  const initialSourceResolvedRef = useRef(false);
-
   useEffect(() => {
-    if (sessionPending || initialSourceResolvedRef.current) {
+    if (sessionPending) {
       return;
     }
 
-    initialSourceResolvedRef.current = true;
     setActiveSourceInStore(session?.user ? "cloud" : "local");
   }, [session?.user, sessionPending, setActiveSourceInStore]);
 
   useEffect(() => {
     void hydrateLocalWorkspace();
   }, [hydrateLocalWorkspace]);
+
+  useEffect(() => {
+    if (sessionPending) {
+      return;
+    }
+
+    if (!session?.user) {
+      if (cloudUserId !== null || cloudIsHydrated || cloudItems.length > 0) {
+        resetCloudWorkspace();
+      }
+      return;
+    }
+
+    if (cloudUserId !== session.user.id) {
+      resetCloudWorkspace();
+      void hydrateCloudWorkspace(session.user.id);
+      return;
+    }
+
+    if (!cloudIsHydrated && !cloudIsHydrating && !cloudError) {
+      void hydrateCloudWorkspace(session.user.id);
+    }
+  }, [
+    cloudError,
+    cloudIsHydrated,
+    cloudIsHydrating,
+    cloudItems.length,
+    cloudUserId,
+    hydrateCloudWorkspace,
+    resetCloudWorkspace,
+    session?.user,
+    sessionPending,
+  ]);
 
   useLayoutEffect(() => {
     const isSmallScreen =
@@ -437,8 +479,14 @@ export function DashboardWorkspace() {
       ) : null}
 
       <main
-        className={`min-w-0 flex-1 ${!selectedDocument ? "h-[calc(100dvh-var(--mobile-dashboard-nav-height))] overflow-hidden pb-0 lg:h-auto lg:overflow-visible" : isMobileFilesSection ? "h-[calc(100dvh-var(--mobile-dashboard-nav-height))] overflow-hidden pb-0 lg:h-auto lg:overflow-visible" : isPreviewMode ? "pb-0" : "pb-20"} lg:pb-0 ${isDesktopSplit ? "lg:h-screen lg:min-h-0" : "lg:h-auto lg:min-h-screen"}`}
+        className={`relative min-w-0 flex-1 ${!selectedDocument ? "h-[calc(100dvh-var(--mobile-dashboard-nav-height))] overflow-hidden pb-0 lg:h-auto lg:overflow-visible" : isMobileFilesSection ? "h-[calc(100dvh-var(--mobile-dashboard-nav-height))] overflow-hidden pb-0 lg:h-auto lg:overflow-visible" : isPreviewMode ? "pb-0" : "pb-20"} lg:pb-0 ${isDesktopSplit ? "lg:h-screen lg:min-h-0" : "lg:h-auto lg:min-h-screen"}`}
       >
+        {activeSource === "cloud" && cloudIsSaving ? (
+          <div className="pointer-events-none absolute top-3 right-4 z-40 flex items-center gap-2 rounded-full border border-border/80 bg-background/90 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur-sm">
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+            Saving to cloud...
+          </div>
+        ) : null}
         <div
           className={`hidden ${selectedDocument ? (isDesktopSplit ? "lg:flex h-full min-h-0 flex-col" : "lg:block") : "lg:flex h-full min-h-0 flex-col"}`}
         >

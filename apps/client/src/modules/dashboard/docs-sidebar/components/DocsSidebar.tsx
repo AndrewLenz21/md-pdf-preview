@@ -1,6 +1,12 @@
 "use client";
 
-import { FilePlus2, FileText, Folder, LibraryBig } from "lucide-react";
+import {
+  FilePlus2,
+  FileText,
+  Folder,
+  LibraryBig,
+  Loader2,
+} from "lucide-react";
 import { useLocale } from "next-intl";
 import { useState } from "react";
 
@@ -20,7 +26,7 @@ import {
   useLocalWorkspaceStore,
   useWorkspaceSessionStore,
 } from "@/modules/dashboard/stores";
-import { transferWorkspaceItem } from "@/modules/dashboard/stores/workspace-transfer";
+import { transferWorkspaceItemBetweenSources } from "@/modules/dashboard/stores/workspace-transfer";
 import { AuthActions } from "@/modules/navigation/components/AuthActions";
 
 import { DocumentSourceToggle } from "./DocumentSourceToggle";
@@ -55,7 +61,7 @@ type FolderActionsState = {
 
 type MarkdownDialogState = {
   source: DocumentSource;
-  parentId: string;
+  parentId: string | null;
   parentName: string;
   name: string;
 };
@@ -97,6 +103,22 @@ function DragPreview({
   );
 }
 
+function getAncestorFolderIds(
+  items: Array<{ id: string; parent_id: string | null }>,
+  parentId: string | null,
+) {
+  const ancestors = new Set<string>();
+  let currentId = parentId;
+
+  while (currentId) {
+    ancestors.add(currentId);
+    currentId =
+      items.find((item) => item.id === currentId)?.parent_id ?? null;
+  }
+
+  return ancestors;
+}
+
 export function DocsSidebar({
   selectedId,
   onSelect,
@@ -134,6 +156,16 @@ export function DocsSidebar({
   );
   const localItems = useLocalWorkspaceStore((state) => state.items);
   const cloudItems = useCloudWorkspaceStore((state) => state.items);
+  const hydrateCloudWorkspace = useCloudWorkspaceStore(
+    (state) => state.hydrate,
+  );
+  const cloudIsHydrated = useCloudWorkspaceStore((state) => state.isHydrated);
+  const cloudIsHydrating = useCloudWorkspaceStore(
+    (state) => state.isHydrating,
+  );
+  const cloudOperation = useCloudWorkspaceStore((state) => state.operation);
+  const cloudError = useCloudWorkspaceStore((state) => state.error);
+  const cloudIsSaving = useCloudWorkspaceStore((state) => state.isSaving);
   const localCollapsedFolderIds = useLocalWorkspaceStore(
     (state) => state.collapsedFolderIds,
   );
@@ -150,51 +182,53 @@ export function DocsSidebar({
     (state) => state.createFolder,
   );
   const createCloudFolder = useCloudWorkspaceStore(
-    (state) => state.createFolder,
+    (state) => state.createFolderRemote,
   );
   const renameLocalFolder = useLocalWorkspaceStore(
     (state) => state.renameFolder,
   );
   const renameCloudFolder = useCloudWorkspaceStore(
-    (state) => state.renameFolder,
+    (state) => state.renameFolderRemote,
   );
   const deleteLocalFolder = useLocalWorkspaceStore(
     (state) => state.deleteFolder,
   );
   const deleteCloudFolder = useCloudWorkspaceStore(
-    (state) => state.deleteFolder,
+    (state) => state.deleteFolderRemote,
   );
   const createLocalDocument = useLocalWorkspaceStore(
     (state) => state.createDocument,
   );
   const createCloudDocument = useCloudWorkspaceStore(
-    (state) => state.createDocument,
+    (state) => state.createDocumentRemote,
   );
   const renameLocalDocument = useLocalWorkspaceStore(
     (state) => state.renameDocument,
   );
   const renameCloudDocument = useCloudWorkspaceStore(
-    (state) => state.renameDocument,
+    (state) => state.renameDocumentRemote,
   );
   const moveLocalDocument = useLocalWorkspaceStore(
     (state) => state.moveDocument,
   );
   const moveCloudDocument = useCloudWorkspaceStore(
-    (state) => state.moveDocument,
+    (state) => state.moveDocumentRemote,
   );
   const moveLocalFolder = useLocalWorkspaceStore((state) => state.moveFolder);
-  const moveCloudFolder = useCloudWorkspaceStore((state) => state.moveFolder);
+  const moveCloudFolder = useCloudWorkspaceStore(
+    (state) => state.moveFolderRemote,
+  );
   const toggleLocalFavorite = useLocalWorkspaceStore(
     (state) => state.toggleFavorite,
   );
   const toggleCloudFavorite = useCloudWorkspaceStore(
-    (state) => state.toggleFavorite,
+    (state) => state.toggleFavoriteRemote,
   );
   const deleteLocalDocument = useLocalWorkspaceStore(
     (state) => state.deleteDocument,
   );
   const deleteCloudDocument = useCloudWorkspaceStore(
-    (state) => state.deleteDocument,
+    (state) => state.deleteDocumentRemote,
   );
   const flushLocalPendingContent = useLocalWorkspaceStore(
     (state) => state.flushPendingContent,
@@ -202,14 +236,12 @@ export function DocsSidebar({
   const flushCloudPendingContent = useCloudWorkspaceStore(
     (state) => state.flushPendingContent,
   );
-  const flushAllLocalPendingContent = useLocalWorkspaceStore(
-    (state) => state.flushAllPendingContent,
-  );
-  const flushAllCloudPendingContent = useCloudWorkspaceStore(
-    (state) => state.flushAllPendingContent,
-  );
   const setActiveSource = (source: DocumentSource) => {
-    if (source === activeSource) {
+    if (
+      source === activeSource ||
+      (activeSource === "cloud" && cloudIsHydrating) ||
+      cloudOperation === "transfer"
+    ) {
       return;
     }
 
@@ -229,7 +261,7 @@ export function DocsSidebar({
     icon: DocumentFolderIcon,
   ) =>
     source === "local"
-      ? createLocalFolder(name, parentId, color, icon)
+      ? Promise.resolve(createLocalFolder(name, parentId, color, icon))
       : createCloudFolder(name, parentId, color, icon);
   const renameFolder = (
     source: DocumentSource,
@@ -238,58 +270,53 @@ export function DocsSidebar({
     color: DocumentFolderColor,
     icon: DocumentFolderIcon,
   ) =>
-    (source === "local" ? renameLocalFolder : renameCloudFolder)(
-      folderId,
-      name,
-      color,
-      icon,
-    );
+    source === "local"
+      ? Promise.resolve(renameLocalFolder(folderId, name, color, icon))
+      : renameCloudFolder(folderId, name, color, icon);
   const deleteFolder = (source: DocumentSource, folderId: string) =>
-    (source === "local" ? deleteLocalFolder : deleteCloudFolder)(folderId);
+    source === "local"
+      ? Promise.resolve(deleteLocalFolder(folderId))
+      : deleteCloudFolder(folderId);
   const createDocument = (
     source: DocumentSource,
     title: string | undefined,
-    parentId: string,
+    parentId: string | null,
   ) =>
-    (source === "local" ? createLocalDocument : createCloudDocument)(
-      title,
-      parentId,
-    );
+    source === "local"
+      ? Promise.resolve(createLocalDocument(title, parentId ?? undefined))
+      : createCloudDocument(title, parentId);
   const renameDocument = (
     source: DocumentSource,
     documentId: string,
     title: string,
   ) =>
-    (source === "local" ? renameLocalDocument : renameCloudDocument)(
-      documentId,
-      title,
-    );
+    source === "local"
+      ? Promise.resolve(renameLocalDocument(documentId, title))
+      : renameCloudDocument(documentId, title);
   const moveDocument = (
     source: DocumentSource,
     documentId: string,
     folderId: string | null,
   ) =>
-    (source === "local" ? moveLocalDocument : moveCloudDocument)(
-      documentId,
-      folderId,
-    );
+    source === "local"
+      ? Promise.resolve(moveLocalDocument(documentId, folderId))
+      : moveCloudDocument(documentId, folderId);
   const moveFolder = (
     source: DocumentSource,
     folderId: string,
     parentId: string | null,
   ) =>
-    (source === "local" ? moveLocalFolder : moveCloudFolder)(
-      folderId,
-      parentId,
-    );
+    source === "local"
+      ? Promise.resolve(moveLocalFolder(folderId, parentId))
+      : moveCloudFolder(folderId, parentId);
   const toggleFavorite = (source: DocumentSource, documentId: string) =>
-    (source === "local" ? toggleLocalFavorite : toggleCloudFavorite)(
-      documentId,
-    );
+    source === "local"
+      ? Promise.resolve(toggleLocalFavorite(documentId))
+      : toggleCloudFavorite(documentId);
   const deleteDocument = (source: DocumentSource, documentId: string) =>
-    (source === "local" ? deleteLocalDocument : deleteCloudDocument)(
-      documentId,
-    );
+    source === "local"
+      ? Promise.resolve(deleteLocalDocument(documentId)).then(() => true)
+      : deleteCloudDocument(documentId);
   const toggleFolderExpanded = (source: DocumentSource, folderId: string) =>
     (source === "local"
       ? toggleLocalFolderExpanded
@@ -297,6 +324,10 @@ export function DocsSidebar({
   const displaySource = dragPreviewSource ?? activeSource;
   const canUseCloud = !sessionPending && Boolean(session?.user);
   const isCloudUnauthenticated = displaySource === "cloud" && !canUseCloud;
+  const cloudBusy =
+    cloudIsHydrating ||
+    cloudOperation !== null ||
+    cloudIsSaving;
   const sourceItems = displaySource === "local" ? localItems : cloudItems;
   const sourceDocuments = sourceItems.filter(
     (item): item is WorkspaceDocumentItem =>
@@ -315,6 +346,7 @@ export function DocsSidebar({
     dragPosition,
     dragPreviewItem,
     dragPreviewPhase,
+    dropTarget,
     dropTargetFolderId,
     startLongPress,
     suppressClick,
@@ -328,7 +360,7 @@ export function DocsSidebar({
         target.source === "local"
           ? useLocalWorkspaceStore.getState().items
           : useCloudWorkspaceStore.getState().items;
-      const destinationFolderId =
+      const destinationParentId =
         target.kind === "folder"
           ? target.folderId
           : destinationItems.find(
@@ -336,43 +368,35 @@ export function DocsSidebar({
                 isWorkspaceFolder(candidate) && candidate.parent_id === null,
             )?.id;
 
-      if (!destinationFolderId) {
-        return false;
-      }
+      const resolvedDestinationParentId = destinationParentId ?? null;
 
       if (item.source === target.source) {
-        return item.kind === "folder"
-          ? moveFolder(item.source, item.id, destinationFolderId)
-          : (moveDocument(item.source, item.id, destinationFolderId), true);
+        if (item.kind === "folder") {
+          void moveFolder(
+            item.source,
+            item.id,
+            resolvedDestinationParentId,
+          ).catch(() => undefined);
+        } else {
+          void moveDocument(
+            item.source,
+            item.id,
+            resolvedDestinationParentId,
+          ).catch(() => undefined);
+        }
+        return true;
       }
 
-      (item.source === "local"
-        ? flushAllLocalPendingContent
-        : flushAllCloudPendingContent)();
-      const sourceItems =
-        item.source === "local"
-          ? useLocalWorkspaceStore.getState().items
-          : useCloudWorkspaceStore.getState().items;
-      const transfer = transferWorkspaceItem({
+      void transferWorkspaceItemBetweenSources({
         itemId: item.id,
-        sourceItems,
-        destinationItems,
-        destinationParentId: destinationFolderId,
+        source: item.source,
+        destination: target.source,
+        destinationParentId: resolvedDestinationParentId,
+      }).then((transferred) => {
+        if (transferred) {
+          setActiveSourceInSession(target.source);
+        }
       });
-
-      if (!transfer) {
-        return false;
-      }
-
-      if (item.source === "local") {
-        useLocalWorkspaceStore.getState().setItems(transfer.sourceItems);
-        useCloudWorkspaceStore.getState().setItems(transfer.destinationItems);
-      } else {
-        useCloudWorkspaceStore.getState().setItems(transfer.sourceItems);
-        useLocalWorkspaceStore.getState().setItems(transfer.destinationItems);
-      }
-
-      setActiveSourceInSession(target.source);
 
       return true;
     },
@@ -393,28 +417,36 @@ export function DocsSidebar({
       setDragPreviewSource(null);
     },
   });
+  const rootDropActive = Boolean(
+    dropTarget &&
+      (dropTarget.kind === "root" || dropTarget.kind === "source-toggle") &&
+      dropTarget.source === displaySource &&
+      (dropTarget.source !== "cloud" || canUseCloud),
+  );
 
   const handleDelete = (id: string) => {
     if (sourceDocuments.length <= 1) {
       return;
     }
 
-    deleteDocument(displaySource, id);
-
-    if (displaySource === "local") {
-      onDelete?.(id);
-    }
+    void deleteDocument(displaySource, id)
+      .then((deleted) => {
+        if (deleted) {
+          onDelete?.(id);
+        }
+      })
+      .catch(() => undefined);
   };
 
   const handleCreateDocument = (
-    folderId: string,
+    folderId: string | null,
     source: DocumentSource = displaySource,
   ) => {
     const sourceItems = source === "local" ? localItems : cloudItems;
     const parentName =
       sourceItems.find(
         (item): item is WorkspaceFolderItem =>
-          isWorkspaceFolder(item) && item.id === folderId,
+           isWorkspaceFolder(item) && folderId !== null && item.id === folderId,
       )?.name ?? "Workspace";
 
     setMarkdownDialog({
@@ -426,13 +458,11 @@ export function DocsSidebar({
   };
 
   const handleCreateRootDocument = () => {
-    if (rootFolderId) {
-      handleCreateDocument(rootFolderId);
-    }
+    handleCreateDocument(rootFolderId ?? null);
   };
 
   const handleCreateFolder = (
-    parentId: string,
+    parentId: string | null,
     source: DocumentSource = displaySource,
   ) => {
     setFolderDialog({
@@ -501,17 +531,20 @@ export function DocsSidebar({
       return;
     }
 
-    const id = createDocument(
+    void createDocument(
       markdownDialog.source,
       markdownDialog.name,
       markdownDialog.parentId,
-    );
-
-    if (markdownDialog.source === "local") {
-      onSelect(id);
-    }
-
-    setMarkdownDialog(null);
+    )
+      .then((id) => {
+        if (id) {
+          onSelect(id);
+        }
+        if (id) {
+          setMarkdownDialog(null);
+        }
+      })
+      .catch(() => undefined);
   };
 
   const handleDeleteFolder = () => {
@@ -519,24 +552,43 @@ export function DocsSidebar({
       return;
     }
 
-    const deleted = deleteFolder(
+    void deleteFolder(
       deleteFolderDialog.source,
       deleteFolderDialog.folder.id,
-    );
+    )
+      .then((deleted) => {
+        if (!deleted) {
+          return;
+        }
 
-    if (
-      deleted &&
-      deleteFolderDialog.source === "local" &&
-      selectedId &&
-      localItems.find(
-        (item): item is WorkspaceDocumentItem =>
-          isWorkspaceDocument(item) && item.id === selectedId,
-      )?.deleted_at
-    ) {
-      onDelete?.(selectedId);
-    }
+        if (deleteFolderDialog.source === "local") {
+          if (
+            selectedId &&
+            localItems.find(
+              (item): item is WorkspaceDocumentItem =>
+                isWorkspaceDocument(item) && item.id === selectedId,
+            )?.deleted_at
+          ) {
+            onDelete?.(selectedId);
+          }
+        } else if (
+          selectedId &&
+          cloudItems.some(
+            (item) =>
+              isWorkspaceDocument(item) &&
+              item.id === selectedId &&
+              (item.parent_id === deleteFolderDialog.folder.id ||
+                getAncestorFolderIds(cloudItems, item.parent_id).has(
+                  deleteFolderDialog.folder.id,
+                )),
+          )
+        ) {
+          onDelete?.(selectedId);
+        }
 
-    setDeleteFolderDialog(null);
+        setDeleteFolderDialog(null);
+      })
+      .catch(() => undefined);
   };
 
   const handleEditFolder = (folder: WorkspaceFolderItem) => {
@@ -557,28 +609,32 @@ export function DocsSidebar({
     }
 
     if (folderDialog.mode === "create") {
-      const createdFolderId = createFolder(
+      void createFolder(
         folderDialog.source,
         folderDialog.name,
         folderDialog.parentId,
         folderDialog.color,
         folderDialog.icon,
-      );
-
-      if (!createdFolderId) {
-        return;
-      }
+      )
+        .then((createdFolderId) => {
+          if (createdFolderId) {
+            setFolderDialog(null);
+          }
+        })
+        .catch(() => undefined);
+      return;
     } else if (folderDialog.folderId) {
-      renameFolder(
+      void renameFolder(
         folderDialog.source,
         folderDialog.folderId,
         folderDialog.name,
         folderDialog.color,
         folderDialog.icon,
-      );
+      )
+        .then(() => setFolderDialog(null))
+        .catch(() => undefined);
+      return;
     }
-
-    setFolderDialog(null);
   };
 
   return (
@@ -606,7 +662,10 @@ export function DocsSidebar({
           <button
             type="button"
             aria-label="Create new document"
-            disabled={isCloudUnauthenticated}
+            disabled={
+              isCloudUnauthenticated ||
+              (displaySource === "cloud" && cloudBusy)
+            }
             className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
             onClick={handleCreateRootDocument}
           >
@@ -635,11 +694,49 @@ export function DocsSidebar({
               onChange={setActiveSource}
               dragging={draggingItem !== null}
               cloudBlocked={cloudDropBlocked}
+              disabled={cloudBusy}
             />
           </div>
         </div>
+        {canUseCloud && (displaySource === "cloud" || cloudError) ? (
+          <div
+            aria-live="polite"
+            className="mx-2 mb-2 rounded-lg border border-border/70 bg-background/50 px-3 py-2 text-xs text-muted-foreground"
+          >
+            {cloudIsHydrating || (!cloudIsHydrated && !cloudError) ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                Loading cloud files...
+              </span>
+            ) : cloudOperation === "transfer" ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                Transferring workspace items...
+              </span>
+            ) : cloudIsSaving ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                Saving cloud changes...
+              </span>
+            ) : cloudError ? (
+              <div className="flex items-center justify-between gap-3">
+                <span className="min-w-0">{cloudError.message}</span>
+                <button
+                  type="button"
+                  className="shrink-0 font-semibold text-foreground hover:underline"
+                  onClick={() => void hydrateCloudWorkspace()}
+                >
+                  Retry
+                </button>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
       </div>
-      <div className="docs-sidebar-scroll min-h-0 flex-1 overflow-y-auto px-3 pb-5 pt-2">
+      <div
+        className={`docs-sidebar-scroll min-h-0 flex-1 overflow-y-auto px-3 pb-5 pt-2 ${displaySource === "cloud" && cloudBusy ? "pointer-events-none opacity-60" : ""}`}
+        aria-busy={displaySource === "cloud" && cloudBusy}
+      >
         <FolderTree
           items={sourceItems}
           source={displaySource}
@@ -651,6 +748,9 @@ export function DocsSidebar({
           onToggleFavorite={(id) => toggleFavorite(displaySource, id)}
           onCreateDocument={handleCreateDocument}
           onCreateFolder={handleCreateFolder}
+          onCreateRootDocument={handleCreateRootDocument}
+          onCreateRootFolder={() => handleCreateFolder(null)}
+          rootDropActive={rootDropActive}
           onEditFolder={handleEditFolder}
           collapsedFolderIds={collapsedFolderIds}
           onToggleFolder={(folderId) =>

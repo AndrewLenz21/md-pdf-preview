@@ -176,25 +176,47 @@ function flattenFolders(
 
 function EmptyWorkspaceState({
   cloudUnauthenticated,
+  isDropTarget,
+  source,
+  onCreateDocument,
+  onCreateFolder,
 }: {
   cloudUnauthenticated: boolean;
+  isDropTarget: boolean;
+  source: DocumentSource;
+  onCreateDocument?: () => void;
+  onCreateFolder?: () => void;
 }) {
+  const isCloud = source === "cloud";
+
   return (
-    <div className="flex min-h-64 flex-col items-center justify-center px-6 py-16 text-center">
-      <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-border/70 bg-accent/50 text-primary shadow-sm">
-        {cloudUnauthenticated ? (
+    <div
+      className={`flex min-h-64 flex-col items-center justify-center rounded-2xl px-6 py-16 text-center transition-[background-color,border-color,box-shadow] ${isDropTarget ? "border-2 border-dashed border-primary/60 bg-primary/5 shadow-inner" : "border border-transparent"}`}
+    >
+      <span
+        className={`mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-border/70 bg-accent/50 text-primary shadow-sm ${isDropTarget ? "scale-105 border-primary/60 bg-primary/10" : ""}`}
+      >
+        {isDropTarget && isCloud ? (
+          <Cloud className="h-5 w-5" strokeWidth={1.7} />
+        ) : cloudUnauthenticated ? (
           <Cloud className="h-5 w-5" strokeWidth={1.7} />
         ) : (
           <Files className="h-5 w-5" strokeWidth={1.7} />
         )}
       </span>
       <p className="text-sm font-semibold text-foreground">
-        {cloudUnauthenticated
+        {isDropTarget
+          ? isCloud
+            ? "Drop to save your first Cloud item"
+            : "Drop to add your first item"
+          : cloudUnauthenticated
           ? "Sync your workspace"
           : "Your workspace is empty"}
       </p>
       <p className="mt-1 max-w-[220px] text-xs leading-5 text-muted-foreground">
-        {cloudUnauthenticated
+        {isDropTarget
+          ? "Release the file or folder here to continue."
+          : cloudUnauthenticated
           ? "Sign in to sync your Markdown files across devices."
           : "Create your first folder or Markdown file to get started."}
       </p>
@@ -212,6 +234,28 @@ function EmptyWorkspaceState({
           >
             Sign Up
           </Link>
+        </div>
+      ) : null}
+      {!cloudUnauthenticated && (onCreateDocument || onCreateFolder) ? (
+        <div className="mt-5 flex items-center gap-2">
+          {onCreateDocument ? (
+            <button
+              type="button"
+              className="rounded-lg border border-border px-3 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-accent"
+              onClick={onCreateDocument}
+            >
+              New file
+            </button>
+          ) : null}
+          {onCreateFolder ? (
+            <button
+              type="button"
+              className="rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+              onClick={onCreateFolder}
+            >
+              New folder
+            </button>
+          ) : null}
         </div>
       ) : null}
     </div>
@@ -266,6 +310,9 @@ export function FolderTree({
   onToggleFavorite,
   onCreateDocument,
   onCreateFolder,
+  onCreateRootDocument,
+  onCreateRootFolder,
+  rootDropActive,
   onEditFolder,
   collapsedFolderIds,
   onToggleFolder,
@@ -287,6 +334,9 @@ export function FolderTree({
   onToggleFavorite: (id: string) => void;
   onCreateDocument: (folderId: string) => void;
   onCreateFolder: (parentId: string) => void;
+  onCreateRootDocument?: () => void;
+  onCreateRootFolder?: () => void;
+  rootDropActive: boolean;
   onEditFolder: (folder: WorkspaceFolderItem) => void;
   collapsedFolderIds: string[];
   onToggleFolder: (folderId: string) => void;
@@ -326,10 +376,6 @@ export function FolderTree({
 
   useTreeLayoutAnimation(treeRef, layoutKey);
 
-  if (!visibleDocuments.length && !items.some(isWorkspaceFolder)) {
-    return <EmptyWorkspaceState cloudUnauthenticated={cloudUnauthenticated} />;
-  }
-
   return (
     <div
       ref={treeRef}
@@ -337,58 +383,72 @@ export function FolderTree({
       data-dnd-root-drop="true"
       data-dnd-source={source}
     >
-      {rootDocuments.map((document) => (
-        <DocumentItem
-          key={document.id}
-          documentId={document.id}
-          displayTitle={document.name}
-          favorite={document.favorite === true}
-          selected={document.id === selectedId}
-          onSelect={() => onSelect(document.id)}
-          onRename={(title) => onRename(document.id, title)}
-          onDelete={() => onDelete(document.id)}
-          onMove={(folderId) => onMove(document.id, folderId)}
-          onToggleFavorite={() => onToggleFavorite(document.id)}
-          folderId={null}
-          folderOptions={folderOptions}
-          mobile={mobile}
-          dragging={
-            draggingItem?.kind === "document" && draggingItem.id === document.id
-          }
-          onDragPointerDown={(event) =>
-            onDragPointerDown({ kind: "document", id: document.id }, event)
-          }
-          onDragClickCapture={onDragClickCapture}
-        />
-      ))}
-      {rootFolders.map((folder) => (
-        <FolderNode
-          key={folder.id}
-          folder={folder}
-          depth={0}
-          items={items}
-          source={source}
-          selectedId={selectedId}
-          folderOptions={folderOptions}
-          onSelect={onSelect}
-          onRename={onRename}
-          onDelete={onDelete}
-          onMove={onMove}
-          onToggleFavorite={onToggleFavorite}
-          onCreateDocument={onCreateDocument}
-          onCreateFolder={onCreateFolder}
-          onEditFolder={onEditFolder}
-          collapsedFolderIds={collapsedFolderIds}
-          onToggleFolder={onToggleFolder}
+      {!visibleDocuments.length && !items.some(isWorkspaceFolder) ? (
+        <EmptyWorkspaceState
           cloudUnauthenticated={cloudUnauthenticated}
-          mobile={mobile}
-          onOpenFolderActions={onOpenFolderActions}
-          draggingItem={draggingItem}
-          dropTargetFolderId={dropTargetFolderId}
-          onDragPointerDown={onDragPointerDown}
-          onDragClickCapture={onDragClickCapture}
+          isDropTarget={rootDropActive}
+          source={source}
+          onCreateDocument={onCreateRootDocument}
+          onCreateFolder={onCreateRootFolder}
         />
-      ))}
+      ) : (
+        <>
+          {rootDocuments.map((document) => (
+            <DocumentItem
+              key={document.id}
+              documentId={document.id}
+              displayTitle={document.name}
+              favorite={document.favorite === true}
+              selected={document.id === selectedId}
+              onSelect={() => onSelect(document.id)}
+              onRename={(title) => onRename(document.id, title)}
+              onDelete={() => onDelete(document.id)}
+              onMove={(folderId) => onMove(document.id, folderId)}
+              onToggleFavorite={() => onToggleFavorite(document.id)}
+              folderId={null}
+              folderOptions={folderOptions}
+              mobile={mobile}
+              dragging={
+                draggingItem?.kind === "document" &&
+                draggingItem.id === document.id
+              }
+              onDragPointerDown={(event) =>
+                onDragPointerDown({ kind: "document", id: document.id }, event)
+              }
+              onDragClickCapture={onDragClickCapture}
+            />
+          ))}
+          {rootFolders.map((folder) => (
+            <FolderNode
+              key={folder.id}
+              folder={folder}
+              depth={0}
+              items={items}
+              source={source}
+              selectedId={selectedId}
+              folderOptions={folderOptions}
+              onSelect={onSelect}
+              onRename={onRename}
+              onDelete={onDelete}
+              onMove={onMove}
+              onToggleFavorite={onToggleFavorite}
+              onCreateDocument={onCreateDocument}
+              onCreateFolder={onCreateFolder}
+              onEditFolder={onEditFolder}
+              collapsedFolderIds={collapsedFolderIds}
+              onToggleFolder={onToggleFolder}
+              cloudUnauthenticated={cloudUnauthenticated}
+              mobile={mobile}
+              onOpenFolderActions={onOpenFolderActions}
+              rootDropActive={rootDropActive}
+              draggingItem={draggingItem}
+              dropTargetFolderId={dropTargetFolderId}
+              onDragPointerDown={onDragPointerDown}
+              onDragClickCapture={onDragClickCapture}
+            />
+          ))}
+        </>
+      )}
     </div>
   );
 }
@@ -413,6 +473,7 @@ function FolderNode({
   cloudUnauthenticated,
   mobile,
   onOpenFolderActions,
+  rootDropActive,
   draggingItem,
   dropTargetFolderId,
   onDragPointerDown,
@@ -437,6 +498,7 @@ function FolderNode({
   cloudUnauthenticated: boolean;
   mobile: boolean;
   onOpenFolderActions: (folder: WorkspaceFolderItem) => void;
+  rootDropActive: boolean;
   draggingItem: LongPressDragItem | null;
   dropTargetFolderId: string | null;
   onDragPointerDown: (
@@ -603,7 +665,11 @@ function FolderNode({
       </div>
       {expanded ? (
         !hasChildren && depth === 0 ? (
-          <EmptyWorkspaceState cloudUnauthenticated={cloudUnauthenticated} />
+          <EmptyWorkspaceState
+            cloudUnauthenticated={cloudUnauthenticated}
+            isDropTarget={rootDropActive}
+            source={source}
+          />
         ) : (
           <div className="relative">
             <span
@@ -662,6 +728,7 @@ function FolderNode({
                 cloudUnauthenticated={cloudUnauthenticated}
                 mobile={mobile}
                 onOpenFolderActions={onOpenFolderActions}
+                rootDropActive={rootDropActive}
                 draggingItem={draggingItem}
                 dropTargetFolderId={dropTargetFolderId}
                 onDragPointerDown={onDragPointerDown}

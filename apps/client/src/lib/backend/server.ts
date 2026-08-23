@@ -43,14 +43,16 @@ class AppServer {
       !(body instanceof FormData) &&
       !(body instanceof Blob) &&
       !(body instanceof ArrayBuffer);
+    const requestHeaders = new Headers(init?.headers);
+
+    if (isJSONBody && !requestHeaders.has("Content-Type")) {
+      requestHeaders.set("Content-Type", "application/json");
+    }
 
     return {
       ...init,
       method,
-      headers: {
-        ...(isJSONBody ? { "Content-Type": "application/json" } : {}),
-        ...init?.headers,
-      },
+      headers: requestHeaders,
       body: isJSONBody ? JSON.stringify(body) : (body as BodyInit | null | undefined),
     };
   }

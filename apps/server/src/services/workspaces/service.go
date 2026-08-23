@@ -14,11 +14,29 @@ import (
 )
 
 var ErrWorkspaceDatabaseUnavailable = errors.New("workspace PostgreSQL repository is not initialized")
+var ErrWorkspaceItemNotDocument = errors.New("workspace item is not a document")
+var ErrWorkspaceDocumentObjectKeyInvalid = errors.New("workspace document object key is invalid")
+
+type workspaceRepository interface {
+	Create(context.Context, string, models.CreateWorkspaceItemParams) (models.WorkspaceItem, error)
+	List(context.Context, string) ([]models.WorkspaceItem, error)
+	Get(context.Context, string, string) (models.WorkspaceItem, error)
+	Update(context.Context, string, models.UpdateWorkspaceItemParams) (models.WorkspaceItem, error)
+	CompleteDocumentUpload(context.Context, string, models.CompleteDocumentUploadParams) (models.WorkspaceItem, error)
+	CollectSubtreeR2ObjectKeys(context.Context, string, string) ([]string, error)
+	Delete(context.Context, string, string) (int, error)
+}
+
+type workspaceCloudStorage interface {
+	GenerateDocumentUploadURL(context.Context, string, string, string) (cloudflare_service.PresignedDocumentURL, error)
+	GenerateDocumentDownloadURL(context.Context, string, string) (cloudflare_service.PresignedDocumentURL, error)
+	DeleteObjects(context.Context, []string) error
+}
 
 type Service struct {
 	ctx   context.Context
-	repo  *workspace_repository.WorkspaceItemRepository
-	cloud *cloudflare_service.Service
+	repo  workspaceRepository
+	cloud workspaceCloudStorage
 }
 
 // 🏗️ New creates a workspace service from the initialized application resources.
@@ -39,15 +57,19 @@ func NewWithDependencies(
 	schema string,
 	cloud *cloudflare_service.Service,
 ) *Service {
-	var repo *workspace_repository.WorkspaceItemRepository
+	var repo workspaceRepository
 	if database != nil {
 		repo = workspace_repository.NewWorkspaceItemRepository(database, schema)
+	}
+	var storage workspaceCloudStorage
+	if cloud != nil {
+		storage = cloud
 	}
 
 	return &Service{
 		ctx:   ctx,
 		repo:  repo,
-		cloud: cloud,
+		cloud: storage,
 	}
 }
 
@@ -119,10 +141,24 @@ func (service *Service) Update(
 	return item, nil
 }
 
-// 🗑️ Delete soft deletes an item and its descendants.
+// Delete removes all R2 objects in an item subtree before physically deleting its rows.
 func (service *Service) Delete(userID, itemID string) (int, error) {
 	if err := service.requireRepository(); err != nil {
 		return 0, err
+	}
+
+	objectKeys, err := service.repo.CollectSubtreeR2ObjectKeys(service.ctx, userID, itemID)
+	if err != nil {
+		return 0, fmt.Errorf("collect workspace item objects: %w", err)
+	}
+
+	if len(objectKeys) > 0 {
+		if service.cloud == nil {
+			return 0, cloudflare_service.ErrStorageNotInitialized
+		}
+		if err := service.cloud.DeleteObjects(service.ctx, objectKeys); err != nil {
+			return 0, fmt.Errorf("delete workspace item objects: %w", err)
+		}
 	}
 
 	deletedCount, err := service.repo.Delete(service.ctx, userID, itemID)
@@ -131,6 +167,48 @@ func (service *Service) Delete(userID, itemID string) (int, error) {
 	}
 
 	return deletedCount, nil
+}
+
+// CompleteDocumentUpload records the R2 metadata after a direct upload succeeds.
+func (service *Service) CompleteDocumentUpload(
+	userID string,
+	documentID string,
+	params models.CompleteDocumentUploadParams,
+) (models.WorkspaceItem, error) {
+	params.DocumentID = documentID
+	params.R2ObjectKey = strings.TrimSpace(params.R2ObjectKey)
+	params.ContentType = strings.TrimSpace(params.ContentType)
+	params.ContentHash = strings.TrimSpace(params.ContentHash)
+
+	if err := validateCompleteUploadParams(params); err != nil {
+		return models.WorkspaceItem{}, err
+	}
+	if err := service.requireRepository(); err != nil {
+		return models.WorkspaceItem{}, err
+	}
+
+	item, err := service.repo.Get(service.ctx, userID, documentID)
+	if err != nil {
+		return models.WorkspaceItem{}, fmt.Errorf("complete document upload: %w", err)
+	}
+	if item.Type != models.WorkspaceItemTypeDocument {
+		return models.WorkspaceItem{}, ErrWorkspaceItemNotDocument
+	}
+
+	expectedObjectKey, err := cloudflare_service.BuildDocumentObjectKey(userID, documentID)
+	if err != nil {
+		return models.WorkspaceItem{}, fmt.Errorf("complete document upload: %w", err)
+	}
+	if params.R2ObjectKey != expectedObjectKey {
+		return models.WorkspaceItem{}, ErrWorkspaceDocumentObjectKeyInvalid
+	}
+
+	completedItem, err := service.repo.CompleteDocumentUpload(service.ctx, userID, params)
+	if err != nil {
+		return models.WorkspaceItem{}, fmt.Errorf("complete document upload: %w", err)
+	}
+
+	return completedItem, nil
 }
 
 // ☁️ GenerateDocumentUploadURL verifies the item before exposing an R2 URL.
@@ -144,7 +222,7 @@ func (service *Service) GenerateDocumentUploadURL(
 		return cloudflare_service.PresignedDocumentURL{}, err
 	}
 	if item.Type != models.WorkspaceItemTypeDocument {
-		return cloudflare_service.PresignedDocumentURL{}, errors.New("workspace item is not a document")
+		return cloudflare_service.PresignedDocumentURL{}, ErrWorkspaceItemNotDocument
 	}
 	if service.cloud == nil {
 		return cloudflare_service.PresignedDocumentURL{}, cloudflare_service.ErrStorageNotInitialized
@@ -168,7 +246,7 @@ func (service *Service) GenerateDocumentDownloadURL(
 		return cloudflare_service.PresignedDocumentURL{}, err
 	}
 	if item.Type != models.WorkspaceItemTypeDocument {
-		return cloudflare_service.PresignedDocumentURL{}, errors.New("workspace item is not a document")
+		return cloudflare_service.PresignedDocumentURL{}, ErrWorkspaceItemNotDocument
 	}
 	if service.cloud == nil {
 		return cloudflare_service.PresignedDocumentURL{}, cloudflare_service.ErrStorageNotInitialized
@@ -197,6 +275,26 @@ func validateCreateParams(params models.CreateWorkspaceItemParams) error {
 
 	if params.Type != models.WorkspaceItemTypeFolder && params.Type != models.WorkspaceItemTypeDocument {
 		return errors.New("workspace item type is invalid")
+	}
+
+	return nil
+}
+
+func validateCompleteUploadParams(params models.CompleteDocumentUploadParams) error {
+	if params.R2ObjectKey == "" {
+		return errors.New("document object key cannot be empty")
+	}
+	if params.ContentType == "" {
+		return errors.New("document content type cannot be empty")
+	}
+	if params.SizeBytes < 0 {
+		return errors.New("document size is invalid")
+	}
+	if params.ContentHash == "" {
+		return errors.New("document content hash cannot be empty")
+	}
+	if params.ContentRevision < 0 {
+		return errors.New("document content revision is invalid")
 	}
 
 	return nil

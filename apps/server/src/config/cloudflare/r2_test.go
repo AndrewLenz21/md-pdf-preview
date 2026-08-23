@@ -2,6 +2,8 @@ package cloudflare
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"testing"
 
@@ -83,5 +85,49 @@ func TestPresignURLsUseConfiguredR2Endpoint(t *testing.T) {
 
 	if parsedDownloadURL.Host != "documents.account.r2.cloudflarestorage.com" {
 		t.Fatalf("unexpected download URL host: %s", parsedDownloadURL.Host)
+	}
+}
+
+func TestPutObjectOmitsEmptyContentEncoding(t *testing.T) {
+	var requestHeaders http.Header
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		requestHeaders = request.Header.Clone()
+		writer.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	cfg, err := awsconfig.LoadDefaultConfig(
+		context.Background(),
+		awsconfig.WithCredentialsProvider(
+			credentials.NewStaticCredentialsProvider("access-key", "secret-key", ""),
+		),
+		awsconfig.WithRegion("auto"),
+	)
+	if err != nil {
+		t.Fatalf("load AWS SDK config: %v", err)
+	}
+
+	client := s3.NewFromConfig(cfg, func(options *s3.Options) {
+		options.BaseEndpoint = aws.String(server.URL)
+		options.UsePathStyle = true
+	})
+	storage := &R2Storage{Client: client, BucketName: "documents"}
+
+	if err := storage.PutObject(
+		context.Background(),
+		"documents",
+		"logs/test.json.gz",
+		[]byte("compressed log"),
+		"application/gzip",
+		"",
+	); err != nil {
+		t.Fatalf("put object: %v", err)
+	}
+
+	if encoding := requestHeaders.Get("Content-Encoding"); encoding != "" {
+		t.Fatalf("Content-Encoding should be omitted, got %q", encoding)
+	}
+	if contentType := requestHeaders.Get("Content-Type"); contentType != "application/gzip" {
+		t.Fatalf("unexpected Content-Type: %q", contentType)
 	}
 }

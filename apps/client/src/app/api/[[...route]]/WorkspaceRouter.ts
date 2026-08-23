@@ -101,6 +101,19 @@ workspaceRouter.post("/documents/:documentID/upload-url", async (context) => {
   );
 });
 
+workspaceRouter.post("/documents/:documentID/upload-complete", async (context) => {
+  const body = await readJSONBody(context);
+  if (!body.ok) {
+    return body.response;
+  }
+
+  return proxyBackend(context, "POST /workspace/documents/:documentID/upload-complete", () =>
+    appServer
+      .withUser(context.get("userID"))
+      .post(`workspace/documents/${context.req.param("documentID")}/upload-complete`, body.value),
+  );
+});
+
 workspaceRouter.get("/documents/:documentID/download-url", (context) =>
   proxyBackend(context, "GET /workspace/documents/:documentID/download-url", () =>
     appServer

@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/andrew/md-pdf-preview/server/src/config/logging"
 	"github.com/andrew/md-pdf-preview/server/src/config/postgres"
 	"github.com/andrew/md-pdf-preview/server/src/models"
 	request_log_repository "github.com/andrew/md-pdf-preview/server/src/repositories/request_logs"
@@ -84,7 +85,7 @@ func (service *Service) Start() {
 		service.wait.Add(1)
 		go service.worker()
 	}
-	fmt.Printf("[logger] started with %d workers and queue size %d\n", service.workers, cap(service.queue))
+	logging.Printf("✅ [logger] started workers=%d queue_size=%d", service.workers, cap(service.queue))
 }
 
 // Dispatch never blocks the request indefinitely when the queue is full.
@@ -102,7 +103,7 @@ func (service *Service) Dispatch(requestLog models.RequestLog) {
 	select {
 	case service.queue <- requestLog:
 	default:
-		fmt.Printf("[logger] queue full; dropping request log %s\n", requestLog.RequestID)
+		logging.Printf("⚠️ [logger] queue full; dropping request_id=%s", requestLog.RequestID)
 	}
 }
 
@@ -128,7 +129,7 @@ func (service *Service) Stop(ctx context.Context) error {
 
 	select {
 	case <-done:
-		fmt.Println("[logger] workers stopped")
+		logging.Println("🛑 [logger] workers stopped")
 		return nil
 	case <-ctx.Done():
 		return fmt.Errorf("stop logger workers: %w", ctx.Err())
@@ -148,7 +149,7 @@ func (service *Service) process(requestLog models.RequestLog) {
 
 	pool, ok := postgres.GetPool()
 	if !ok {
-		fmt.Printf("[logger] PostgreSQL unavailable; dropped request log %s\n", requestLog.RequestID)
+		logging.Printf("⚠️ [logger][DB] PostgreSQL unavailable; dropped request_id=%s", requestLog.RequestID)
 		return
 	}
 
@@ -164,11 +165,11 @@ func (service *Service) process(requestLog models.RequestLog) {
 		requestLog.ConsoleLogsSizeBytes = &archivedLog.CompressedSize
 		requestLog.ConsoleLogsSHA256 = &archivedLog.CompressedSHA256
 	} else {
-		fmt.Printf("[logger] archive request log %s failed: %v\n", requestLog.RequestID, archiveErr)
+		logging.Printf("🚨 [logger][R2] archive failed request_id=%s: %v", requestLog.RequestID, archiveErr)
 	}
 
 	if err := repository.Create(processContext, requestLog); err != nil {
-		fmt.Printf("[logger] create request log %s failed: %v\n", requestLog.RequestID, err)
+		logging.Printf("❌ [logger][DB] create request log failed request_id=%s: %v", requestLog.RequestID, err)
 		return
 	}
 
@@ -181,7 +182,7 @@ func (service *Service) process(requestLog models.RequestLog) {
 	}
 
 	if err := repository.UpdateLoggerError(processContext, requestLog.RequestID, archivedLog.JSON); err != nil {
-		fmt.Printf("[logger] persist error document %s failed: %v\n", requestLog.RequestID, err)
+		logging.Printf("❌ [logger][DB] persist error document failed request_id=%s: %v", requestLog.RequestID, err)
 	}
 }
 

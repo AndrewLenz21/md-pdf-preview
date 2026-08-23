@@ -5,8 +5,10 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
+	"github.com/andrew/md-pdf-preview/server/src/config/logging"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
@@ -28,8 +30,16 @@ func InitR2() {
 	endpoint := os.Getenv("R2_ENDPOINT")
 	bucketName := os.Getenv("R2_BUCKET_NAME")
 
+	logging.Printf(
+		"🔐 [R2] credentials loaded access_key_len=%d secret_key_len=%d endpoint_set=%t bucket_set=%t",
+		len(accessKey),
+		len(secretKey),
+		endpoint != "",
+		bucketName != "",
+	)
+
 	if accessKey == "" || secretKey == "" || endpoint == "" || bucketName == "" {
-		fmt.Println("[R2] missing environment variables; R2 features are disabled")
+		logging.Println("⚠️ [R2] configuration incomplete; R2 features are disabled")
 		return
 	}
 
@@ -41,7 +51,7 @@ func InitR2() {
 		config.WithRegion("auto"),
 	)
 	if err != nil {
-		fmt.Printf("[R2] failed to load SDK config: %v\n", err)
+		logging.Printf("❌ [R2] SDK configuration failed: %v", err)
 		return
 	}
 
@@ -53,7 +63,7 @@ func InitR2() {
 		Bucket:  aws.String(bucketName),
 		MaxKeys: aws.Int32(1),
 	}); err != nil {
-		fmt.Printf("[R2] connection test failed: %v\n", err)
+		logging.Printf("❌ [R2] connection test failed endpoint=%q bucket=%q: %v", endpoint, bucketName, err)
 		return
 	}
 
@@ -63,7 +73,7 @@ func InitR2() {
 		BucketName:    bucketName,
 	}
 
-	fmt.Printf("[R2] connected to bucket %s\n", bucketName)
+	logging.Printf("✅ [R2] connected endpoint=%q bucket=%q", endpoint, bucketName)
 }
 
 func (storage *R2Storage) InitiateMultipartUpload(
@@ -208,19 +218,32 @@ func (storage *R2Storage) DeleteObjects(ctx context.Context, keys []string) erro
 		return nil
 	}
 
-	objects := make([]types.ObjectIdentifier, 0, len(keys))
-	for _, key := range keys {
-		objects = append(objects, types.ObjectIdentifier{Key: aws.String(key)})
-	}
+	for start := 0; start < len(keys); start += 1000 {
+		end := min(start+1000, len(keys))
+		objects := make([]types.ObjectIdentifier, 0, end-start)
+		for _, key := range keys[start:end] {
+			objects = append(objects, types.ObjectIdentifier{Key: aws.String(key)})
+		}
 
-	if _, err := storage.Client.DeleteObjects(ctx, &s3.DeleteObjectsInput{
-		Bucket: aws.String(storage.BucketName),
-		Delete: &types.Delete{
-			Objects: objects,
-			Quiet:   aws.Bool(true),
-		},
-	}); err != nil {
-		return fmt.Errorf("delete R2 objects: %w", err)
+		response, err := storage.Client.DeleteObjects(ctx, &s3.DeleteObjectsInput{
+			Bucket: aws.String(storage.BucketName),
+			Delete: &types.Delete{
+				Objects: objects,
+				Quiet:   aws.Bool(true),
+			},
+		})
+		if err != nil {
+			return fmt.Errorf("delete R2 objects: %w", err)
+		}
+		if len(response.Errors) > 0 {
+			failure := response.Errors[0]
+			return fmt.Errorf(
+				"delete R2 object %q failed (%s): %s",
+				aws.ToString(failure.Key),
+				aws.ToString(failure.Code),
+				aws.ToString(failure.Message),
+			)
+		}
 	}
 
 	return nil
@@ -242,15 +265,22 @@ func (storage *R2Storage) PutObject(
 	}
 
 	input := &s3.PutObjectInput{
-		Bucket:          aws.String(bucketName),
-		Key:             aws.String(key),
-		Body:            bytes.NewReader(body),
-		ContentType:     aws.String(contentType),
-		ContentEncoding: aws.String(contentEncoding),
+		Bucket:      aws.String(bucketName),
+		Key:         aws.String(key),
+		Body:        bytes.NewReader(body),
+		ContentType: aws.String(contentType),
+	}
+	if encoding := strings.TrimSpace(contentEncoding); encoding != "" {
+		input.ContentEncoding = aws.String(encoding)
 	}
 
 	if _, err := storage.Client.PutObject(ctx, input); err != nil {
-		return fmt.Errorf("put R2 object: %w", err)
+		return fmt.Errorf(
+			"put R2 object (bucket=%q, key=%q): %w",
+			bucketName,
+			key,
+			err,
+		)
 	}
 
 	return nil

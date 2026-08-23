@@ -8,11 +8,13 @@ export function DocumentSourceToggle({
   onChange,
   dragging = false,
   cloudBlocked = false,
+  disabled = false,
 }: {
   source: DocumentSource;
   onChange: (source: DocumentSource) => void;
   dragging?: boolean;
   cloudBlocked?: boolean;
+  disabled?: boolean;
 }) {
   const isDragging = useDocumentDndStore((state) => state.isDragging);
 
@@ -21,9 +23,10 @@ export function DocumentSourceToggle({
       type="button"
       aria-label="Switch document source"
       aria-pressed={source === "cloud"}
+      disabled={disabled}
       className="relative grid min-h-9 shrink-0 grid-cols-2 gap-0.5 overflow-hidden rounded-lg border border-border/80 bg-background/50 p-0.5 text-[11px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
       onClick={(event) => {
-        if (dragging || isDragging) {
+        if (disabled || dragging || isDragging) {
           event.preventDefault();
           return;
         }

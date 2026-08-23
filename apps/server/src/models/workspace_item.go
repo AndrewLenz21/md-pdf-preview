@@ -45,3 +45,12 @@ type UpdateWorkspaceItemParams struct {
 	Favorite  bool
 	SortOrder int
 }
+
+type CompleteDocumentUploadParams struct {
+	DocumentID      string
+	R2ObjectKey     string
+	ContentType     string
+	SizeBytes       int64
+	ContentHash     string
+	ContentRevision int64
+}

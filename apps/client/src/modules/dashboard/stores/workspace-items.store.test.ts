@@ -6,7 +6,10 @@ import {
 } from "@/modules/dashboard/constants/document-workspaces";
 import type { WorkspaceDocumentItem } from "@/modules/dashboard/document/model/document.types";
 
-import { useCloudWorkspaceStore } from "./cloud-workspace.store";
+import {
+  mapCloudWorkspaceItem,
+  useCloudWorkspaceStore,
+} from "./cloud-workspace.store";
 import { useLocalWorkspaceStore } from "./local-workspace.store";
 import {
   DOCUMENT_CONTENT_DEBOUNCE_MS,
@@ -146,6 +149,14 @@ describe("workspace item stores", () => {
     expect(
       useLocalWorkspaceStore.getState().moveFolder(destinationId!, childId!),
     ).toBe(false);
+    expect(
+      useLocalWorkspaceStore.getState().moveFolder(sourceId!, null),
+    ).toBe(true);
+    expect(
+      useLocalWorkspaceStore.getState().items.find(
+        (item) => item.id === sourceId,
+      )?.parent_id,
+    ).toBeNull();
   });
 
   it("uses the first H1 as the document name", () => {
@@ -263,5 +274,31 @@ describe("workspace item stores", () => {
       );
     });
     expect(CLOUD_WORKSPACE_ITEMS.some(isWorkspaceFolder)).toBe(true);
+  });
+
+  it("maps cloud camelCase metadata to client workspace fields", () => {
+    expect(
+      mapCloudWorkspaceItem({
+        id: "cloud-document",
+        parentId: "cloud-folder",
+        type: "document",
+        name: "Cloud document",
+        color: null,
+        icon: null,
+        favorite: true,
+        sortOrder: 3,
+        contentRevision: 2,
+        storageStatus: "ready",
+        createdAt: "2026-08-23T00:00:00.000Z",
+        updatedAt: "2026-08-23T00:01:00.000Z",
+      }, "# Loaded\n"),
+    ).toMatchObject({
+      id: "cloud-document",
+      parent_id: "cloud-folder",
+      content: "# Loaded\n",
+      favorite: true,
+      content_revision: 2,
+      storage_status: "ready",
+    });
   });
 });

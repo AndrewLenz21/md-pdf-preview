@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -9,16 +8,17 @@ import (
 
 	"github.com/andrew/md-pdf-preview/server/src/config/cloudflare"
 	"github.com/andrew/md-pdf-preview/server/src/config/environment"
+	"github.com/andrew/md-pdf-preview/server/src/config/logging"
 	"github.com/andrew/md-pdf-preview/server/src/config/postgres"
 	"github.com/andrew/md-pdf-preview/server/src/config/server"
 )
 
 func main() {
 	start := time.Now()
-	fmt.Printf("[startup] server starting at %s\n", start.Format("15:04:05"))
+	logging.Printf("🚀 [startup] server starting at %s", start.Format("15:04:05"))
 
 	if err := environment.Load(".env"); err != nil {
-		fmt.Printf("[environment] failed to load .env: %v\n", err)
+		logging.Printf("⚠️ [environment] failed to load .env: %v", err)
 	}
 
 	cloudflare.InitR2()
@@ -32,7 +32,7 @@ func main() {
 	server.NewServer()
 	server.StartRoutes()
 
-	fmt.Printf("[startup] server initialized in %s\n", time.Since(start))
+	logging.Printf("✅ [startup] server initialized in %s", time.Since(start))
 	server.StartServer()
 }
 
@@ -42,7 +42,7 @@ func listenForShutdown() {
 	defer signal.Stop(shutdownSignal)
 
 	<-shutdownSignal
-	fmt.Println("[shutdown] shutdown signal received")
+	logging.Println("🛑 [shutdown] signal received")
 
 	server.StopServer(10 * time.Second)
 	postgres.CloseConnectionPool()

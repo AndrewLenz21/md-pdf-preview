@@ -334,6 +334,111 @@ var workspaceItemsSchemaStatements = []string{
 		WHERE item.id = p_item_id AND item.user_id = p_user_id;
 	END;
 	$$`,
+	`CREATE OR REPLACE FUNCTION fn_workspace_document_upload_complete(
+		p_user_id uuid,
+		p_document_id uuid,
+		p_r2_object_key text,
+		p_content_type text,
+		p_size_bytes bigint,
+		p_content_hash text,
+		p_content_revision bigint
+	)
+	RETURNS TABLE (
+		id uuid,
+		user_id uuid,
+		parent_id uuid,
+		item_type text,
+		name text,
+		color text,
+		icon text,
+		favorite boolean,
+		sort_order integer,
+		r2_object_key text,
+		content_type text,
+		size_bytes bigint,
+		content_hash text,
+		content_revision bigint,
+		storage_status text,
+		created_at timestamptz,
+		updated_at timestamptz,
+		deleted_at timestamptz
+	)
+	LANGUAGE plpgsql
+	AS $$
+	DECLARE
+		v_item workspace_items%ROWTYPE;
+	BEGIN
+		SELECT item.*
+		INTO v_item
+		FROM workspace_items item
+		WHERE item.id = p_document_id
+			AND item.user_id = p_user_id
+			AND item.item_type = 'document'
+			AND item.deleted_at IS NULL
+		FOR UPDATE;
+
+		IF NOT FOUND THEN
+			RETURN;
+		END IF;
+
+		IF btrim(p_r2_object_key) <> format('files/%s/%s/content.txt', p_user_id, p_document_id) THEN
+			RAISE EXCEPTION 'workspace document object key is invalid';
+		END IF;
+		IF btrim(p_content_type) = '' THEN
+			RAISE EXCEPTION 'document content type cannot be empty';
+		END IF;
+		IF p_size_bytes < 0 THEN
+			RAISE EXCEPTION 'document size is invalid';
+		END IF;
+		IF btrim(p_content_hash) = '' THEN
+			RAISE EXCEPTION 'document content hash cannot be empty';
+		END IF;
+		IF p_content_revision < 0 THEN
+			RAISE EXCEPTION 'document content revision is invalid';
+		END IF;
+
+		UPDATE workspace_items item
+		SET r2_object_key = btrim(p_r2_object_key),
+			content_type = btrim(p_content_type),
+			size_bytes = p_size_bytes,
+			content_hash = btrim(p_content_hash),
+			content_revision = p_content_revision,
+			storage_status = 'ready'
+		WHERE item.id = p_document_id AND item.user_id = p_user_id;
+
+		RETURN QUERY
+		SELECT item.id, item.user_id, item.parent_id, item.item_type, item.name,
+			item.color, item.icon, item.favorite, item.sort_order, item.r2_object_key,
+			item.content_type, item.size_bytes, item.content_hash, item.content_revision,
+			item.storage_status, item.created_at, item.updated_at, item.deleted_at
+		FROM workspace_items item
+		WHERE item.id = p_document_id AND item.user_id = p_user_id;
+	END;
+	$$`,
+	`CREATE OR REPLACE FUNCTION fn_workspace_item_collect_r2_keys(p_user_id uuid, p_item_id uuid)
+	RETURNS TABLE (r2_object_key text)
+	LANGUAGE sql
+	STABLE
+	AS $$
+		WITH RECURSIVE descendants AS (
+			SELECT item.id
+			FROM workspace_items item
+			WHERE item.id = $2 AND item.user_id = $1
+
+			UNION ALL
+
+			SELECT child.id
+			FROM workspace_items child
+			JOIN descendants ancestor ON ancestor.id = child.parent_id
+			WHERE child.user_id = $1
+		)
+		SELECT DISTINCT item.r2_object_key
+		FROM workspace_items item
+		JOIN descendants ON descendants.id = item.id
+		WHERE item.user_id = $1
+			AND item.r2_object_key IS NOT NULL
+		ORDER BY item.r2_object_key;
+	$$`,
 	`CREATE OR REPLACE FUNCTION fn_workspace_item_delete(p_user_id uuid, p_item_id uuid)
 	RETURNS integer
 	LANGUAGE plpgsql
@@ -346,7 +451,6 @@ var workspaceItemsSchemaStatements = []string{
 			FROM workspace_items item
 			WHERE item.id = p_item_id
 				AND item.user_id = p_user_id
-				AND item.deleted_at IS NULL
 
 			UNION ALL
 
@@ -354,12 +458,10 @@ var workspaceItemsSchemaStatements = []string{
 			FROM workspace_items child
 			JOIN descendants ancestor ON ancestor.id = child.parent_id
 			WHERE child.user_id = p_user_id
-				AND child.deleted_at IS NULL
 		)
-		UPDATE workspace_items item
-		SET deleted_at = CURRENT_TIMESTAMP,
-			updated_at = CURRENT_TIMESTAMP
-		WHERE item.id IN (SELECT descendants.id FROM descendants);
+		DELETE FROM workspace_items item
+		WHERE item.user_id = p_user_id
+			AND item.id IN (SELECT descendants.id FROM descendants);
 
 		GET DIAGNOSTICS v_deleted_count = ROW_COUNT;
 		RETURN v_deleted_count;

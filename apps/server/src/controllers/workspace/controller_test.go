@@ -16,12 +16,15 @@ import (
 )
 
 type fakeWorkspaceService struct {
-	createdParams models.CreateWorkspaceItemParams
-	createdUserID string
-	listUserID    string
-	getErr        error
-	items         []models.WorkspaceItem
-	uploadURL     cloudflare_service.PresignedDocumentURL
+	createdParams       models.CreateWorkspaceItemParams
+	createdUserID       string
+	listUserID          string
+	getErr              error
+	items               []models.WorkspaceItem
+	uploadURL           cloudflare_service.PresignedDocumentURL
+	completedUserID     string
+	completedDocumentID string
+	completedParams     models.CompleteDocumentUploadParams
 }
 
 func (service *fakeWorkspaceService) Create(userID string, params models.CreateWorkspaceItemParams) (models.WorkspaceItem, error) {
@@ -48,6 +51,17 @@ func (service *fakeWorkspaceService) Update(string, models.UpdateWorkspaceItemPa
 
 func (service *fakeWorkspaceService) Delete(string, string) (int, error) {
 	return 1, nil
+}
+
+func (service *fakeWorkspaceService) CompleteDocumentUpload(
+	userID string,
+	documentID string,
+	params models.CompleteDocumentUploadParams,
+) (models.WorkspaceItem, error) {
+	service.completedUserID = userID
+	service.completedDocumentID = documentID
+	service.completedParams = params
+	return models.WorkspaceItem{ID: documentID, UserID: userID, Type: models.WorkspaceItemTypeDocument}, nil
 }
 
 func (service *fakeWorkspaceService) GenerateDocumentUploadURL(string, string, string) (cloudflare_service.PresignedDocumentURL, error) {
@@ -179,5 +193,42 @@ func TestGenerateUploadURLReturnsSafeResponseShape(t *testing.T) {
 	}
 	if response["objectKey"] != service.uploadURL.ObjectKey || response["url"] != service.uploadURL.URL {
 		t.Fatalf("unexpected upload response: %#v", response)
+	}
+}
+
+func TestCompleteUploadPassesMetadataToService(t *testing.T) {
+	service := &fakeWorkspaceService{}
+	server := echo.New()
+	controller := NewWithServiceFactory(func(context.Context) workspaceService {
+		return service
+	})
+
+	request := httptest.NewRequest(
+		http.MethodPost,
+		"/workspace/documents/document/upload-complete",
+		strings.NewReader(`{"objectKey":"files/user/document/content.txt","contentType":"text/markdown","sizeBytes":42,"contentHash":"hash","contentRevision":3}`),
+	)
+	request.Header.Set("Content-Type", "application/json")
+	recorder := httptest.NewRecorder()
+	context := server.NewContext(request, recorder)
+	context.SetParamNames("documentID")
+	context.SetParamValues("document")
+	context.Set("user_id", "user-123")
+
+	if err := controller.completeUpload(context); err != nil {
+		t.Fatalf("complete upload error = %v", err)
+	}
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", recorder.Code, http.StatusOK)
+	}
+	if service.completedUserID != "user-123" || service.completedDocumentID != "document" {
+		t.Fatalf("unexpected completion identity: %s/%s", service.completedUserID, service.completedDocumentID)
+	}
+	if service.completedParams.R2ObjectKey != "files/user/document/content.txt" ||
+		service.completedParams.ContentType != "text/markdown" ||
+		service.completedParams.SizeBytes != 42 ||
+		service.completedParams.ContentHash != "hash" ||
+		service.completedParams.ContentRevision != 3 {
+		t.Fatalf("unexpected completion params: %#v", service.completedParams)
 	}
 }

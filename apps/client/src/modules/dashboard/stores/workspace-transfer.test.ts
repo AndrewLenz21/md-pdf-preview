@@ -48,6 +48,42 @@ describe("transferWorkspaceItem", () => {
     ).toBe(folderId);
   });
 
+  it("moves a document into an empty workspace root", () => {
+    const result = transferWorkspaceItem({
+      itemId: "project-research",
+      sourceItems: LOCAL_WORKSPACE_ITEMS,
+      destinationItems: [],
+      destinationParentId: null,
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.destinationItems).toHaveLength(1);
+    expect(result?.destinationItems[0]).toMatchObject({
+      id: "project-research",
+      parent_id: null,
+    });
+  });
+
+  it("moves a folder and descendants into an empty workspace root", () => {
+    const folderId = LOCAL_WORKSPACE_ITEMS.find(
+      (item) => isWorkspaceFolder(item) && item.name === "Documents",
+    )?.id;
+    const result = transferWorkspaceItem({
+      itemId: folderId ?? "",
+      sourceItems: LOCAL_WORKSPACE_ITEMS,
+      destinationItems: [],
+      destinationParentId: null,
+    });
+
+    expect(result).not.toBeNull();
+    expect(
+      result?.destinationItems.find((item) => item.id === folderId),
+    ).toMatchObject({ parent_id: null });
+    expect(
+      result?.destinationItems.find((item) => item.name === "Planning"),
+    ).toMatchObject({ parent_id: folderId });
+  });
+
   it("rejects an attempt to move a workspace root", () => {
     const rootId = LOCAL_WORKSPACE_ITEMS.find(
       (item) => isWorkspaceFolder(item) && item.parent_id === null,

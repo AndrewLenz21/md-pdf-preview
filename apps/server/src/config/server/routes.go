@@ -1,8 +1,7 @@
 package server
 
 import (
-	"fmt"
-
+	"github.com/andrew/md-pdf-preview/server/src/config/logging"
 	"github.com/andrew/md-pdf-preview/server/src/controllers/health"
 	"github.com/andrew/md-pdf-preview/server/src/controllers/workspace"
 )
@@ -10,7 +9,7 @@ import (
 func StartRoutes() {
 	applicationServer := GetServer()
 	if applicationServer == nil {
-		fmt.Println("[http] routes were not registered: Echo server is not initialized")
+		logging.Println("❌ [http] routes were not registered: Echo server is not initialized")
 		return
 	}
 

@@ -108,7 +108,11 @@ func (service *ErrorLoggerService) Log(
 	defer cancel()
 
 	if err := service.storage.PutLoggerObject(loggingContext, r2Key, compressed); err != nil {
-		return ArchivedRequestLog{}, fmt.Errorf("store request logger document in R2: %w", err)
+		return ArchivedRequestLog{}, fmt.Errorf(
+			"store request logger document in R2 (key=%q): %w",
+			r2Key,
+			err,
+		)
 	}
 
 	return ArchivedRequestLog{

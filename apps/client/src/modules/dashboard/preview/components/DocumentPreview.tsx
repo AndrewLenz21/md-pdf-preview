@@ -9,6 +9,7 @@ import {
   type MutableRefObject,
 } from "react";
 import type { Editor } from "@tiptap/core";
+import { Loader2 } from "lucide-react";
 
 import {
   useCloudWorkspaceStore,
@@ -272,6 +273,18 @@ export function DocumentPreview({
   const cloudPendingContent = useCloudWorkspaceStore(
     (state) => state.pendingContentByDocumentId[document.id],
   );
+  const cloudContentLoaded = useCloudWorkspaceStore(
+    (state) => state.contentLoadedByDocumentId[document.id] === true,
+  );
+  const cloudContentLoading = useCloudWorkspaceStore(
+    (state) => state.contentLoadingByDocumentId[document.id] === true,
+  );
+  const cloudContentError = useCloudWorkspaceStore(
+    (state) => state.contentErrorByDocumentId[document.id],
+  );
+  const loadCloudDocumentContent = useCloudWorkspaceStore(
+    (state) => state.loadDocumentContent,
+  );
   const pendingContent =
     activeSource === "local" ? localPendingContent : cloudPendingContent;
   const { zoom } = useModeZoom(mode);
@@ -317,6 +330,20 @@ export function DocumentPreview({
 
     return () => onEditingActionsChange?.(null);
   }, [onEditingActionsChange]);
+
+  useEffect(() => {
+    if (activeSource !== "cloud" || cloudContentLoaded || cloudContentError) {
+      return;
+    }
+
+    void loadCloudDocumentContent(document.id).catch(() => undefined);
+  }, [
+    activeSource,
+    cloudContentError,
+    cloudContentLoaded,
+    document.id,
+    loadCloudDocumentContent,
+  ]);
 
   useLayoutEffect(() => {
     if (disableScrollSync || !isActiveScrollScope(scrollScope)) {
@@ -417,6 +444,74 @@ export function DocumentPreview({
     scrollScope,
     usesCanvasScroll,
   ]);
+
+  if (
+    activeSource === "cloud" &&
+    !cloudContentLoaded &&
+    (cloudContentLoading || !cloudContentError)
+  ) {
+    return (
+      <div
+        className={getRootClassName(mode, usesCanvasScroll)}
+        data-document-mode={mode}
+        style={getRootStyle(mode, paperDimensions)}
+      >
+        {showToolbar ? (
+          <PreviewToolbar
+            document={document}
+            mode={mode}
+            onModeChange={onModeChange}
+            editingActions={null}
+          />
+        ) : null}
+        <div className={getCanvasClassName(mode, usesCanvasScroll)}>
+          <div className={`${getStageClassName(mode)} flex min-h-full items-center justify-center`}>
+            <div className="flex flex-col items-center gap-3 px-6 text-center text-sm text-muted-foreground">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              Loading cloud document...
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (activeSource === "cloud" && !cloudContentLoaded && cloudContentError) {
+    return (
+      <div
+        className={getRootClassName(mode, usesCanvasScroll)}
+        data-document-mode={mode}
+        style={getRootStyle(mode, paperDimensions)}
+      >
+        {showToolbar ? (
+          <PreviewToolbar
+            document={document}
+            mode={mode}
+            onModeChange={onModeChange}
+            editingActions={null}
+          />
+        ) : null}
+        <div className={getCanvasClassName(mode, usesCanvasScroll)}>
+          <div className={`${getStageClassName(mode)} flex min-h-full items-center justify-center`}>
+            <div className="flex max-w-sm flex-col items-center gap-3 px-6 text-center text-sm text-muted-foreground">
+              <p>Unable to load this cloud document.</p>
+              <button
+                type="button"
+                className="rounded-lg border border-border px-3 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-accent"
+                onClick={() =>
+                  void loadCloudDocumentContent(document.id).catch(
+                    () => undefined,
+                  )
+                }
+              >
+                Try again
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

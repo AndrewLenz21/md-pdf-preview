@@ -2,6 +2,7 @@ export {
   DOCUMENT_CONTENT_DEBOUNCE_MS,
   MAX_MARKDOWN_CHARACTERS,
   createInitialMarkdown,
+  createWorkspaceItemId,
   getWorkspaceRoute,
   isWorkspaceDocument,
   isWorkspaceFolder,

@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/andrew/md-pdf-preview/server/src/config/logging"
 	"github.com/andrew/md-pdf-preview/server/src/models"
 	"github.com/labstack/echo/v4"
 )
@@ -53,6 +54,7 @@ func (service *Service) RequestLogger() echo.MiddlewareFunc {
 			c.Response().Writer = responseWriter
 
 			status := responseStatus(c.Response().Status, err)
+			durationMs := time.Since(startedAt).Milliseconds()
 			outcome := models.RequestLogOutcomeSuccess
 			if err != nil || status >= http.StatusBadRequest {
 				outcome = models.RequestLogOutcomeError
@@ -76,12 +78,26 @@ func (service *Service) RequestLogger() echo.MiddlewareFunc {
 				Status:       status,
 				Outcome:      outcome,
 				IPAddress:    c.RealIP(),
-				DurationMs:   time.Since(startedAt).Milliseconds(),
+				DurationMs:   durationMs,
 				ErrorCode:    errorCode,
 				ErrorMessage: errorMessage,
 				ServiceLogs:  buffer.Messages(),
 				CreatedAt:    time.Now().UTC(),
 			}
+
+			requestEmoji := "✅"
+			if outcome == models.RequestLogOutcomeError {
+				requestEmoji = "❌"
+			}
+			logging.Printf(
+				"%s [http] %s %s status=%d duration_ms=%d request_id=%s",
+				requestEmoji,
+				request.Method,
+				endpointFromContext(c),
+				status,
+				durationMs,
+				requestID,
+			)
 
 			service.Dispatch(requestLog)
 			return err
@@ -93,7 +109,7 @@ func (service *Service) RequestLogger() echo.MiddlewareFunc {
 func Log(ctx context.Context, level string, message string, args ...any) {
 	buffer, ok := ctx.Value(logBufferContextKey).(*LogBuffer)
 	formattedMessage := SanitizeText(fmt.Sprintf(message, args...))
-	fmt.Printf("[logger] [%s] %s\n", strings.TrimSpace(level), formattedMessage)
+	logging.Printf("[logger] [%s] %s", strings.TrimSpace(level), formattedMessage)
 
 	if ok && buffer != nil {
 		buffer.Add(level, formattedMessage)

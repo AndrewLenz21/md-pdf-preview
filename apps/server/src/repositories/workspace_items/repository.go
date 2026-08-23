@@ -156,7 +156,79 @@ func (r *WorkspaceItemRepository) Update(
 	return item, nil
 }
 
-// 🗑️ Delete soft deletes an item and its descendants.
+// CompleteDocumentUpload persists the metadata for an uploaded document.
+func (r *WorkspaceItemRepository) CompleteDocumentUpload(
+	ctx context.Context,
+	userID string,
+	params models.CompleteDocumentUploadParams,
+) (models.WorkspaceItem, error) {
+	userUUID, err := parseUUID(userID)
+	if err != nil {
+		return models.WorkspaceItem{}, fmt.Errorf("complete document upload: invalid user ID: %w", err)
+	}
+
+	documentUUID, err := parseUUID(params.DocumentID)
+	if err != nil {
+		return models.WorkspaceItem{}, fmt.Errorf("complete document upload: invalid document ID: %w", err)
+	}
+
+	item, err := r.selectOne(
+		ctx,
+		"fn_workspace_document_upload_complete",
+		userUUID,
+		documentUUID,
+		textArgument(params.R2ObjectKey),
+		textArgument(params.ContentType),
+		params.SizeBytes,
+		textArgument(params.ContentHash),
+		params.ContentRevision,
+	)
+	if err != nil {
+		return models.WorkspaceItem{}, fmt.Errorf("complete document upload: %w", err)
+	}
+
+	return item, nil
+}
+
+// CollectSubtreeR2ObjectKeys returns the R2 keys owned by the user in an item subtree.
+func (r *WorkspaceItemRepository) CollectSubtreeR2ObjectKeys(
+	ctx context.Context,
+	userID string,
+	itemID string,
+) ([]string, error) {
+	userUUID, err := parseUUID(userID)
+	if err != nil {
+		return nil, fmt.Errorf("collect workspace item objects: invalid user ID: %w", err)
+	}
+
+	itemUUID, err := parseUUID(itemID)
+	if err != nil {
+		return nil, fmt.Errorf("collect workspace item objects: invalid item ID: %w", err)
+	}
+
+	rows, err := r.queryService().SelectCall(ctx, "fn_workspace_item_collect_r2_keys", userUUID, itemUUID)
+	if err != nil {
+		return nil, fmt.Errorf("collect workspace item objects: %w", err)
+	}
+	defer rows.Close()
+
+	objectKeys := make([]string, 0)
+	for rows.Next() {
+		var objectKey string
+		if err := rows.Scan(&objectKey); err != nil {
+			return nil, fmt.Errorf("scan workspace item object key: %w", err)
+		}
+		objectKeys = append(objectKeys, objectKey)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate workspace item object keys: %w", err)
+	}
+
+	return objectKeys, nil
+}
+
+// Delete physically deletes an item and its descendants.
 func (r *WorkspaceItemRepository) Delete(
 	ctx context.Context,
 	userID string,

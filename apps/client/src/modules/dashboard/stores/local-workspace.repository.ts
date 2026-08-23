@@ -164,3 +164,37 @@ export function queueLocalWorkspaceChanges(
 
   return writeQueue;
 }
+
+async function persistLocalWorkspaceItemsNow(items: WorkspaceItem[]) {
+  if (typeof indexedDB === "undefined") {
+    return;
+  }
+
+  const database = await openLocalWorkspaceDatabase();
+
+  try {
+    const transaction = database.transaction(
+      [ITEMS_STORE, META_STORE],
+      "readwrite",
+    );
+    const done = transactionDone(transaction);
+    const itemsStore = transaction.objectStore(ITEMS_STORE);
+    const metaStore = transaction.objectStore(META_STORE);
+
+    itemsStore.clear();
+    items.forEach((item) => itemsStore.put(item));
+    metaStore.put({ key: INITIALIZED_KEY, value: true });
+
+    await done;
+  } finally {
+    database.close();
+  }
+}
+
+export function persistLocalWorkspaceItems(items: WorkspaceItem[]) {
+  writeQueue = writeQueue
+    .catch(() => undefined)
+    .then(() => persistLocalWorkspaceItemsNow(items));
+
+  return writeQueue;
+}
