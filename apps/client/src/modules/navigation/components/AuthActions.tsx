@@ -3,10 +3,12 @@
 import { useTranslations } from "next-intl";
 import { Settings2, UserRound } from "lucide-react";
 
-import { Link } from "@/core/i18n";
+import { Link, usePathname } from "@/core/i18n";
 import { authClient } from "@/lib/auth-client";
 
+import { LanguageSelector } from "./LanguageSelector";
 import { SettingsMenu } from "./SettingsMenu";
+import { ThemeMenu } from "./ThemeMenu";
 
 function getInitial(value: string) {
   return value.trim().charAt(0).toUpperCase() || "U";
@@ -43,6 +45,8 @@ export function AuthActions({
   settingsMode?: "dialog" | "menu";
 }) {
   const t = useTranslations("Navigation");
+  const pathname = usePathname();
+  const isLanding = pathname === "/";
   const { data, isPending } = authClient.useSession();
   const user = data?.user;
   const displayName = user?.name || user?.email || "User";
@@ -71,6 +75,33 @@ export function AuthActions({
 
   if (!user) {
     if (mobile) {
+      if (isLanding) {
+        return (
+          <div className="space-y-4">
+            <div className="space-y-1 rounded-lg border border-border p-2">
+              <ThemeMenu inline showLabel />
+              <LanguageSelector inline showLabel />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Link
+                href="/auth/sign-in"
+                onClick={onClose}
+                className="flex items-center justify-center rounded-lg border border-border px-3 py-2.5 text-center text-sm font-medium text-foreground transition-colors hover:bg-accent/60"
+              >
+                {t("actions.signIn")}
+              </Link>
+              <Link
+                href="/auth/sign-up"
+                onClick={onClose}
+                className="flex items-center justify-center rounded-lg bg-primary px-3 py-2.5 text-center text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+              >
+                {t("actions.signUp")}
+              </Link>
+            </div>
+          </div>
+        );
+      }
+
       return (
         <div
           className={`flex items-center justify-between rounded-lg border border-border p-3 ${mobileProfileSurface}`}
@@ -105,35 +136,25 @@ export function AuthActions({
     }
 
     return (
-      <div
-        className={
-          mobile
-            ? "grid grid-cols-2 gap-2"
-            : "grid w-52 grid-cols-2 items-stretch gap-2"
-        }
-      >
-        <Link
-          href="/auth/sign-in"
-          onClick={onClose}
-          className={
-            mobile
-              ? "flex items-center justify-center rounded-lg border border-border px-3 py-2.5 text-center text-sm font-medium text-foreground transition-colors hover:bg-accent/60"
-              : "flex min-h-9 items-center justify-center rounded-md px-2.5 py-1.5 text-center text-sm font-medium leading-4 text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
-          }
-        >
-          {t("actions.signIn")}
-        </Link>
-        <Link
-          href="/auth/sign-up"
-          onClick={onClose}
-          className={
-            mobile
-              ? "flex items-center justify-center rounded-lg bg-primary px-3 py-2.5 text-center text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-              : "flex min-h-9 items-center justify-center rounded-md bg-primary px-2.5 py-1.5 text-center text-sm font-semibold leading-4 text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-          }
-        >
-          {t("actions.signUp")}
-        </Link>
+      <div className="flex items-center gap-1 sm:gap-2">
+        <ThemeMenu />
+        <LanguageSelector />
+        <div className="grid w-52 grid-cols-2 items-stretch gap-2">
+          <Link
+            href="/auth/sign-in"
+            onClick={onClose}
+            className="flex min-h-9 items-center justify-center rounded-md px-2.5 py-1.5 text-center text-sm font-medium leading-4 text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
+          >
+            {t("actions.signIn")}
+          </Link>
+          <Link
+            href="/auth/sign-up"
+            onClick={onClose}
+            className="flex min-h-9 items-center justify-center rounded-md bg-primary px-2.5 py-1.5 text-center text-sm font-semibold leading-4 text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
+            {t("actions.signUp")}
+          </Link>
+        </div>
       </div>
     );
   }
