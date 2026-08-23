@@ -3,7 +3,13 @@
   "private": true,
   "scripts": {
     "build": "turbo run build",
+    "build:client": "turbo run build --filter=client",
+    "build:server": "turbo run build --filter=server",
     "dev": "turbo run dev",
+    "dev:client": "turbo run dev --filter=client",
+    "dev:server": "turbo run dev --filter=server",
+    "preview:client": "turbo run preview --filter=client",
+    "deploy:client": "turbo run deploy --filter=client",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",

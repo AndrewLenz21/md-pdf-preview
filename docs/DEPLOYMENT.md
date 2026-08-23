@@ -49,23 +49,50 @@ The client never talks to PostgreSQL or R2 directly. All cloud requests flow thr
 
 ## Deploying the client
 
-### Build
+### Commands
+
+Run these commands from the repository root:
 
 ```bash
-npm install
-npm run build --filter=client
+# Development
+npm run dev                 # client + server
+npm run dev:client          # client only
+npm run dev:server          # server only
+
+# Builds
+npm run build               # client + server
+npm run build:client        # client only
+npm run build:server        # server only
+
+# Cloudflare Worker
+npm run preview:client      # build and preview with workerd
+npm run deploy:client       # build and deploy with Wrangler
 ```
 
-The Next.js output is produced by `apps/client/.next` (or `out/` if using static export).
+The regular Next.js output is produced by `apps/client/.next`. The Cloudflare
+deployment output is produced by `apps/client/.open-next` and is not committed.
 
 ### Deploy (Cloudflare)
 
-1. Create a **Workers & Pages** project and connect the GitHub repository.
-2. Set the production branch to `main`.
-3. Configure the environment variables below in the Cloudflare dashboard (or a `.dev.vars` file for local `wrangler dev`).
-4. Deploy.
+The client is deployed as a **Cloudflare Worker** using OpenNext and Wrangler,
+not as a static Pages site. Before the first deployment:
 
-> **Note:** The client's API routes use the Node.js runtime (`runtime = "nodejs"`). Make sure your Cloudflare configuration supports Node.js compatibility, or deploy the API routes to a Node-compatible host (e.g., Vercel) and serve the rest from Cloudflare.
+1. Install dependencies with `npm install`.
+2. Authenticate Wrangler with `npx wrangler login`.
+3. Configure the client variables in **Workers & Pages → md-pdf-preview-client → Settings → Variables and Secrets**.
+4. Deploy with `npm run deploy:client`.
+
+For local Worker preview, copy `apps/client/.dev.vars.example` to
+`apps/client/.dev.vars` and keep the application values in the ignored
+`apps/client/.env.local` file.
+
+The `wrangler.jsonc` file enables the `nodejs_compat` compatibility flag needed
+by the Next.js API routes. The Worker name can be changed in
+`apps/client/wrangler.jsonc` before the first deploy.
+
+> **Windows:** OpenNext reports that Windows is not its primary supported build
+> environment. If the local build behaves inconsistently, run the same commands
+> from WSL or the Cloudflare Workers Build pipeline.
 
 ## Deploying the server
 
@@ -146,9 +173,11 @@ The server reads a `.env` file from its working directory (see `apps/server/.env
 Test the production build locally before deploying:
 
 ```bash
-npm run build --filter=client
-npm run start --filter=client
+npm run preview:client
 ```
+
+`npm run start --filter=client` still runs the standard Next.js server when a
+Node.js production preview is preferred.
 
 ## Redeploy
 

@@ -5,7 +5,7 @@ import { routing } from "@/core/i18n";
 
 const handleI18nRouting = createMiddleware(routing);
 
-export function proxy(request: NextRequest) {
+export function middleware(request: NextRequest) {
   return handleI18nRouting(request);
 }
 
