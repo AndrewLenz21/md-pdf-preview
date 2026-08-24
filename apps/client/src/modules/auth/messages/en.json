@@ -32,6 +32,7 @@
     "success": "Signed in successfully.",
     "redirecting": "Opening your dashboard...",
     "error": "Unable to sign in.",
+    "userNotFound": "User not found.",
     "emailNotVerified": "Your email isn't verified yet. Check your inbox for the verification link.",
     "resendVerification": "Resend verification email",
     "resendLoading": "Sending...",

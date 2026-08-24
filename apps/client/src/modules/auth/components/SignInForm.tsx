@@ -69,7 +69,9 @@ export function SignInForm() {
       });
 
       if (signInError) {
-        if (isKnownErrorCode(signInError, "EMAIL_NOT_VERIFIED")) {
+        if (isKnownErrorCode(signInError, "USER_NOT_FOUND")) {
+          setError(t("userNotFound"));
+        } else if (isKnownErrorCode(signInError, "EMAIL_NOT_VERIFIED")) {
           setLastEmail(email);
           setEmailNotVerified(true);
           setError(t("emailNotVerified"));
@@ -166,39 +168,47 @@ export function SignInForm() {
           />
         </label>
       </div>
-      {error ? (
-        <p className="mt-4 text-sm text-destructive" role="alert">
-          {error}
-        </p>
-      ) : null}
       {emailNotVerified ? (
-        <div className="mt-4 space-y-2">
-          <button
-            type="button"
-            onClick={handleResend}
-            disabled={resending}
-            className="w-full rounded-md border border-input px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent/60 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {resending ? t("resendLoading") : t("resendVerification")}
-          </button>
-          {resendSent ? (
-            <p
-              className="flex items-center gap-2 text-sm text-primary"
-              role="status"
+        <>
+          <p className="mt-4 text-sm text-destructive" role="alert">
+            {error}
+          </p>
+          <div className="mt-4 space-y-2">
+            <button
+              type="button"
+              onClick={handleResend}
+              disabled={resending}
+              className="w-full rounded-md border border-input px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent/60 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/15">
-                <Check className="h-3.5 w-3.5" strokeWidth={2.2} />
-              </span>
-              {t("resendSent")}
-            </p>
-          ) : null}
-          {resendError ? (
-            <p className="text-sm text-destructive" role="alert">
-              {resendError}
+              {resending ? t("resendLoading") : t("resendVerification")}
+            </button>
+            {resendSent ? (
+              <p
+                className="flex items-center gap-2 text-sm text-primary"
+                role="status"
+              >
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/15">
+                  <Check className="h-3.5 w-3.5" strokeWidth={2.2} />
+                </span>
+                {t("resendSent")}
+              </p>
+            ) : null}
+            {resendError ? (
+              <p className="text-sm text-destructive" role="alert">
+                {resendError}
+              </p>
+            ) : null}
+          </div>
+        </>
+      ) : (
+        <div className="h-5 text-sm leading-5" aria-live="polite">
+          {error ? (
+            <p className="text-destructive" role="alert">
+              {error}
             </p>
           ) : null}
         </div>
-      ) : null}
+      )}
       {success ? (
         <p
           className="mt-4 flex items-center gap-2 text-sm text-primary animate-pulse"
@@ -213,14 +223,17 @@ export function SignInForm() {
       <button
         type="submit"
         disabled={loading || redirecting}
-        className="mt-6 w-full rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+        className={`${emailNotVerified || success ? "mt-6" : "mt-1"} w-full rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60`}
       >
         {loading ? t("loading") : redirecting ? t("redirecting") : t("submit")}
       </button>
-      <p className="mt-4 text-center text-xs leading-5 text-muted-foreground">
+      <div className="flex flex-col">
+        <p className="order-2 mt-4 text-center text-xs leading-5 text-muted-foreground">
         {t("legalPrefix")}{" "}
         <Link
           href="/terms"
+          target="_blank"
+          rel="noopener noreferrer"
           className="underline underline-offset-4 hover:text-foreground"
         >
           {t("terms")}
@@ -228,13 +241,15 @@ export function SignInForm() {
         {t("legalAnd")}{" "}
         <Link
           href="/privacy"
+          target="_blank"
+          rel="noopener noreferrer"
           className="underline underline-offset-4 hover:text-foreground"
         >
           {t("privacy")}
         </Link>
         .
-      </p>
-      <p className="mt-5 text-center text-sm text-muted-foreground">
+        </p>
+        <p className="order-1 mt-5 text-center text-sm text-muted-foreground">
         {t("newAccount")}{" "}
         <Link
           href="/auth/sign-up"
@@ -242,7 +257,8 @@ export function SignInForm() {
         >
           {t("newAccountLink")}
         </Link>
-      </p>
+        </p>
+      </div>
     </form>
   );
 }

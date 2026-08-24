@@ -32,6 +32,7 @@
     "success": "Sesión iniciada correctamente.",
     "redirecting": "Abriendo tu panel...",
     "error": "No se pudo iniciar sesión.",
+    "userNotFound": "Usuario no encontrado.",
     "emailNotVerified": "Tu correo aún no está verificado. Revisa tu bandeja de entrada para encontrar el enlace de verificación.",
     "resendVerification": "Reenviar correo de verificación",
     "resendLoading": "Enviando...",

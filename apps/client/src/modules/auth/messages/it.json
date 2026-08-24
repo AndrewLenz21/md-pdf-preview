@@ -32,6 +32,7 @@
     "success": "Accesso effettuato correttamente.",
     "redirecting": "Apertura della dashboard...",
     "error": "Impossibile accedere.",
+    "userNotFound": "Utente non trovato.",
     "emailNotVerified": "La tua email non è ancora verificata. Controlla la casella di posta per il link di verifica.",
     "resendVerification": "Reinvia email di verifica",
     "resendLoading": "Invio in corso...",

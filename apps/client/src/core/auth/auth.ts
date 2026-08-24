@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { betterAuth } from "better-auth";
+import { APIError, createAuthMiddleware } from "better-auth/api";
 
 import {
   resendVerificationEmailToExistingUser,
@@ -16,6 +17,30 @@ const googleClientSecret = requiredEnvironmentVariable("GOOGLE_CLIENT_SECRET");
 const githubClientId = requiredEnvironmentVariable("GITHUB_CLIENT_ID");
 const githubClientSecret = requiredEnvironmentVariable("GITHUB_CLIENT_SECRET");
 const deletionRequestReferences = new WeakMap<Request, string>();
+
+const identifyMissingEmailSignInUser = createAuthMiddleware(async (context) => {
+  if (context.path !== "/sign-in/email") {
+    return;
+  }
+
+  const body = context.body as { email?: unknown } | undefined;
+  const email = typeof body?.email === "string" ? body.email.trim() : "";
+
+  if (!email || !email.includes("@")) {
+    return;
+  }
+
+  const user = await context.context.internalAdapter.findUserByEmail(email);
+  if (user) {
+    return;
+  }
+
+  context.context.logger.warn("User not found");
+  throw APIError.from("UNAUTHORIZED", {
+    code: "USER_NOT_FOUND",
+    message: "User not found",
+  });
+});
 
 if (authSecret.length < 32) {
   throw new Error("BETTER_AUTH_SECRET must contain at least 32 characters.");
@@ -47,6 +72,9 @@ export const auth = betterAuth({
     sendOnSignUp: true,
     sendOnSignIn: false,
     autoSignInAfterVerification: true,
+  },
+  hooks: {
+    before: identifyMissingEmailSignInUser,
   },
   user: {
     deleteUser: {
