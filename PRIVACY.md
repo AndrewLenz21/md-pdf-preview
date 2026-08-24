@@ -2,7 +2,7 @@
 
 Last updated: 2026-08-24
 
-This notice explains how md-pdf-preview handles information in the hosted service and in self-hosted deployments. The hosted service is operated in Milan, Italy by Lenz Villanueva Andrew Angel Giovanny, sole proprietor trading as Bitnexus Lab (formal business name: Bitnexus Lab di Lenz Villanueva Andrew Giovanny). Privacy contact: [privacy@bitnexuslab.com](mailto:privacy@bitnexuslab.com). The project is open source, so a self-hosted operator may configure additional services or policies.
+This notice explains how md-pdf-preview handles information in the hosted service and in self-hosted deployments. The detailed Privacy Policy published in the hosted application is the canonical privacy notice for the hosted service. The hosted service is operated in Milan, Italy by Lenz Villanueva Andrew Angel Giovanny, sole proprietor trading as Bitnexus Lab (formal business name: Bitnexus Lab di Lenz Villanueva Andrew Angel Giovanny). Privacy contact: [privacy@bitnexuslab.com](mailto:privacy@bitnexuslab.com). The project is open source, so a self-hosted operator may configure additional services or policies.
 
 ## Local Workspace
 
