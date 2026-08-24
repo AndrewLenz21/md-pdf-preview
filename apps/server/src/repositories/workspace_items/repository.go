@@ -228,6 +228,103 @@ func (r *WorkspaceItemRepository) CollectSubtreeR2ObjectKeys(
 	return objectKeys, nil
 }
 
+// CollectR2ObjectKeys returns every persisted R2 key owned by the user.
+func (r *WorkspaceItemRepository) CollectR2ObjectKeys(
+	ctx context.Context,
+	userID string,
+) ([]string, error) {
+	userUUID, err := parseUUID(userID)
+	if err != nil {
+		return nil, fmt.Errorf("collect user workspace objects: invalid user ID: %w", err)
+	}
+
+	rows, err := r.queryService().SelectCall(ctx, "fn_workspace_items_collect_user_r2_keys", userUUID)
+	if err != nil {
+		return nil, fmt.Errorf("collect user workspace objects: %w", err)
+	}
+	defer rows.Close()
+
+	objectKeys := make([]string, 0)
+	for rows.Next() {
+		var objectKey string
+		if err := rows.Scan(&objectKey); err != nil {
+			return nil, fmt.Errorf("scan user workspace object key: %w", err)
+		}
+		objectKeys = append(objectKeys, objectKey)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate user workspace object keys: %w", err)
+	}
+
+	return objectKeys, nil
+}
+
+// AcquireDeletionLock prevents workspace operations from racing account
+// cleanup. The lock is removed when cleanup fails and cascades with the user
+// row after Better Auth completes deletion.
+func (r *WorkspaceItemRepository) AcquireDeletionLock(
+	ctx context.Context,
+	userID string,
+) (bool, error) {
+	userUUID, err := parseUUID(userID)
+	if err != nil {
+		return false, fmt.Errorf("acquire account deletion lock: invalid user ID: %w", err)
+	}
+
+	var acquired bool
+	if err := r.queryService().MutationCall(
+		ctx,
+		"fn_account_deletion_lock_acquire",
+		&acquired,
+		userUUID,
+	); err != nil {
+		return false, fmt.Errorf("acquire account deletion lock: %w", err)
+	}
+
+	return acquired, nil
+}
+
+func (r *WorkspaceItemRepository) ReleaseDeletionLock(
+	ctx context.Context,
+	userID string,
+) error {
+	userUUID, err := parseUUID(userID)
+	if err != nil {
+		return fmt.Errorf("release account deletion lock: invalid user ID: %w", err)
+	}
+
+	var deletedCount int
+	if err := r.queryService().MutationCall(
+		ctx,
+		"fn_account_deletion_lock_release",
+		&deletedCount,
+		userUUID,
+	); err != nil {
+		return fmt.Errorf("release account deletion lock: %w", err)
+	}
+
+	return nil
+}
+
+func (r *WorkspaceItemRepository) IsDeletionLocked(
+	ctx context.Context,
+	userID string,
+) (bool, error) {
+	userUUID, err := parseUUID(userID)
+	if err != nil {
+		return false, fmt.Errorf("check account deletion lock: invalid user ID: %w", err)
+	}
+
+	var locked bool
+	query := postgres.BuildFunctionQuery(r.schema, "fn_account_deletion_lock_exists", userUUID)
+	if err := r.database.QueryRow(ctx, query, userUUID).Scan(&locked); err != nil {
+		return false, fmt.Errorf("check account deletion lock: %w", err)
+	}
+
+	return locked, nil
+}
+
 // Delete physically deletes an item and its descendants.
 func (r *WorkspaceItemRepository) Delete(
 	ctx context.Context,

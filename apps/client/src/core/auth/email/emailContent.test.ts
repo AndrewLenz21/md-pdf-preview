@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { buildVerificationEmailContent, resolveEmailLocale } from "./emailContent";
+import {
+  buildAccountDeletionEmailContent,
+  buildVerificationEmailContent,
+  resolveEmailLocale,
+} from "./emailContent";
 
 function requestWithLanguage(header?: string): Request {
   return new Request("https://example.com/sign-up", {
@@ -64,5 +68,31 @@ describe("buildVerificationEmailContent", () => {
     });
 
     expect(withoutName.html).toContain("there");
+  });
+});
+
+describe("buildAccountDeletionEmailContent", () => {
+  it("includes the deletion reference and preserves local-document wording", () => {
+    const { subject, html } = buildAccountDeletionEmailContent({
+      locale: "es",
+      name: "Ana",
+      deletionReference: "DEL-request-123",
+    });
+
+    expect(subject).toContain("eliminada");
+    expect(html).toContain("DEL-request-123");
+    expect(html).toContain("Ana");
+    expect(html).toContain("navegador");
+  });
+
+  it("escapes the deletion reference before placing it in HTML", () => {
+    const { html } = buildAccountDeletionEmailContent({
+      locale: "en",
+      name: "there",
+      deletionReference: 'DEL-<script>alert("x")</script>',
+    });
+
+    expect(html).not.toContain("<script>");
+    expect(html).toContain("&lt;script&gt;");
   });
 });

@@ -25,6 +25,22 @@
     "signUp": "Registrati",
     "signOut": "Esci"
   },
+  "accountDeletion": {
+    "menuLabel": "Elimina account",
+    "title": "Eliminare definitivamente l'account?",
+    "description": "Questa azione non può essere annullata.",
+    "deletedTitle": "Verranno eliminati definitivamente",
+    "deletedAccount": "Il tuo account e le sessioni attive",
+    "deletedWorkspace": "Il tuo spazio di lavoro cloud e i documenti sincronizzati",
+    "deletedAuth": "Gli account di accesso collegati e i token di verifica",
+    "keptTitle": "Non verranno eliminati",
+    "keptLocal": "I documenti salvati solo in questo browser",
+    "keptLogs": "I log operativi, soggetti a periodi di conservazione separati",
+    "cancel": "Annulla",
+    "confirm": "Elimina il mio account",
+    "deleting": "Eliminazione account...",
+    "error": "Non è stato possibile eliminare il tuo account. Riprova."
+  },
   "guest": "Ospite",
   "settings": {
     "label": "Impostazioni",

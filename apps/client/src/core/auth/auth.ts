@@ -1,10 +1,13 @@
+import { randomUUID } from "node:crypto";
 import { betterAuth } from "better-auth";
 
 import {
   resendVerificationEmailToExistingUser,
   sendVerificationEmail,
 } from "./email/verificationEmail";
+import { sendAccountDeletionConfirmationEmail } from "./email/accountDeletionEmail";
 import { authPool, requiredEnvironmentVariable } from "./pool";
+import appServer from "@/lib/backend/server";
 
 const authSecret = requiredEnvironmentVariable("BETTER_AUTH_SECRET");
 const authUrl = requiredEnvironmentVariable("BETTER_AUTH_URL");
@@ -12,6 +15,7 @@ const googleClientId = requiredEnvironmentVariable("GOOGLE_CLIENT_ID");
 const googleClientSecret = requiredEnvironmentVariable("GOOGLE_CLIENT_SECRET");
 const githubClientId = requiredEnvironmentVariable("GITHUB_CLIENT_ID");
 const githubClientSecret = requiredEnvironmentVariable("GITHUB_CLIENT_SECRET");
+const deletionRequestReferences = new WeakMap<Request, string>();
 
 if (authSecret.length < 32) {
   throw new Error("BETTER_AUTH_SECRET must contain at least 32 characters.");
@@ -43,6 +47,75 @@ export const auth = betterAuth({
     sendOnSignUp: true,
     sendOnSignIn: false,
     autoSignInAfterVerification: true,
+  },
+  user: {
+    deleteUser: {
+      enabled: true,
+      beforeDelete: async (user, request) => {
+        let response: Response;
+
+        try {
+          response = await appServer
+            .withUser(user.id)
+            .delete("account/cloud-data");
+        } catch (error) {
+          console.error("[Auth] account cloud cleanup request failed:", error);
+          throw new Error("Account cloud cleanup failed.");
+        }
+
+        if (!response.ok) {
+          console.error(
+            `[Auth] account cloud cleanup returned ${response.status}`,
+          );
+          throw new Error("Account cloud cleanup failed.");
+        }
+
+        if (request) {
+          deletionRequestReferences.set(
+            request,
+            response.headers.get("X-Request-ID")?.trim() || randomUUID(),
+          );
+        }
+      },
+      afterDelete: async (user, request) => {
+        const requestReference = request
+          ? deletionRequestReferences.get(request)
+          : undefined;
+        const deletionReference = `DEL-${requestReference ?? randomUUID()}`;
+
+        try {
+          // Better Auth's verification table has no user foreign key. Remove
+          // the email verification and reset tokens for this account after
+          // native user deletion.
+          await authPool.query(
+            'DELETE FROM "verification" WHERE "identifier" = $1',
+            [user.email],
+          );
+        } catch (error) {
+          console.error(
+            "[Auth] verification cleanup after deletion failed:",
+            error,
+          );
+        }
+
+        try {
+          await sendAccountDeletionConfirmationEmail(
+            user,
+            deletionReference,
+            request,
+          );
+        } catch (error) {
+          console.error(
+            "[Auth] account deletion confirmation email failed:",
+            error,
+          );
+        } finally {
+          if (request) {
+            deletionRequestReferences.delete(request);
+          }
+        }
+      },
+    },
   },
   rateLimit: {
     enabled: true,

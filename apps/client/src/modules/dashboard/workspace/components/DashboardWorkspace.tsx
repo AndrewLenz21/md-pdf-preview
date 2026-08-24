@@ -112,6 +112,9 @@ export function DashboardWorkspace() {
   const cloudIsHydrating = useCloudWorkspaceStore(
     (state) => state.isHydrating,
   );
+  const cloudAccessDisabled = useCloudWorkspaceStore(
+    (state) => state.cloudAccessDisabled,
+  );
   const cloudError = useCloudWorkspaceStore((state) => state.error);
   const resetCloudWorkspace = useCloudWorkspaceStore((state) => state.reset);
   const hydrateLocalWorkspace = useLocalWorkspaceStore(
@@ -266,9 +269,11 @@ export function DashboardWorkspace() {
     }
 
     if (!session?.user) {
-      if (cloudUserId !== null || cloudIsHydrated || cloudItems.length > 0) {
-        resetCloudWorkspace();
-      }
+      resetCloudWorkspace();
+      return;
+    }
+
+    if (cloudAccessDisabled) {
       return;
     }
 
@@ -283,6 +288,7 @@ export function DashboardWorkspace() {
     }
   }, [
     cloudError,
+    cloudAccessDisabled,
     cloudIsHydrated,
     cloudIsHydrating,
     cloudItems.length,
@@ -594,10 +600,9 @@ export function DashboardWorkspace() {
       <main
         className={`relative min-w-0 flex-1 lg:flex lg:h-screen lg:min-h-0 lg:flex-col lg:overflow-hidden ${!selectedDocument ? "h-[calc(100dvh-var(--mobile-dashboard-nav-height))] overflow-hidden pb-0" : isMobileFilesSection ? "h-[calc(100dvh-var(--mobile-dashboard-nav-height))] overflow-hidden pb-0" : isMobilePaperPreview ? "h-[calc(100dvh-var(--mobile-dashboard-nav-height))] overflow-hidden pb-0" : isPreviewMode ? "pb-0" : "pb-20"} lg:pb-0`}
       >
-        <div
-          className="relative hidden h-full min-h-0 flex-col lg:flex"
-        >
-          {desktopSidebarCollapsed ? (
+        {isDesktopViewport !== false ? (
+          <div className="relative hidden h-full min-h-0 flex-col lg:flex">
+            {desktopSidebarCollapsed ? (
             <button
               type="button"
               ref={desktopSidebarToggleRef}
@@ -608,77 +613,78 @@ export function DashboardWorkspace() {
             >
               <ChevronRight className="h-4 w-4" strokeWidth={1.7} />
             </button>
-          ) : null}
-          {selectedDocument ? (
-            <>
-              <PreviewToolbar
-                document={selectedDocument}
-                mode={editorMode}
-                onModeChange={changeEditorMode}
-                editingActions={desktopEditingActions}
-                splitMode={isPreviewMode}
-              />
-              <div
-                className="flex h-0 min-h-0 min-w-0 flex-1 overflow-hidden"
-              >
-                <section
-                  className={`relative h-full min-h-0 min-w-0 transition-[width] duration-300 ease-out ${isDesktopSplit ? (isPreviewMode ? "w-1/2" : "w-full") : "w-full"}`}
+            ) : null}
+            {selectedDocument ? (
+              <>
+                <PreviewToolbar
+                  document={selectedDocument}
+                  mode={editorMode}
+                  onModeChange={changeEditorMode}
+                  editingActions={desktopEditingActions}
+                  splitMode={isPreviewMode}
+                />
+                <div
+                  className="flex h-0 min-h-0 min-w-0 flex-1 overflow-hidden"
                 >
-                  <DocumentPreview
-                    document={selectedDocument}
-                    mode={isPreviewMode ? "document" : editorMode}
-                    embedded={isDesktopViewport === true}
-                    showToolbar={false}
-                    scrollScope="desktop"
-                    onModeChange={changeEditorMode}
-                    onContentChange={(content) =>
-                      scheduleContentUpdate(selectedDocument.id, content)
-                    }
-                    onEditingActionsChange={setDesktopEditingActions}
-                    editable={!isWorkspaceTransferActive}
-                    scrollContainerRef={desktopDocumentScrollRef}
-                    pageBreakMarkers={documentPageBreakMarkers}
-                    modeTransitionDirection={modeTransitionDirection}
-                  />
-                  <PreviewZoomControl
-                    mode={isPreviewMode ? "document" : editorMode}
-                    embedded={isDesktopSplit}
-                  />
-                </section>
-                {desktopPreviewVisible ? (
                   <section
-                    aria-hidden={!isPreviewMode}
-                    className={`relative flex h-full min-h-0 min-w-0 flex-col overflow-hidden transition-[width,opacity,transform] duration-300 ease-out ${isPreviewMode ? "dashboard-desktop-preview-enter w-1/2 translate-x-0 opacity-100" : "pointer-events-none w-0 translate-x-4 opacity-0"}`}
+                    className={`relative h-full min-h-0 min-w-0 transition-[width] duration-300 ease-out ${isDesktopSplit ? (isPreviewMode ? "w-1/2" : "w-full") : "w-full"}`}
                   >
-                    <PreviewPaneToolbar
-                      editingActions={desktopEditingActions}
+                    <DocumentPreview
+                      document={selectedDocument}
+                      mode={isPreviewMode ? "document" : editorMode}
+                      embedded={isDesktopViewport === true}
+                      showToolbar={false}
+                      scrollScope="desktop"
+                      onModeChange={changeEditorMode}
+                      onContentChange={(content) =>
+                        scheduleContentUpdate(selectedDocument.id, content)
+                      }
+                      onEditingActionsChange={setDesktopEditingActions}
+                      editable={!isWorkspaceTransferActive}
+                      scrollContainerRef={desktopDocumentScrollRef}
+                      pageBreakMarkers={documentPageBreakMarkers}
+                      modeTransitionDirection={modeTransitionDirection}
                     />
-                    <div className="min-h-0 min-w-0 flex-1">
-                      <DocumentPreview
-                        document={selectedDocument}
-                        mode="preview"
-                        embedded={isDesktopViewport === true}
-                        showToolbar={false}
-                        scrollScope="desktop"
-                        onModeChange={changeEditorMode}
-                         onContentChange={(content) =>
-                           scheduleContentUpdate(selectedDocument.id, content)
-                         }
-                         editable={!isWorkspaceTransferActive}
-                         scrollContainerRef={desktopPreviewScrollRef}
-                      />
-                    </div>
-                    {isPreviewMode ? (
-                      <PreviewZoomControl mode="preview" embedded />
-                    ) : null}
+                    <PreviewZoomControl
+                      mode={isPreviewMode ? "document" : editorMode}
+                      embedded={isDesktopSplit}
+                    />
                   </section>
-                ) : null}
-              </div>
-            </>
-          ) : (
-            <EmptyDocumentState />
-          )}
-        </div>
+                  {desktopPreviewVisible ? (
+                    <section
+                      aria-hidden={!isPreviewMode}
+                      className={`relative flex h-full min-h-0 min-w-0 flex-col overflow-hidden transition-[width,opacity,transform] duration-300 ease-out ${isPreviewMode ? "dashboard-desktop-preview-enter w-1/2 translate-x-0 opacity-100" : "pointer-events-none w-0 translate-x-4 opacity-0"}`}
+                    >
+                      <PreviewPaneToolbar
+                        editingActions={desktopEditingActions}
+                      />
+                      <div className="min-h-0 min-w-0 flex-1">
+                        <DocumentPreview
+                          document={selectedDocument}
+                          mode="preview"
+                          embedded={isDesktopViewport === true}
+                          showToolbar={false}
+                          scrollScope="desktop"
+                          onModeChange={changeEditorMode}
+                          onContentChange={(content) =>
+                            scheduleContentUpdate(selectedDocument.id, content)
+                          }
+                          editable={!isWorkspaceTransferActive}
+                          scrollContainerRef={desktopPreviewScrollRef}
+                        />
+                      </div>
+                      {isPreviewMode ? (
+                        <PreviewZoomControl mode="preview" embedded />
+                      ) : null}
+                    </section>
+                  ) : null}
+                </div>
+              </>
+            ) : (
+              <EmptyDocumentState />
+            )}
+          </div>
+        ) : null}
         {isDesktopViewport === false ? (
           <div
             className={`relative min-h-0 lg:hidden ${isMobileFilesSection || !selectedDocument || isMobilePaperPreview ? "h-full overflow-hidden" : ""}`}

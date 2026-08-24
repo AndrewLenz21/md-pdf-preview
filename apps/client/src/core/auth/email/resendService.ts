@@ -2,6 +2,7 @@ import { Resend } from "resend";
 
 import { requiredEnvironmentVariable } from "../pool";
 import {
+  buildAccountDeletionEmailContent,
   buildVerificationEmailContent,
   type EmailLocale,
 } from "./emailContent";
@@ -24,15 +25,12 @@ const resend = new Resend(resendApiKey);
 
 const MAX_SEND_ATTEMPTS = 2;
 
-export async function sendVerificationEmail(input: {
+async function sendEmail(input: {
   to: string;
-  name: string;
-  locale: EmailLocale;
-  verificationUrl: string;
+  subject: string;
+  html: string;
   idempotencyKey: string;
 }): Promise<{ providerMessageId: string }> {
-  const { subject, html } = buildVerificationEmailContent(input);
-
   let lastError: ResendSendError | null = null;
 
   for (let attempt = 1; attempt <= MAX_SEND_ATTEMPTS; attempt += 1) {
@@ -43,7 +41,12 @@ export async function sendVerificationEmail(input: {
 
     try {
       const response = await resend.emails.send(
-        { from: resendFromAddress, to: [input.to], subject, html },
+        {
+          from: resendFromAddress,
+          to: [input.to],
+          subject: input.subject,
+          html: input.html,
+        },
         { idempotencyKey: input.idempotencyKey },
       );
 
@@ -76,7 +79,7 @@ export async function sendVerificationEmail(input: {
       throw new ResendSendError(
         null,
         null,
-        "Unable to send the verification email.",
+        "Unable to send the email.",
       );
     }
 
@@ -94,6 +97,40 @@ export async function sendVerificationEmail(input: {
 
   throw (
     lastError ??
-    new ResendSendError(null, null, "Unable to send the verification email.")
+    new ResendSendError(null, null, "Unable to send the email.")
   );
+}
+
+export async function sendVerificationEmail(input: {
+  to: string;
+  name: string;
+  locale: EmailLocale;
+  verificationUrl: string;
+  idempotencyKey: string;
+}): Promise<{ providerMessageId: string }> {
+  const { subject, html } = buildVerificationEmailContent(input);
+
+  return sendEmail({
+    to: input.to,
+    subject,
+    html,
+    idempotencyKey: input.idempotencyKey,
+  });
+}
+
+export async function sendAccountDeletionEmail(input: {
+  to: string;
+  name: string;
+  locale: EmailLocale;
+  deletionReference: string;
+  idempotencyKey: string;
+}): Promise<{ providerMessageId: string }> {
+  const { subject, html } = buildAccountDeletionEmailContent(input);
+
+  return sendEmail({
+    to: input.to,
+    subject,
+    html,
+    idempotencyKey: input.idempotencyKey,
+  });
 }

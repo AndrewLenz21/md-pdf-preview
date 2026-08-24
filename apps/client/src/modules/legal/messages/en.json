@@ -135,7 +135,7 @@
         ],
         "bullets": [
           "Local browser data: until you delete it, clear site data, use private browsing, or the browser removes it.",
-          "Account and workspace data: while the account remains active and until you delete the relevant data or the Controller removes it under a documented policy. Cloud document objects are deleted when the corresponding workspace item is deleted by the service.",
+          "Account and workspace data: while the account remains active. Authenticated users can permanently delete their account from application settings; this deletes the cloud workspace and associated Cloudflare R2 document objects.",
           "Sessions: the configured session expiry is up to 7 days by default, with earlier deletion on sign-out or account deletion.",
           "OAuth tokens and account links: while needed for the linked authentication account, subject to provider revocation and account deletion procedures.",
           "Verification records and email-delivery records: verification records have an expiry field; PostgreSQL email-delivery records are automatically deleted after 30 days.",
@@ -164,8 +164,8 @@
       "deletion": {
         "title": "Account and Data Deletion",
         "paragraphs": [
-          "The current application does not yet provide a self-service account-deletion control. You may request deletion of your account and associated cloud data by contacting privacy@bitnexuslab.com. After reasonably verifying the request, the Controller will process it without undue delay and normally within 30 days, subject to applicable GDPR requirements and any legal obligation requiring limited information to be retained.",
-          "Active cloud workspace data associated with the account will be deleted from the production service. Document objects associated with deleted workspace items are removed from Cloudflare R2. PostgreSQL request logs and email-delivery records are not kept indefinitely and expire under their existing 30-day retention policy. R2 diagnostic logs expire after 30 days. Some information may need to be retained when required by law or necessary for the establishment, exercise, or defence of legal claims. No specific deletion timing is promised for backups because their configuration remains unresolved."
+          "Authenticated users can permanently delete their account from the application settings. After explicit confirmation, the service deletes the user's cloud workspace data and associated Cloudflare R2 document objects and then deletes the account through the authentication system. A deletion confirmation email may be sent after completion; its delivery record follows the 30-day email-delivery retention period. This action cannot be undone.",
+          "Local-only documents stored in the browser are not automatically deleted because they are separate from the cloud account. PostgreSQL request logs, email-delivery records, and diagnostic logs follow their separate 30-day retention periods. Formal GDPR and privacy requests can still be sent to privacy@bitnexuslab.com. Some information may need to be retained when required by law or necessary for the establishment, exercise, or defence of legal claims. No specific deletion timing is promised for backups because their configuration remains unresolved."
         ]
       },
       "security": {
@@ -291,7 +291,7 @@
       "deletion": {
         "title": "15. Account Deletion",
         "paragraphs": [
-          "The current service does not provide a self-service account-deletion control. Request deletion by contacting privacy@bitnexuslab.com. Individual cloud documents can be deleted through the workspace controls. The operator will handle account, storage, log, and backup deletion under the procedure described in the Privacy Policy; immediate deletion cannot be promised where backups or legal retention apply."
+          "Authenticated users can permanently delete their account from the application settings after explicit confirmation. The service deletes the account and associated cloud workspace data, including Cloudflare R2 document objects; this action cannot be undone. Local-only browser documents are separate from the cloud account. Operational logs follow their independent retention periods, and formal privacy requests may be sent to privacy@bitnexuslab.com."
         ]
       },
       "warranties": {

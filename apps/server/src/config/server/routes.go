@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/andrew/md-pdf-preview/server/src/config/logging"
+	"github.com/andrew/md-pdf-preview/server/src/controllers/account"
 	"github.com/andrew/md-pdf-preview/server/src/controllers/health"
 	"github.com/andrew/md-pdf-preview/server/src/controllers/workspace"
 )
@@ -15,4 +16,5 @@ func StartRoutes() {
 
 	health.RegisterRoutes(applicationServer)
 	workspace.RegisterRoutes(applicationServer)
+	account.RegisterRoutes(applicationServer)
 }

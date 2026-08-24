@@ -12,6 +12,12 @@ func TestWorkspaceItemsSchemaProtectsTreeInvariants(t *testing.T) {
 	schema := strings.Join(migrations.SchemaStatements(), "\n")
 
 	requiredFragments := []string{
+		"CREATE TABLE IF NOT EXISTS account_deletion_locks",
+		"REFERENCES \"user\" (\"id\") ON DELETE CASCADE",
+		"fn_account_deletion_lock_acquire",
+		"fn_account_deletion_lock_exists",
+		"created_at >= CURRENT_TIMESTAMP - INTERVAL '15 minutes'",
+		"fn_account_deletion_lock_release",
 		"CREATE TABLE IF NOT EXISTS workspace_items",
 		"id uuid DEFAULT pg_catalog.gen_random_uuid()",
 		"user_id uuid NOT NULL REFERENCES \"user\" (\"id\")",
@@ -22,7 +28,9 @@ func TestWorkspaceItemsSchemaProtectsTreeInvariants(t *testing.T) {
 		"fn_workspace_item_update",
 		"fn_workspace_document_upload_complete",
 		"fn_workspace_item_collect_r2_keys",
+		"fn_workspace_items_collect_user_r2_keys",
 		"fn_workspace_item_delete",
+		"CREATE TRIGGER workspace_items_updated_at_trigger",
 	}
 
 	for _, fragment := range requiredFragments {
@@ -76,6 +84,31 @@ func TestRequestLogsSchemaStoresRequestMetadataAndR2Details(t *testing.T) {
 	for _, fragment := range requiredFragments {
 		if !strings.Contains(schema, fragment) {
 			t.Errorf("request logs schema is missing %q", fragment)
+		}
+	}
+}
+
+func TestEmailDeliveriesAllowsAccountDeletionPurpose(t *testing.T) {
+	schema := strings.Join(migrations.SchemaStatements(), "\n")
+
+	for _, fragment := range []string{
+		"email_verification', 'account_deletion",
+	} {
+		if !strings.Contains(schema, fragment) {
+			t.Errorf("email deliveries schema is missing %q", fragment)
+		}
+	}
+}
+
+func TestBootstrapSchemaAvoidsIncrementalTableAlterations(t *testing.T) {
+	schema := strings.Join(migrations.SchemaStatements(), "\n")
+
+	for _, fragment := range []string{
+		"ALTER TABLE",
+		"DROP TRIGGER",
+	} {
+		if strings.Contains(schema, fragment) {
+			t.Fatalf("bootstrap schema must not contain %q", fragment)
 		}
 	}
 }

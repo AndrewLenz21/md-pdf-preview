@@ -68,11 +68,21 @@ var workspaceItemsSchemaStatements = []string{
 		RETURN NEW;
 	END;
 	$$`,
-	`DROP TRIGGER IF EXISTS workspace_items_updated_at_trigger ON workspace_items`,
-	`CREATE TRIGGER workspace_items_updated_at_trigger
-		BEFORE UPDATE ON workspace_items
-		FOR EACH ROW
-		EXECUTE FUNCTION fn_workspace_items_set_updated_at()`,
+	`DO $$
+	BEGIN
+		IF NOT EXISTS (
+			SELECT 1
+			FROM pg_catalog.pg_trigger
+			WHERE tgname = 'workspace_items_updated_at_trigger'
+				AND tgrelid = 'workspace_items'::pg_catalog.regclass
+		) THEN
+			EXECUTE 'CREATE TRIGGER workspace_items_updated_at_trigger
+				BEFORE UPDATE ON workspace_items
+				FOR EACH ROW
+				EXECUTE FUNCTION fn_workspace_items_set_updated_at()';
+		END IF;
+	END;
+	$$`,
 	`CREATE OR REPLACE FUNCTION fn_workspace_item_create(
 		p_user_id uuid,
 		p_parent_id uuid,
@@ -435,6 +445,17 @@ var workspaceItemsSchemaStatements = []string{
 		SELECT DISTINCT item.r2_object_key
 		FROM workspace_items item
 		JOIN descendants ON descendants.id = item.id
+		WHERE item.user_id = $1
+			AND item.r2_object_key IS NOT NULL
+		ORDER BY item.r2_object_key;
+	$$`,
+	`CREATE OR REPLACE FUNCTION fn_workspace_items_collect_user_r2_keys(p_user_id uuid)
+	RETURNS TABLE (r2_object_key text)
+	LANGUAGE sql
+	STABLE
+	AS $$
+		SELECT DISTINCT item.r2_object_key
+		FROM workspace_items item
 		WHERE item.user_id = $1
 			AND item.r2_object_key IS NOT NULL
 		ORDER BY item.r2_object_key;

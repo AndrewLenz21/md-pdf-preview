@@ -41,6 +41,14 @@ describe("resendService", () => {
     idempotencyKey: "email_verification:delivery-1",
   };
 
+  const deletionInput = {
+    to: "user@example.com",
+    name: "Ana",
+    locale: "es" as const,
+    deletionReference: "DEL-request-1",
+    idempotencyKey: "account_deletion:delivery-1",
+  };
+
   it("returns the provider message id on success", async () => {
     emailsSendMock.mockResolvedValue({
       data: { id: "resend-msg-1" },
@@ -56,6 +64,24 @@ describe("resendService", () => {
         to: ["user@example.com"],
       }),
       { idempotencyKey: input.idempotencyKey },
+    );
+  });
+
+  it("sends the account deletion confirmation with its idempotency key", async () => {
+    emailsSendMock.mockResolvedValue({
+      data: { id: "resend-delete-1" },
+      error: null,
+    });
+
+    const result = await service.sendAccountDeletionEmail(deletionInput);
+
+    expect(result).toEqual({ providerMessageId: "resend-delete-1" });
+    expect(emailsSendMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: ["user@example.com"],
+        subject: "Tu cuenta ha sido eliminada",
+      }),
+      { idempotencyKey: deletionInput.idempotencyKey },
     );
   });
 

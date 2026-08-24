@@ -46,6 +46,15 @@ interface EmailCopy {
   expires: string;
 }
 
+interface AccountDeletionEmailCopy {
+  subject: string;
+  greeting: string;
+  completed: string;
+  reference: string;
+  localDocuments: string;
+  support: string;
+}
+
 const CONTENT: Record<EmailLocale, EmailCopy> = {
   en: {
     subject: "Verify your email address",
@@ -82,6 +91,42 @@ const CONTENT: Record<EmailLocale, EmailCopy> = {
   },
 };
 
+const ACCOUNT_DELETION_CONTENT: Record<EmailLocale, AccountDeletionEmailCopy> = {
+  en: {
+    subject: "Your account has been deleted",
+    greeting: "Hi {name},",
+    completed:
+      "Your MarkDown Preview account and its cloud-synced workspace have been permanently deleted.",
+    reference: "Deletion reference: {reference}",
+    localDocuments:
+      "Documents stored only in this browser were not affected.",
+    support:
+      "Keep this reference if you need to contact support about the deletion.",
+  },
+  es: {
+    subject: "Tu cuenta ha sido eliminada",
+    greeting: "¡Hola {name}!",
+    completed:
+      "Tu cuenta de MarkDown Preview y su espacio de trabajo sincronizado en la nube se han eliminado permanentemente.",
+    reference: "Referencia de eliminación: {reference}",
+    localDocuments:
+      "Los documentos almacenados únicamente en este navegador no se han modificado.",
+    support:
+      "Conserva esta referencia si necesitas contactar con soporte sobre la eliminación.",
+  },
+  it: {
+    subject: "Il tuo account è stato eliminato",
+    greeting: "Ciao {name},",
+    completed:
+      "Il tuo account MarkDown Preview e il relativo spazio di lavoro sincronizzato nel cloud sono stati eliminati definitivamente.",
+    reference: "Riferimento eliminazione: {reference}",
+    localDocuments:
+      "I documenti salvati solo in questo browser non sono stati modificati.",
+    support:
+      "Conserva questo riferimento se devi contattare il supporto per l'eliminazione.",
+  },
+};
+
 export function buildVerificationEmailContent({
   locale,
   name,
@@ -104,6 +149,39 @@ export function buildVerificationEmailContent({
     `</p>`,
     `<p style="color: #6b7280; font-size: 14px;">${escapeHtml(copy.fallback)}<br />${safeUrl}</p>`,
     `<p style="color: #6b7280; font-size: 14px;">${escapeHtml(copy.expires)}</p>`,
+  ].join("\n");
+
+  return {
+    subject: copy.subject,
+    html: `<div style="font-family: Arial, Helvetica, sans-serif; color: #111827; line-height: 1.6;">${html}</div>`,
+  };
+}
+
+export function buildAccountDeletionEmailContent({
+  locale,
+  name,
+  deletionReference,
+}: {
+  locale: EmailLocale;
+  name: string;
+  deletionReference: string;
+}): { subject: string; html: string } {
+  const copy = ACCOUNT_DELETION_CONTENT[locale];
+  const displayName = name.trim() || FALLBACK_GREETING[locale];
+  const greeting = escapeHtml(copy.greeting.replace("{name}", displayName));
+  const completed = escapeHtml(copy.completed);
+  const reference = escapeHtml(
+    copy.reference.replace("{reference}", deletionReference),
+  );
+  const localDocuments = escapeHtml(copy.localDocuments);
+  const support = escapeHtml(copy.support);
+
+  const html = [
+    `<p>${greeting}</p>`,
+    `<p>${completed}</p>`,
+    `<p><strong>${reference}</strong></p>`,
+    `<p>${localDocuments}</p>`,
+    `<p style="color: #6b7280; font-size: 14px;">${support}</p>`,
   ].join("\n");
 
   return {

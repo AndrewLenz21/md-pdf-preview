@@ -52,9 +52,7 @@ var loggerSchemaStatements = []string{
 				console_logs_size_bytes IS NULL
 				OR console_logs_size_bytes >= 0
 			)
-	)`,
-	`ALTER TABLE request_logs
-		ADD COLUMN IF NOT EXISTS logger_error jsonb`,
+		)`,
 	`CREATE INDEX IF NOT EXISTS request_logs_created_at_idx
 		ON request_logs (created_at DESC)`,
 	`CREATE INDEX IF NOT EXISTS request_logs_user_created_idx

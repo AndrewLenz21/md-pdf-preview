@@ -25,6 +25,22 @@
     "signUp": "Registrarse",
     "signOut": "Cerrar sesión"
   },
+  "accountDeletion": {
+    "menuLabel": "Eliminar cuenta",
+    "title": "¿Eliminar la cuenta permanentemente?",
+    "description": "Esta acción no se puede deshacer.",
+    "deletedTitle": "Se eliminará permanentemente",
+    "deletedAccount": "Tu cuenta y las sesiones activas",
+    "deletedWorkspace": "Tu espacio de trabajo cloud y los documentos sincronizados",
+    "deletedAuth": "Las cuentas de acceso vinculadas y los tokens de verificación",
+    "keptTitle": "No se eliminará",
+    "keptLocal": "Los documentos guardados únicamente en este navegador",
+    "keptLogs": "Los registros operativos, que siguen periodos de conservación independientes",
+    "cancel": "Cancelar",
+    "confirm": "Eliminar mi cuenta",
+    "deleting": "Eliminando cuenta...",
+    "error": "No se pudo eliminar tu cuenta. Inténtalo de nuevo."
+  },
   "guest": "Invitado",
   "settings": {
     "label": "Configuración",

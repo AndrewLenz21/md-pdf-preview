@@ -16,6 +16,7 @@ type fakeWorkspaceRepository struct {
 	deletedCount    int
 	events          *[]string
 	completedParams models.CompleteDocumentUploadParams
+	lockReleased    bool
 }
 
 func (repository *fakeWorkspaceRepository) Create(context.Context, string, models.CreateWorkspaceItemParams) (models.WorkspaceItem, error) {
@@ -46,6 +47,26 @@ func (repository *fakeWorkspaceRepository) CollectSubtreeR2ObjectKeys(context.Co
 	return repository.objectKeys, nil
 }
 
+func (repository *fakeWorkspaceRepository) CollectR2ObjectKeys(context.Context, string) ([]string, error) {
+	if repository.events != nil {
+		*repository.events = append(*repository.events, "collect-account")
+	}
+	return repository.objectKeys, nil
+}
+
+func (repository *fakeWorkspaceRepository) AcquireDeletionLock(context.Context, string) (bool, error) {
+	return true, nil
+}
+
+func (repository *fakeWorkspaceRepository) ReleaseDeletionLock(context.Context, string) error {
+	repository.lockReleased = true
+	return nil
+}
+
+func (repository *fakeWorkspaceRepository) IsDeletionLocked(context.Context, string) (bool, error) {
+	return false, nil
+}
+
 func (repository *fakeWorkspaceRepository) Delete(context.Context, string, string) (int, error) {
 	if repository.events != nil {
 		*repository.events = append(*repository.events, "database-delete")
@@ -54,9 +75,12 @@ func (repository *fakeWorkspaceRepository) Delete(context.Context, string, strin
 }
 
 type fakeWorkspaceCloudStorage struct {
-	events     *[]string
-	deleteErr  error
-	deletedKey []string
+	events       *[]string
+	deleteErr    error
+	deletedKey   []string
+	listedKeys   []string
+	listSequence [][]string
+	listCalls    int
 }
 
 func (storage *fakeWorkspaceCloudStorage) GenerateDocumentUploadURL(context.Context, string, string, string) (cloudflare_service.PresignedDocumentURL, error) {
@@ -72,7 +96,19 @@ func (storage *fakeWorkspaceCloudStorage) DeleteObjects(_ context.Context, keys 
 		*storage.events = append(*storage.events, "r2-delete")
 	}
 	storage.deletedKey = append([]string(nil), keys...)
+	if storage.deleteErr == nil {
+		storage.listedKeys = nil
+	}
 	return storage.deleteErr
+}
+
+func (storage *fakeWorkspaceCloudStorage) ListUserDocumentObjectKeys(context.Context, string) ([]string, error) {
+	if storage.listCalls < len(storage.listSequence) {
+		keys := storage.listSequence[storage.listCalls]
+		storage.listCalls++
+		return keys, nil
+	}
+	return storage.listedKeys, nil
 }
 
 func TestCreateRejectsInvalidWorkspaceItem(t *testing.T) {
@@ -155,6 +191,69 @@ func TestDeleteDoesNotDeleteDatabaseRowsWhenR2DeletionFails(t *testing.T) {
 	}
 	if want := []string{"collect", "r2-delete"}; !reflect.DeepEqual(events, want) {
 		t.Fatalf("Delete() events = %#v, want %#v", events, want)
+	}
+}
+
+func TestDeleteCloudDataUsesPostgresAndR2Inventory(t *testing.T) {
+	const userID = "550e8400-e29b-41d4-a716-446655440000"
+	repository := &fakeWorkspaceRepository{
+		objectKeys: []string{
+			"files/550e8400-e29b-41d4-a716-446655440000/document-1/content.txt",
+		},
+	}
+	storage := &fakeWorkspaceCloudStorage{
+		listSequence: [][]string{
+			{
+				"files/550e8400-e29b-41d4-a716-446655440000/document-1/content.txt",
+				"files/550e8400-e29b-41d4-a716-446655440000/document-2/content.txt",
+			},
+			{},
+		},
+	}
+	service := &Service{ctx: context.Background(), repo: repository, cloud: storage}
+
+	if err := service.DeleteCloudData(userID); err != nil {
+		t.Fatalf("DeleteCloudData() error = %v", err)
+	}
+
+	want := []string{
+		"files/550e8400-e29b-41d4-a716-446655440000/document-1/content.txt",
+		"files/550e8400-e29b-41d4-a716-446655440000/document-2/content.txt",
+	}
+	if !reflect.DeepEqual(storage.deletedKey, want) {
+		t.Fatalf("deleted keys = %#v, want %#v", storage.deletedKey, want)
+	}
+	if repository.lockReleased {
+		t.Fatal("successful cleanup should keep the deletion lock until Better Auth deletes the user")
+	}
+}
+
+func TestDeleteCloudDataReleasesLockWhenR2Fails(t *testing.T) {
+	const userID = "550e8400-e29b-41d4-a716-446655440000"
+	repository := &fakeWorkspaceRepository{}
+	storage := &fakeWorkspaceCloudStorage{
+		listedKeys: []string{
+			"files/550e8400-e29b-41d4-a716-446655440000/document/content.txt",
+		},
+		deleteErr: errors.New("R2 unavailable"),
+	}
+	service := &Service{ctx: context.Background(), repo: repository, cloud: storage}
+
+	if err := service.DeleteCloudData(userID); err == nil {
+		t.Fatal("DeleteCloudData() should fail when R2 deletion fails")
+	}
+	if !repository.lockReleased {
+		t.Fatal("failed cleanup should release the deletion lock")
+	}
+}
+
+func TestMergeOwnedObjectKeysRejectsAnotherUserNamespace(t *testing.T) {
+	_, err := mergeOwnedObjectKeys(
+		"550e8400-e29b-41d4-a716-446655440000",
+		[]string{"files/another-user/document/content.txt"},
+	)
+	if err == nil {
+		t.Fatal("mergeOwnedObjectKeys() should reject an object outside the user's namespace")
 	}
 }
 

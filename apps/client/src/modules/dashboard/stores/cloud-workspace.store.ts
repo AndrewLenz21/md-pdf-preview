@@ -40,6 +40,7 @@ export type CloudWorkspaceOperation =
 type CloudWorkspaceStoreState = WorkspaceItemsStoreState & {
   isHydrated: boolean;
   isHydrating: boolean;
+  cloudAccessDisabled: boolean;
   userId: string | null;
   operation: CloudWorkspaceOperation | null;
   error: ReturnType<typeof toWorkspaceApiError> | null;
@@ -49,6 +50,7 @@ type CloudWorkspaceStoreState = WorkspaceItemsStoreState & {
   contentLoadingByDocumentId: Record<string, boolean>;
   contentErrorByDocumentId: Record<string, string | null>;
   hydrate: (userId?: string) => Promise<void>;
+  disableCloudAccess: () => void;
   reset: () => void;
   loadDocumentContent: (documentId: string) => Promise<void>;
   flushPendingContentAndSave: (documentId: string) => Promise<void>;
@@ -343,6 +345,7 @@ export const useCloudWorkspaceStore = create<CloudWorkspaceStoreState>(
       ...baseState,
       isHydrated: false,
       isHydrating: false,
+      cloudAccessDisabled: false,
       userId: null,
       operation: null,
       error: null,
@@ -354,6 +357,7 @@ export const useCloudWorkspaceStore = create<CloudWorkspaceStoreState>(
 
       hydrate: async (userId) => {
         if (
+          get().cloudAccessDisabled ||
           get().isHydrating ||
           (get().isHydrated && (!userId || get().userId === userId))
         ) {
@@ -401,6 +405,26 @@ export const useCloudWorkspaceStore = create<CloudWorkspaceStoreState>(
         }
       },
 
+      disableCloudAccess: () => {
+        hydrationGeneration += 1;
+        set({
+          items: [],
+          pendingContentByDocumentId: {},
+          collapsedFolderIds: [],
+          isHydrated: false,
+          isHydrating: false,
+          cloudAccessDisabled: true,
+          userId: null,
+          operation: null,
+          error: null,
+          isSaving: false,
+          savingDocumentIds: {},
+          contentLoadedByDocumentId: {},
+          contentLoadingByDocumentId: {},
+          contentErrorByDocumentId: {},
+        });
+      },
+
       reset: () => {
         hydrationGeneration += 1;
         set({
@@ -409,6 +433,7 @@ export const useCloudWorkspaceStore = create<CloudWorkspaceStoreState>(
           collapsedFolderIds: [],
           isHydrated: false,
           isHydrating: false,
+          cloudAccessDisabled: false,
           userId: null,
           operation: null,
           error: null,

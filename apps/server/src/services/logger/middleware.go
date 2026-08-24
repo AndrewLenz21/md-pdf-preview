@@ -27,6 +27,27 @@ type contextKey string
 
 const logBufferContextKey contextKey = "request-log-buffer"
 
+const accountDeletionCompletedContextKey = "account-deletion-completed"
+
+// MarkAccountDeletionCompleted marks only the successful cloud-cleanup
+// request for privacy-preserving request-log persistence.
+func MarkAccountDeletionCompleted(context echo.Context) {
+	context.Set(accountDeletionCompletedContextKey, true)
+}
+
+func isAccountDeletionCompleted(context echo.Context) bool {
+	completed, ok := context.Get(accountDeletionCompletedContextKey).(bool)
+	return ok && completed
+}
+
+func userIDForRequestLog(context echo.Context) *string {
+	if isAccountDeletionCompleted(context) {
+		return nil
+	}
+
+	return userIDFromContext(context)
+}
+
 // RequestLogger captures one bounded request record around every Echo handler.
 func (service *Service) RequestLogger() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
@@ -70,7 +91,7 @@ func (service *Service) RequestLogger() echo.MiddlewareFunc {
 
 			requestLog := models.RequestLog{
 				RequestID:    requestID,
-				UserID:       userIDFromContext(c),
+				UserID:       userIDForRequestLog(c),
 				Method:       request.Method,
 				Endpoint:     endpointFromContext(c),
 				Input:        SanitizeJSON(input),

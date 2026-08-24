@@ -45,6 +45,26 @@ describe("workspace API", () => {
     });
     expect(console.error).toHaveBeenCalled();
   });
+
+  it("does not log an expected unauthorized response", async () => {
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({ message: "authenticated user is required" }),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        },
+      ),
+    );
+
+    await expect(workspaceApi.listItems()).rejects.toMatchObject({
+      status: 401,
+    });
+    expect(consoleError).not.toHaveBeenCalled();
+  });
 });
 
 describe("uploadWorkspaceDocument", () => {

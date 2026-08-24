@@ -25,6 +25,22 @@
     "signUp": "Sign up",
     "signOut": "Sign out"
   },
+  "accountDeletion": {
+    "menuLabel": "Delete account",
+    "title": "Delete account permanently?",
+    "description": "This action cannot be undone.",
+    "deletedTitle": "This will permanently delete",
+    "deletedAccount": "Your account and active sessions",
+    "deletedWorkspace": "Your cloud workspace and synced documents",
+    "deletedAuth": "Connected sign-in accounts and verification tokens",
+    "keptTitle": "This will not delete",
+    "keptLocal": "Documents saved only in this browser",
+    "keptLogs": "Operational logs, which follow separate retention periods",
+    "cancel": "Cancel",
+    "confirm": "Delete my account",
+    "deleting": "Deleting account...",
+    "error": "We couldn't delete your account. Please try again."
+  },
   "guest": "Guest",
   "settings": {
     "label": "Settings",

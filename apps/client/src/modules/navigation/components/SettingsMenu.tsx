@@ -8,6 +8,7 @@ import {
   LogOut,
   Palette,
   Settings2,
+  Trash2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
@@ -34,10 +35,14 @@ export function SettingsMenu({
   placement = "bottom",
   onSignOut,
   signOutLabel = "Sign out",
+  onDeleteAccount,
+  deleteAccountLabel = "Delete account",
 }: {
   placement?: "bottom" | "sidebar";
   onSignOut?: () => void | Promise<void>;
   signOutLabel?: string;
+  onDeleteAccount?: () => void;
+  deleteAccountLabel?: string;
 }) {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -260,21 +265,37 @@ export function SettingsMenu({
                   </Link>
                 ) : null}
               </div>
-              {onSignOut ? (
+              {onSignOut || onDeleteAccount ? (
                 <>
                   <div className="my-2 border-t border-border/70" />
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-muted-foreground transition-colors hover:bg-accent/60 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    onClick={() => {
-                      requestCloseMenu();
-                      void onSignOut();
-                    }}
-                  >
-                    <LogOut className="h-3.5 w-3.5" strokeWidth={1.7} />
-                    {signOutLabel}
-                  </button>
+                  {onSignOut ? (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-muted-foreground transition-colors hover:bg-accent/60 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      onClick={() => {
+                        requestCloseMenu();
+                        void onSignOut();
+                      }}
+                    >
+                      <LogOut className="h-3.5 w-3.5" strokeWidth={1.7} />
+                      {signOutLabel}
+                    </button>
+                  ) : null}
+                  {onDeleteAccount ? (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-destructive/80 transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      onClick={() => {
+                        requestCloseMenu();
+                        onDeleteAccount();
+                      }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" strokeWidth={1.7} />
+                      {deleteAccountLabel}
+                    </button>
+                  ) : null}
                 </>
               ) : null}
             </div>,

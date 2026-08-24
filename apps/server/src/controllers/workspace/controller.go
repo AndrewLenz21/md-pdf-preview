@@ -95,7 +95,7 @@ func (controller *Controller) RegisterRoutes(router *echo.Echo) {
 }
 
 func (controller *Controller) list(context echo.Context) error {
-	userID, err := authenticatedUserID(context)
+	userID, err := AuthenticatedUserID(context)
 	if err != nil {
 		return err
 	}
@@ -109,7 +109,7 @@ func (controller *Controller) list(context echo.Context) error {
 }
 
 func (controller *Controller) create(context echo.Context) error {
-	userID, err := authenticatedUserID(context)
+	userID, err := AuthenticatedUserID(context)
 	if err != nil {
 		return err
 	}
@@ -134,7 +134,7 @@ func (controller *Controller) create(context echo.Context) error {
 }
 
 func (controller *Controller) get(context echo.Context) error {
-	userID, err := authenticatedUserID(context)
+	userID, err := AuthenticatedUserID(context)
 	if err != nil {
 		return err
 	}
@@ -148,7 +148,7 @@ func (controller *Controller) get(context echo.Context) error {
 }
 
 func (controller *Controller) update(context echo.Context) error {
-	userID, err := authenticatedUserID(context)
+	userID, err := AuthenticatedUserID(context)
 	if err != nil {
 		return err
 	}
@@ -175,7 +175,7 @@ func (controller *Controller) update(context echo.Context) error {
 }
 
 func (controller *Controller) delete(context echo.Context) error {
-	userID, err := authenticatedUserID(context)
+	userID, err := AuthenticatedUserID(context)
 	if err != nil {
 		return err
 	}
@@ -189,7 +189,7 @@ func (controller *Controller) delete(context echo.Context) error {
 }
 
 func (controller *Controller) generateUploadURL(context echo.Context) error {
-	userID, err := authenticatedUserID(context)
+	userID, err := AuthenticatedUserID(context)
 	if err != nil {
 		return err
 	}
@@ -215,7 +215,7 @@ func (controller *Controller) generateUploadURL(context echo.Context) error {
 }
 
 func (controller *Controller) generateDownloadURL(context echo.Context) error {
-	userID, err := authenticatedUserID(context)
+	userID, err := AuthenticatedUserID(context)
 	if err != nil {
 		return err
 	}
@@ -235,7 +235,7 @@ func (controller *Controller) generateDownloadURL(context echo.Context) error {
 }
 
 func (controller *Controller) completeUpload(context echo.Context) error {
-	userID, err := authenticatedUserID(context)
+	userID, err := AuthenticatedUserID(context)
 	if err != nil {
 		return err
 	}
@@ -278,6 +278,8 @@ func (controller *Controller) handleServiceError(err error) error {
 	case errors.Is(err, workspace_service.ErrWorkspaceItemNotDocument),
 		errors.Is(err, workspace_service.ErrWorkspaceDocumentObjectKeyInvalid):
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error()).SetInternal(err)
+	case errors.Is(err, workspace_service.ErrAccountDeletionInProgress):
+		return echo.NewHTTPError(http.StatusConflict, "account deletion is in progress").SetInternal(err)
 	case strings.Contains(err.Error(), "invalid") || strings.Contains(err.Error(), "cannot be empty"):
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error()).SetInternal(err)
 	default:
@@ -285,7 +287,7 @@ func (controller *Controller) handleServiceError(err error) error {
 	}
 }
 
-func authenticatedUserID(context echo.Context) (string, error) {
+func AuthenticatedUserID(context echo.Context) (string, error) {
 	if value := context.Get("user_id"); value != nil {
 		if userID, ok := value.(string); ok && strings.TrimSpace(userID) != "" {
 			return strings.TrimSpace(userID), nil

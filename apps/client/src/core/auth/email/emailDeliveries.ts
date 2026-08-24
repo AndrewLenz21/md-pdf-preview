@@ -14,6 +14,7 @@ export type EmailDeliveryStatus =
 
 export const EMAIL_PURPOSE = {
   EMAIL_VERIFICATION: "email_verification",
+  ACCOUNT_DELETION: "account_deletion",
 } as const;
 
 export const EMAIL_PROVIDER = {

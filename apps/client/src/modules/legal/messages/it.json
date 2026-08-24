@@ -135,7 +135,7 @@
         ],
         "bullets": [
           "Dati locali: fino a cancellazione, eliminazione dei dati del sito, navigazione privata o rimozione da parte del browser.",
-          "Account e spazio cloud: finché l'account è attivo e finché i dati non vengono eliminati dall'utente o secondo una policy documentata. Gli oggetti R2 vengono eliminati con l'elemento corrispondente.",
+          "Account e spazio cloud: finché l'account è attivo. Gli utenti autenticati possono eliminare definitivamente il proprio account dalle impostazioni; questa operazione elimina lo spazio cloud e gli oggetti documentali associati in Cloudflare R2.",
           "Sessioni: fino a 7 giorni per impostazione predefinita, con cancellazione precedente al logout o all'eliminazione dell'account.",
           "Token OAuth e collegamenti: finché necessari all'account collegato, considerando revoca del provider e procedura di eliminazione.",
           "Record di verifica e consegna email: i primi hanno una scadenza; i record di consegna email in PostgreSQL vengono eliminati automaticamente dopo 30 giorni.",
@@ -164,8 +164,8 @@
       "deletion": {
         "title": "Cancellazione dell'account e dei dati",
         "paragraphs": [
-          "L'attuale applicazione non offre ancora un comando self-service per la cancellazione dell'account. Puoi richiedere la cancellazione dell'account e dei dati cloud associati scrivendo a privacy@bitnexuslab.com. Dopo una ragionevole verifica della richiesta, il Titolare la gestirà senza ingiustificato ritardo e normalmente entro 30 giorni, nel rispetto dei requisiti GDPR applicabili e di eventuali obblighi legali che impongano di conservare informazioni limitate.",
-          "I dati attivi dello spazio cloud associati all'account saranno eliminati dal servizio di produzione. Gli oggetti dei documenti associati agli elementi dello spazio di lavoro eliminati saranno rimossi da Cloudflare R2. I log delle richieste PostgreSQL e i record di consegna email non sono conservati indefinitamente e scadono secondo l'attuale periodo di conservazione di 30 giorni. I log diagnostici R2 scadono dopo 30 giorni. Alcune informazioni potrebbero dover essere conservate quando richiesto dalla legge o necessario per l'accertamento, l'esercizio o la difesa di diritti in sede legale. Non viene promesso alcun termine di cancellazione per i backup, perché la loro configurazione non è ancora confermata."
+          "Gli utenti autenticati possono eliminare definitivamente il proprio account dalle impostazioni dell'applicazione. Dopo una conferma esplicita, il servizio elimina i dati dello spazio cloud e gli oggetti documentali associati in Cloudflare R2, quindi elimina l'account tramite il sistema di autenticazione. Al termine può essere inviata un'email di conferma della cancellazione; il relativo record di consegna viene conservato per 30 giorni. Questa azione non può essere annullata.",
+          "I documenti salvati solo nel browser non vengono eliminati automaticamente perché sono separati dall'account cloud. I log delle richieste PostgreSQL, i record di consegna email e i log diagnostici seguono i rispettivi periodi indipendenti di conservazione di 30 giorni. Le richieste formali relative alla privacy e al GDPR possono essere inviate anche a privacy@bitnexuslab.com. Alcune informazioni potrebbero dover essere conservate quando richiesto dalla legge o necessario per l'accertamento, l'esercizio o la difesa di diritti in sede legale. Non viene promesso alcun termine di cancellazione per i backup, perché la loro configurazione non è ancora confermata."
         ]
       },
       "security": {
@@ -291,7 +291,7 @@
       "deletion": {
         "title": "15. Cancellazione dell'account",
         "paragraphs": [
-          "Il servizio non offre attualmente la cancellazione autonoma dell'account. Richiedila a privacy@bitnexuslab.com. I documenti cloud possono essere cancellati dai controlli dello spazio di lavoro. Backup, log e conservazioni legali possono richiedere tempo."
+          "Gli utenti autenticati possono eliminare definitivamente il proprio account dalle impostazioni dell'applicazione dopo una conferma esplicita. Il servizio elimina l'account e i dati associati dello spazio cloud, inclusi gli oggetti documentali di Cloudflare R2; questa azione non può essere annullata. I documenti locali del browser sono separati dall'account cloud. I log operativi mantengono i propri periodi indipendenti di conservazione e le richieste formali relative alla privacy possono essere inviate a privacy@bitnexuslab.com."
         ]
       },
       "warranties": {

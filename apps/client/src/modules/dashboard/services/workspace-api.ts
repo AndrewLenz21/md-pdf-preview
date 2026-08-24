@@ -129,10 +129,12 @@ async function request<T>(path: string, options: RequestInit = {}) {
       details.code,
       body,
     );
-    console.error(
-      `[WorkspaceApi] ${options.method ?? "GET"} ${path} returned ${response.status}:`,
-      body,
-    );
+    if (response.status !== 401) {
+      console.error(
+        `[WorkspaceApi] ${options.method ?? "GET"} ${path} returned ${response.status}:`,
+        body,
+      );
+    }
     throw error;
   }
 

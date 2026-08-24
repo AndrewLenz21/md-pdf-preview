@@ -1,14 +1,18 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Settings2, UserRound } from "lucide-react";
 
 import { Link, usePathname } from "@/core/i18n";
 import { authClient } from "@/lib/auth-client";
+import { useCloudWorkspaceStore } from "@/modules/dashboard/stores/cloud-workspace.store";
+import { useWorkspaceSessionStore } from "@/modules/dashboard/stores/workspace-session.store";
 
 import { LanguageSelector } from "./LanguageSelector";
 import { SettingsMenu } from "./SettingsMenu";
 import { ThemeMenu } from "./ThemeMenu";
+import { AccountDeletionDialog } from "./AccountDeletionDialog";
 
 function getInitial(value: string) {
   return value.trim().charAt(0).toUpperCase() || "U";
@@ -57,6 +61,15 @@ export function AuthActions({
     ? t("settings.open")
     : "Open settings";
   const guestLabel = t.has("guest") ? t("guest") : "Guest";
+  const deleteAccountLabel = t.has("accountDeletion.menuLabel")
+    ? t("accountDeletion.menuLabel")
+    : "Delete account";
+  const deleteAccountError = t.has("accountDeletion.error")
+    ? t("accountDeletion.error")
+    : "We couldn't delete your account. Please try again.";
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const mobileProfileSurface =
     settingsMode === "menu" ? "bg-sidebar-accent" : "bg-card/60";
 
@@ -158,6 +171,40 @@ export function AuthActions({
     onClose?.();
   };
 
+  const openDeleteDialog = () => {
+    setDeleteError(null);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteAccount = async () => {
+    if (isDeleting) {
+      return;
+    }
+
+    setIsDeleting(true);
+    setDeleteError(null);
+
+    try {
+      const { error } = await authClient.deleteUser();
+      if (error) {
+        console.error("[AuthActions] account deletion failed:", error);
+        setDeleteError(deleteAccountError);
+        return;
+      }
+
+      useCloudWorkspaceStore.getState().disableCloudAccess();
+      useWorkspaceSessionStore.getState().setActiveSource("local");
+      useWorkspaceSessionStore.getState().clearSelection();
+      setDeleteDialogOpen(false);
+      onClose?.();
+    } catch (error) {
+      console.error("[AuthActions] account deletion request failed:", error);
+      setDeleteError(deleteAccountError);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   if (mobile) {
     return (
       <div
@@ -182,6 +229,8 @@ export function AuthActions({
               placement="sidebar"
               onSignOut={handleSignOut}
               signOutLabel={signOutLabel}
+              onDeleteAccount={openDeleteDialog}
+              deleteAccountLabel={deleteAccountLabel}
             />
           ) : (
             <button
@@ -197,15 +246,31 @@ export function AuthActions({
           )}
         </div>
         {settingsMode === "dialog" ? (
-          <button
-            type="button"
-            onClick={handleSignOut}
-            className="flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent/60"
-          >
-            <SignOutIcon />
-            {signOutLabel}
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent/60"
+            >
+              <SignOutIcon />
+              {signOutLabel}
+            </button>
+            <button
+              type="button"
+              onClick={openDeleteDialog}
+              className="w-full rounded-md px-3 py-1.5 text-center text-xs font-medium text-destructive/80 transition-colors hover:bg-destructive/10 hover:text-destructive"
+            >
+              {deleteAccountLabel}
+            </button>
+          </>
         ) : null}
+        <AccountDeletionDialog
+          open={deleteDialogOpen}
+          onClose={() => setDeleteDialogOpen(false)}
+          onConfirm={() => void handleDeleteAccount()}
+          isDeleting={isDeleting}
+          error={deleteError}
+        />
       </div>
     );
   }
@@ -220,7 +285,10 @@ export function AuthActions({
           {displayName}
         </span>
       </div>
-      <SettingsMenu />
+      <SettingsMenu
+        onDeleteAccount={openDeleteDialog}
+        deleteAccountLabel={deleteAccountLabel}
+      />
       <button
         type="button"
         onClick={handleSignOut}
@@ -229,6 +297,13 @@ export function AuthActions({
         <SignOutIcon />
         {signOutLabel}
       </button>
+      <AccountDeletionDialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={() => void handleDeleteAccount()}
+        isDeleting={isDeleting}
+        error={deleteError}
+      />
     </div>
   );
 }

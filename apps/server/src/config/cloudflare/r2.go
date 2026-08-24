@@ -202,6 +202,46 @@ func (storage *R2Storage) PresignDownloadURL(
 	return request.URL, nil
 }
 
+// ListObjectKeys returns every object key under a prefix. R2 lists are
+// paginated, so callers can use this to reconcile objects that are not present
+// in PostgreSQL metadata (for example, an upload that never reached completion).
+func (storage *R2Storage) ListObjectKeys(ctx context.Context, prefix string) ([]string, error) {
+	if storage == nil || storage.Client == nil {
+		return nil, fmt.Errorf("R2 client is not initialized")
+	}
+
+	prefix = strings.TrimSpace(prefix)
+	if prefix == "" {
+		return nil, fmt.Errorf("R2 object prefix cannot be empty")
+	}
+
+	keys := make([]string, 0)
+	var continuationToken *string
+	for {
+		response, err := storage.Client.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
+			Bucket:            aws.String(storage.BucketName),
+			Prefix:            aws.String(prefix),
+			ContinuationToken: continuationToken,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("list R2 objects for prefix %q: %w", prefix, err)
+		}
+
+		for _, object := range response.Contents {
+			if key := aws.ToString(object.Key); key != "" {
+				keys = append(keys, key)
+			}
+		}
+
+		if !aws.ToBool(response.IsTruncated) || response.NextContinuationToken == nil {
+			break
+		}
+		continuationToken = response.NextContinuationToken
+	}
+
+	return keys, nil
+}
+
 func (storage *R2Storage) DeleteObject(ctx context.Context, key string) error {
 	if _, err := storage.Client.DeleteObject(ctx, &s3.DeleteObjectInput{
 		Bucket: aws.String(storage.BucketName),

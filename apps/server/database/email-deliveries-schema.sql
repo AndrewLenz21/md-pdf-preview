@@ -17,7 +17,7 @@ create table email_deliveries (
 	constraint email_deliveries_status_check
 		check (status in ('reserved', 'accepted', 'delivered', 'bounced', 'failed', 'suppressed', 'request_failed', 'cancelled')),
 	constraint email_deliveries_purpose_check
-		check (purpose in ('email_verification'))
+		check (purpose in ('email_verification', 'account_deletion'))
 );
 
 create index email_deliveries_quota_date_idx on email_deliveries (quota_date);

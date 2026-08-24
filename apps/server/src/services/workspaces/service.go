@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 
+	"github.com/andrew/md-pdf-preview/server/src/config/logging"
 	"github.com/andrew/md-pdf-preview/server/src/config/postgres"
 	"github.com/andrew/md-pdf-preview/server/src/models"
 	workspace_repository "github.com/andrew/md-pdf-preview/server/src/repositories/workspace_items"
@@ -16,6 +18,7 @@ import (
 var ErrWorkspaceDatabaseUnavailable = errors.New("workspace PostgreSQL repository is not initialized")
 var ErrWorkspaceItemNotDocument = errors.New("workspace item is not a document")
 var ErrWorkspaceDocumentObjectKeyInvalid = errors.New("workspace document object key is invalid")
+var ErrAccountDeletionInProgress = errors.New("account deletion is already in progress")
 
 type workspaceRepository interface {
 	Create(context.Context, string, models.CreateWorkspaceItemParams) (models.WorkspaceItem, error)
@@ -24,6 +27,10 @@ type workspaceRepository interface {
 	Update(context.Context, string, models.UpdateWorkspaceItemParams) (models.WorkspaceItem, error)
 	CompleteDocumentUpload(context.Context, string, models.CompleteDocumentUploadParams) (models.WorkspaceItem, error)
 	CollectSubtreeR2ObjectKeys(context.Context, string, string) ([]string, error)
+	CollectR2ObjectKeys(context.Context, string) ([]string, error)
+	AcquireDeletionLock(context.Context, string) (bool, error)
+	ReleaseDeletionLock(context.Context, string) error
+	IsDeletionLocked(context.Context, string) (bool, error)
 	Delete(context.Context, string, string) (int, error)
 }
 
@@ -31,6 +38,7 @@ type workspaceCloudStorage interface {
 	GenerateDocumentUploadURL(context.Context, string, string, string) (cloudflare_service.PresignedDocumentURL, error)
 	GenerateDocumentDownloadURL(context.Context, string, string) (cloudflare_service.PresignedDocumentURL, error)
 	DeleteObjects(context.Context, []string) error
+	ListUserDocumentObjectKeys(context.Context, string) ([]string, error)
 }
 
 type Service struct {
@@ -78,6 +86,9 @@ func (service *Service) Create(
 	userID string,
 	params models.CreateWorkspaceItemParams,
 ) (models.WorkspaceItem, error) {
+	if err := service.ensureDeletionNotInProgress(userID); err != nil {
+		return models.WorkspaceItem{}, err
+	}
 	if err := validateCreateParams(params); err != nil {
 		return models.WorkspaceItem{}, err
 	}
@@ -95,6 +106,9 @@ func (service *Service) Create(
 
 // 📚 List returns all active items owned by the authenticated user.
 func (service *Service) List(userID string) ([]models.WorkspaceItem, error) {
+	if err := service.ensureDeletionNotInProgress(userID); err != nil {
+		return nil, err
+	}
 	if err := service.requireRepository(); err != nil {
 		return nil, err
 	}
@@ -109,6 +123,9 @@ func (service *Service) List(userID string) ([]models.WorkspaceItem, error) {
 
 // 🔍 Get returns one active item after ownership is checked by the repository.
 func (service *Service) Get(userID, itemID string) (models.WorkspaceItem, error) {
+	if err := service.ensureDeletionNotInProgress(userID); err != nil {
+		return models.WorkspaceItem{}, err
+	}
 	if err := service.requireRepository(); err != nil {
 		return models.WorkspaceItem{}, err
 	}
@@ -126,6 +143,9 @@ func (service *Service) Update(
 	userID string,
 	params models.UpdateWorkspaceItemParams,
 ) (models.WorkspaceItem, error) {
+	if err := service.ensureDeletionNotInProgress(userID); err != nil {
+		return models.WorkspaceItem{}, err
+	}
 	if strings.TrimSpace(params.Name) == "" {
 		return models.WorkspaceItem{}, errors.New("workspace item name cannot be empty")
 	}
@@ -143,6 +163,9 @@ func (service *Service) Update(
 
 // Delete removes all R2 objects in an item subtree before physically deleting its rows.
 func (service *Service) Delete(userID, itemID string) (int, error) {
+	if err := service.ensureDeletionNotInProgress(userID); err != nil {
+		return 0, err
+	}
 	if err := service.requireRepository(); err != nil {
 		return 0, err
 	}
@@ -175,6 +198,9 @@ func (service *Service) CompleteDocumentUpload(
 	documentID string,
 	params models.CompleteDocumentUploadParams,
 ) (models.WorkspaceItem, error) {
+	if err := service.ensureDeletionNotInProgress(userID); err != nil {
+		return models.WorkspaceItem{}, err
+	}
 	params.DocumentID = documentID
 	params.R2ObjectKey = strings.TrimSpace(params.R2ObjectKey)
 	params.ContentType = strings.TrimSpace(params.ContentType)
@@ -260,12 +286,117 @@ func (service *Service) GenerateDocumentDownloadURL(
 	return url, nil
 }
 
+// DeleteCloudData removes all user-owned document objects before Better Auth
+// is allowed to delete the user row. The existing user foreign keys then
+// cascade the workspace metadata, sessions, and linked auth accounts.
+func (service *Service) DeleteCloudData(userID string) error {
+	if err := service.requireRepository(); err != nil {
+		return err
+	}
+	if service.cloud == nil {
+		return cloudflare_service.ErrStorageNotInitialized
+	}
+
+	acquired, err := service.repo.AcquireDeletionLock(service.ctx, userID)
+	if err != nil {
+		return fmt.Errorf("start account deletion: %w", err)
+	}
+	if !acquired {
+		return ErrAccountDeletionInProgress
+	}
+
+	completed := false
+	defer func() {
+		if completed {
+			return
+		}
+		if releaseErr := service.repo.ReleaseDeletionLock(service.ctx, userID); releaseErr != nil {
+			logging.Printf("[account] deletion lock release failed for user %s: %v", userID, releaseErr)
+		}
+	}()
+
+	persistedKeys, err := service.repo.CollectR2ObjectKeys(service.ctx, userID)
+	if err != nil {
+		return fmt.Errorf("collect persisted account objects: %w", err)
+	}
+
+	listedKeys, err := service.cloud.ListUserDocumentObjectKeys(service.ctx, userID)
+	if err != nil {
+		return fmt.Errorf("list account document objects: %w", err)
+	}
+
+	objectKeys, err := mergeOwnedObjectKeys(userID, persistedKeys, listedKeys)
+	if err != nil {
+		return err
+	}
+	if len(objectKeys) > 0 {
+		if err := service.cloud.DeleteObjects(service.ctx, objectKeys); err != nil {
+			return fmt.Errorf("delete account document objects: %w", err)
+		}
+	}
+
+	remainingKeys, err := service.cloud.ListUserDocumentObjectKeys(service.ctx, userID)
+	if err != nil {
+		return fmt.Errorf("verify account document deletion: %w", err)
+	}
+	if len(remainingKeys) > 0 {
+		return fmt.Errorf("verify account document deletion: %d objects remain", len(remainingKeys))
+	}
+
+	completed = true
+	return nil
+}
+
 func (service *Service) requireRepository() error {
 	if service == nil || service.repo == nil {
 		return ErrWorkspaceDatabaseUnavailable
 	}
 
 	return nil
+}
+
+func (service *Service) ensureDeletionNotInProgress(userID string) error {
+	if err := service.requireRepository(); err != nil {
+		return err
+	}
+
+	locked, err := service.repo.IsDeletionLocked(service.ctx, userID)
+	if err != nil {
+		return fmt.Errorf("check account deletion state: %w", err)
+	}
+	if locked {
+		return ErrAccountDeletionInProgress
+	}
+
+	return nil
+}
+
+func mergeOwnedObjectKeys(userID string, keySets ...[]string) ([]string, error) {
+	prefix, err := cloudflare_service.BuildUserDocumentPrefix(userID)
+	if err != nil {
+		return nil, fmt.Errorf("validate account document namespace: %w", err)
+	}
+
+	uniqueKeys := make(map[string]struct{})
+	for _, keys := range keySets {
+		for _, key := range keys {
+			key = strings.TrimSpace(key)
+			if key == "" {
+				continue
+			}
+			if !strings.HasPrefix(key, prefix) {
+				return nil, fmt.Errorf("account cleanup found an object outside the user's document namespace")
+			}
+			uniqueKeys[key] = struct{}{}
+		}
+	}
+
+	mergedKeys := make([]string, 0, len(uniqueKeys))
+	for key := range uniqueKeys {
+		mergedKeys = append(mergedKeys, key)
+	}
+	sort.Strings(mergedKeys)
+	return mergedKeys, nil
 }
 
 func validateCreateParams(params models.CreateWorkspaceItemParams) error {

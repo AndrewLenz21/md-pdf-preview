@@ -56,6 +56,16 @@ func BuildDocumentObjectKey(userID, documentID string) (string, error) {
 	), nil
 }
 
+// BuildUserDocumentPrefix creates the only R2 namespace owned by a user.
+func BuildUserDocumentPrefix(userID string) (string, error) {
+	canonicalUserID, err := canonicalUUID(userID, "user ID")
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("files/%s/", canonicalUserID), nil
+}
+
 // ☁️ GenerateDocumentUploadURL creates a short-lived direct upload URL.
 func (service *Service) GenerateDocumentUploadURL(
 	ctx context.Context,
@@ -145,6 +155,30 @@ func (service *Service) DeleteObjects(ctx context.Context, objectKeys []string) 
 	}
 
 	return nil
+}
+
+// ListUserDocumentObjectKeys lists the user's complete active document
+// namespace, including objects that do not have a completed PostgreSQL row.
+func (service *Service) ListUserDocumentObjectKeys(
+	ctx context.Context,
+	userID string,
+) ([]string, error) {
+	storage, err := service.requireStorage()
+	if err != nil {
+		return nil, err
+	}
+
+	prefix, err := BuildUserDocumentPrefix(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	objectKeys, err := storage.ListObjectKeys(ctx, prefix)
+	if err != nil {
+		return nil, fmt.Errorf("list user document objects: %w", err)
+	}
+
+	return objectKeys, nil
 }
 
 // PutLoggerObject stores one compressed request log in the shared R2 bucket.

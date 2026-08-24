@@ -131,3 +131,64 @@ func TestPutObjectOmitsEmptyContentEncoding(t *testing.T) {
 		t.Fatalf("unexpected Content-Type: %q", contentType)
 	}
 }
+
+func TestListObjectKeysFollowsR2Pagination(t *testing.T) {
+	var continuationTokens []string
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		continuationTokens = append(continuationTokens, request.URL.Query().Get("continuation-token"))
+		writer.Header().Set("Content-Type", "application/xml")
+		if request.URL.Query().Get("continuation-token") == "" {
+			_, _ = writer.Write([]byte(`<?xml version="1.0" encoding="UTF-8"?>
+<ListBucketResult>
+  <Name>documents</Name>
+  <Prefix>files/user/</Prefix>
+  <KeyCount>1</KeyCount>
+  <MaxKeys>1</MaxKeys>
+  <IsTruncated>true</IsTruncated>
+  <NextContinuationToken>page-2</NextContinuationToken>
+  <Contents><Key>files/user/one/content.txt</Key></Contents>
+</ListBucketResult>`))
+			return
+		}
+		_, _ = writer.Write([]byte(`<?xml version="1.0" encoding="UTF-8"?>
+<ListBucketResult>
+  <Name>documents</Name>
+  <Prefix>files/user/</Prefix>
+  <KeyCount>1</KeyCount>
+  <MaxKeys>1</MaxKeys>
+  <IsTruncated>false</IsTruncated>
+  <Contents><Key>files/user/two/content.txt</Key></Contents>
+</ListBucketResult>`))
+	}))
+	defer server.Close()
+
+	cfg, err := awsconfig.LoadDefaultConfig(
+		context.Background(),
+		awsconfig.WithCredentialsProvider(
+			credentials.NewStaticCredentialsProvider("access-key", "secret-key", ""),
+		),
+		awsconfig.WithRegion("auto"),
+	)
+	if err != nil {
+		t.Fatalf("load AWS SDK config: %v", err)
+	}
+
+	client := s3.NewFromConfig(cfg, func(options *s3.Options) {
+		options.BaseEndpoint = aws.String(server.URL)
+		options.UsePathStyle = true
+	})
+	storage := &R2Storage{Client: client, BucketName: "documents"}
+
+	keys, err := storage.ListObjectKeys(context.Background(), "files/user/")
+	if err != nil {
+		t.Fatalf("list object keys: %v", err)
+	}
+
+	wantKeys := []string{"files/user/one/content.txt", "files/user/two/content.txt"}
+	if len(keys) != len(wantKeys) || keys[0] != wantKeys[0] || keys[1] != wantKeys[1] {
+		t.Fatalf("keys = %#v, want %#v", keys, wantKeys)
+	}
+	if len(continuationTokens) != 2 || continuationTokens[1] != "page-2" {
+		t.Fatalf("continuation tokens = %#v, want [\"\" \"page-2\"]", continuationTokens)
+	}
+}

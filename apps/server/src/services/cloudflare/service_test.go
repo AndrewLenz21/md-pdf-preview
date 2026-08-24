@@ -27,6 +27,18 @@ func TestBuildDocumentObjectKeyRejectsInvalidIDs(t *testing.T) {
 	}
 }
 
+func TestBuildUserDocumentPrefixCanonicalizesUUIDs(t *testing.T) {
+	prefix, err := BuildUserDocumentPrefix("550E8400-E29B-41D4-A716-446655440000")
+	if err != nil {
+		t.Fatalf("BuildUserDocumentPrefix() error = %v", err)
+	}
+
+	want := "files/550e8400-e29b-41d4-a716-446655440000/"
+	if prefix != want {
+		t.Fatalf("BuildUserDocumentPrefix() = %q, want %q", prefix, want)
+	}
+}
+
 func TestGenerateDocumentUploadURLRequiresStorage(t *testing.T) {
 	service := NewWithStorage(nil)
 

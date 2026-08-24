@@ -60,8 +60,9 @@ func SchemaStatements() []string {
 
 func schemaStatements(schema string) []string {
 	retentionStatements := retentionSchemaStatements(schema)
-	statements := make([]string, 0, len(betterAuthSchemaStatements)+len(workspaceItemsSchemaStatements)+len(loggerSchemaStatements)+len(emailDeliveriesSchemaStatements)+len(retentionStatements))
+	statements := make([]string, 0, len(betterAuthSchemaStatements)+len(accountDeletionSchemaStatements)+len(workspaceItemsSchemaStatements)+len(loggerSchemaStatements)+len(emailDeliveriesSchemaStatements)+len(retentionStatements))
 	statements = append(statements, betterAuthSchemaStatements...)
+	statements = append(statements, accountDeletionSchemaStatements...)
 	statements = append(statements, emailDeliveriesSchemaStatements...)
 	statements = append(statements, workspaceItemsSchemaStatements...)
 	statements = append(statements, loggerSchemaStatements...)
