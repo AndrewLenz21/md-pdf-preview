@@ -40,7 +40,7 @@
           "Dati di sessione e sicurezza: identificativo di sessione lato server, date di creazione, aggiornamento e scadenza, indirizzo IP e user-agent. Il browser riceve anche un cookie di sessione necessario.",
           "Dati OAuth: i token di accesso, rinnovo e identità e le relative scadenze possono essere memorizzati sul server quando restituiti dal provider. Non sono mostrati nell'applicazione.",
           "Dati dello spazio di lavoro: nomi, gerarchia, icone, colori, preferiti, ordine, date, revisioni, tipo e dimensione, hash e contenuto dei documenti quando scegli la sincronizzazione cloud.",
-          "Dati email: indirizzo, finalità di verifica, identificativo del messaggio, stato di consegna, date, data della quota e informazioni limitate sugli errori.",
+          "Dati email: indirizzo, finalità di verifica o conferma della cancellazione dell'account, identificativo del messaggio, stato di consegna, date, data della quota e informazioni limitate sugli errori.",
           "Dati operativi: identificativo richiesta, endpoint, metodo, stato, durata, identificativo utente quando disponibile, IP e informazioni limitate e sanificate per sicurezza e diagnostica."
         ]
       },
@@ -115,23 +115,23 @@
         "bullets": [
           "Cloudflare Workers/OpenNext: ospita o distribuisce l'applicazione e può trattare metadati delle richieste all'edge. Cloudflare R2 conserva gli oggetti dei documenti cloud e i metadati di storage.",
           "PostgreSQL: conserva account, sessioni, autenticazione, email, metadati dello spazio e log operativi. Il servizio ospitato utilizza Supabase come provider PostgreSQL gestito. Il database di produzione è ospitato su AWS nella regione eu-west-1 (Europa – Irlanda).",
-          "Resend: invia email di verifica e tratta destinatario, nome, link, metadati di consegna e webhook.",
+          "Resend: invia email di verifica e conferma della cancellazione dell'account e tratta destinatario, nome, link pertinente, metadati di consegna e webhook.",
           "Google: riceve richieste OAuth e restituisce claim di identità solo se scegli Google.",
           "GitHub: riceve richieste OAuth e restituisce profilo ed email solo se scegli GitHub.",
-          "Il servizio ospitato utilizza attualmente Cloudflare per la distribuzione dell'applicazione e lo storage degli oggetti R2, Supabase per PostgreSQL gestito, Resend per le email di verifica e Google o GitHub quando gli utenti scelgono questi metodi di autenticazione."
+          "Il servizio ospitato utilizza attualmente Cloudflare per la distribuzione dell'applicazione e lo storage degli oggetti R2, Supabase per PostgreSQL gestito, Resend per le email di verifica e conferma della cancellazione dell'account e Google o GitHub quando gli utenti scelgono questi metodi di autenticazione."
         ]
       },
       "transfers": {
         "title": "Trasferimenti internazionali",
         "paragraphs": [
           "Il repository non dimostra che tutti i trattamenti restino nello SEE. Cloudflare, Resend, Google, GitHub e Supabase possono trattare dati fuori dallo SEE in base a account, regione e configurazione.",
-          "I meccanismi specifici per i trasferimenti internazionali e le garanzie supplementari applicabili a ciascun provider sono ancora in fase di definizione per il servizio ospitato."
+          "Quando necessario, i trasferimenti si basano su meccanismi riconosciuti dalla legge descritti nei termini del provider pertinente, come decisioni di adeguatezza, Clausole Contrattuali Standard o il Data Privacy Framework UE-USA, ove applicabile. Le garanzie e i sub-responsabili specifici di ciascun provider sono disciplinati dai loro accordi e informative vigenti."
         ]
       },
       "retention": {
         "title": "Conservazione",
         "paragraphs": [
-          "Il servizio ospitato prevede diversi meccanismi concreti di conservazione e cancellazione, ma non tutte le categorie hanno una cancellazione automatica. Di seguito è descritto il comportamento attuale; i dettagli su esistenza, posizione, conservazione e cancellazione dei backup sono ancora in fase di definizione per il servizio ospitato."
+          "Il servizio ospitato prevede diversi meccanismi concreti di conservazione e cancellazione, ma non tutte le categorie hanno una cancellazione automatica. Di seguito è descritto il comportamento attuale. Le copie di backup, quando fornite dal provider di hosting, possono conservare temporaneamente informazioni eliminate secondo il ciclo di vita dei backup del provider e non sono usate come dati attivi dell'applicazione; il servizio ospitato non promette un termine specifico per la cancellazione dei backup."
         ],
         "bullets": [
           "Dati locali: fino a cancellazione, eliminazione dei dati del sito, navigazione privata o rimozione da parte del browser.",
@@ -140,7 +140,7 @@
           "Token OAuth e collegamenti: finché necessari all'account collegato, considerando revoca del provider e procedura di eliminazione.",
           "Record di verifica e consegna email: i primi hanno una scadenza; i record di consegna email in PostgreSQL vengono eliminati automaticamente dopo 30 giorni.",
           "Log operativi: i log delle richieste archiviati in PostgreSQL vengono eliminati automaticamente dopo 30 giorni. Anche gli oggetti di diagnostica archiviati sotto il prefisso logs/ di Cloudflare R2 sono configurati per scadere automaticamente dopo 30 giorni.",
-          "Backup: esistenza, posizione, conservazione e calendario di cancellazione sono ancora in fase di definizione per il servizio ospitato; questa informativa non promette un termine di cancellazione dei backup."
+          "Backup: quando forniti dal provider di hosting, possono conservare temporaneamente informazioni eliminate secondo il ciclo di vita dei backup del provider; non sono dati attivi dell'applicazione e non viene promesso un termine specifico per la cancellazione."
         ]
       },
       "rights": {
@@ -165,7 +165,7 @@
         "title": "Cancellazione dell'account e dei dati",
         "paragraphs": [
           "Gli utenti autenticati possono eliminare definitivamente il proprio account dalle impostazioni dell'applicazione. Dopo una conferma esplicita, il servizio elimina i dati dello spazio cloud e gli oggetti documentali associati in Cloudflare R2, quindi elimina l'account tramite il sistema di autenticazione. Al termine può essere inviata un'email di conferma della cancellazione; il relativo record di consegna viene conservato per 30 giorni. Questa azione non può essere annullata.",
-          "I documenti salvati solo nel browser non vengono eliminati automaticamente perché sono separati dall'account cloud. I log delle richieste PostgreSQL, i record di consegna email e i log diagnostici seguono i rispettivi periodi indipendenti di conservazione di 30 giorni. Le richieste formali relative alla privacy e al GDPR possono essere inviate anche a privacy@bitnexuslab.com. Alcune informazioni potrebbero dover essere conservate quando richiesto dalla legge o necessario per l'accertamento, l'esercizio o la difesa di diritti in sede legale. Non viene promesso alcun termine di cancellazione per i backup, perché la loro configurazione non è ancora confermata."
+          "I documenti salvati solo nel browser non vengono eliminati automaticamente perché sono separati dall'account cloud. I log delle richieste PostgreSQL, i record di consegna email e i log diagnostici seguono i rispettivi periodi indipendenti di conservazione di 30 giorni. Le richieste formali relative alla privacy e al GDPR possono essere inviate a privacy@bitnexuslab.com. Alcune informazioni potrebbero dover essere conservate quando richiesto dalla legge o necessario per l'accertamento, l'esercizio o la difesa di diritti in sede legale. Le copie di backup, quando fornite dal provider di hosting, possono conservare temporaneamente informazioni eliminate secondo il ciclo di vita dei backup del provider e non sono usate come dati attivi dell'applicazione."
         ]
       },
       "security": {

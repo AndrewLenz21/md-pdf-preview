@@ -1,6 +1,6 @@
 # Support
 
-This project is maintained as an open-source application and is available as a hosted demo at [md-pdf-preview.andrew-lenz.com](https://md-pdf-preview.andrew-lenz.com).
+This project is maintained as an open-source application and is available as a hosted service at [md-pdf-preview.andrew-lenz.com](https://md-pdf-preview.andrew-lenz.com).
 
 ## Before Opening an Issue
 
@@ -24,6 +24,6 @@ Include the operating system, Node.js version, browser, reproduction steps, and 
 
 Do not report security vulnerabilities in a public issue. Follow the process in [SECURITY.md](./SECURITY.md).
 
-## Hosted Demo
+## Hosted Service
 
-The hosted demo uses the optional cloud features. For local development, the client can run without the backend and stores documents in the browser's IndexedDB.
+The hosted service uses the optional cloud features. For local development, the client can run without the backend and stores documents in the browser's IndexedDB.

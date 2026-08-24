@@ -2,7 +2,7 @@
 
 Last updated: 2026-08-24
 
-These terms describe use of the md-pdf-preview open-source project and the hosted service operated in Italy by Bitnexus Lab di Lenz Villanueva Andrew Angel Giovanny. If you run your own deployment, you are responsible for the terms and policies that apply to that deployment.
+These terms summarize use of the md-pdf-preview open-source project and the hosted service operated in Milan, Italy by Bitnexus Lab di Lenz Villanueva Andrew Angel Giovanny. The detailed Terms of Service published in the hosted application are the canonical hosted-service terms. If you run your own deployment, you are responsible for the terms and policies that apply to that deployment.
 
 ## Using the Project
 
@@ -14,11 +14,15 @@ You retain responsibility for the Markdown documents and other content you creat
 
 ## Acceptable Use
 
-Do not attempt to bypass authentication, access another user's workspace, abuse rate limits, disrupt the service, or use the hosted demo to test attacks outside the process in [SECURITY.md](./SECURITY.md).
+Do not attempt to bypass authentication, access another user's workspace, abuse rate limits, disrupt the service, or use the hosted service to test attacks outside the process in [SECURITY.md](./SECURITY.md).
 
-## Hosted Demo
+## Hosted Service
 
-The hosted demo is provided for evaluation and may change, become unavailable, or remove data. No availability, backup, or data retention guarantee is made for the hosted demo. Keep independent backups of important documents.
+The hosted service is currently free and may change, become unavailable, or remove data as described in the canonical Terms of Service. No uninterrupted availability, permanent availability, or particular backup guarantee is made. Keep independent backups of important documents.
+
+## Accounts and Eligibility
+
+Local, account-free features may be used subject to applicable law. Creating an account or using Cloud Sync requires the user to be at least 16 years old, or older where applicable law requires it. Authenticated users can permanently delete their account after explicit confirmation; cloud workspace data and associated Cloudflare R2 document objects are deleted, while local browser documents remain separate.
 
 ## Open Source Software
 
@@ -26,7 +30,7 @@ The source code is provided under the MIT License without warranty. Third-party 
 
 ## Changes
 
-These terms may be updated when the hosted demo or project changes. The current version is published in this file.
+These terms may be updated when the hosted service or project changes. The current summary is published in this file; the canonical hosted-service version includes the effective and last-updated dates.
 
 ## Contact
 

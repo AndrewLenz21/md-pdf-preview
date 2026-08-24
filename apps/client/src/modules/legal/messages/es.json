@@ -40,7 +40,7 @@
           "Datos de sesión y seguridad: identificador de sesión del servidor, fechas de creación, actualización y caducidad, dirección IP y agente de usuario. El navegador también recibe una cookie de sesión necesaria.",
           "Datos OAuth: los tokens de acceso, renovación e identidad y sus fechas de caducidad pueden almacenarse en el servidor cuando el proveedor los devuelve. No se muestran en la aplicación.",
           "Datos del espacio de trabajo: nombres, jerarquía, iconos, colores, favoritos, orden, fechas, revisiones, tipo y tamaño de archivo, hash y contenido de documentos cuando eliges la sincronización en la nube.",
-          "Datos de email: dirección, finalidad de verificación, identificador del mensaje del proveedor, estado de entrega, fechas, fecha de cuota e información limitada de errores.",
+          "Datos de email: dirección, finalidad de verificación o confirmación de eliminación de cuenta, identificador del mensaje del proveedor, estado de entrega, fechas, fecha de cuota e información limitada de errores.",
           "Datos operativos: identificador de petición, endpoint, método, estado, duración, identificador de usuario cuando existe, IP e información limitada y saneada de petición, respuesta o error para seguridad y diagnóstico."
         ]
       },
@@ -115,23 +115,23 @@
         "bullets": [
           "Cloudflare Workers/OpenNext: aloja o entrega la aplicación y puede tratar metadatos de petición en el borde. Cloudflare R2 almacena objetos de documentos y metadatos de almacenamiento.",
           "PostgreSQL: almacena cuenta, sesión, autenticación, emails, metadatos del espacio y registros operativos. El servicio alojado utiliza Supabase como proveedor administrado de PostgreSQL. La base de datos de producción está alojada en AWS en la región eu-west-1 (Europa – Irlanda).",
-          "Resend: envía verificaciones y trata email, nombre, enlace de verificación, metadatos de entrega y webhooks.",
+          "Resend: envía emails de verificación y confirmación de eliminación de cuenta y trata email, nombre, enlace correspondiente, metadatos de entrega y webhooks.",
           "Google: recibe peticiones OAuth y devuelve claims de identidad solo al elegir Google.",
           "GitHub: recibe peticiones OAuth y devuelve perfil y email solo al elegir GitHub.",
-          "El servicio alojado utiliza actualmente Cloudflare para la entrega de la aplicación y el almacenamiento de objetos R2, Supabase para PostgreSQL administrado, Resend para emails de verificación y Google o GitHub cuando los usuarios eligen esos métodos de autenticación."
+          "El servicio alojado utiliza actualmente Cloudflare para la entrega de la aplicación y el almacenamiento de objetos R2, Supabase para PostgreSQL administrado, Resend para emails de verificación y confirmación de eliminación de cuenta, y Google o GitHub cuando los usuarios eligen esos métodos de autenticación."
         ]
       },
       "transfers": {
         "title": "Transferencias internacionales",
         "paragraphs": [
           "El repositorio no demuestra que todo el tratamiento permanezca dentro del EEE. Cloudflare, Resend, Google, GitHub y Supabase pueden tratar datos fuera del EEE según la cuenta, región y configuración.",
-          "Los mecanismos concretos de transferencia internacional y las garantías adicionales aplicables a cada proveedor todavía se están finalizando para el servicio alojado."
+          "Cuando sea necesario, las transferencias se basan en mecanismos reconocidos legalmente descritos en las condiciones del proveedor correspondiente, como decisiones de adecuación, Cláusulas Contractuales Tipo o el Marco de Privacidad UE-EE. UU., cuando proceda. Las garantías y los subencargados específicos de cada proveedor se rigen por sus acuerdos y políticas vigentes."
         ]
       },
       "retention": {
         "title": "Conservación",
         "paragraphs": [
-          "El servicio alojado cuenta con varios mecanismos concretos de conservación y borrado, pero no todas las categorías tienen eliminación automática. Esta es la descripción del comportamiento actual; los detalles sobre existencia, ubicación, conservación y borrado de las copias de seguridad todavía se están finalizando para el servicio alojado."
+          "El servicio alojado cuenta con varios mecanismos concretos de conservación y borrado, pero no todas las categorías tienen eliminación automática. Esta es la descripción del comportamiento actual. Las copias de seguridad, cuando las proporcione el proveedor de alojamiento, pueden conservar temporalmente información eliminada conforme al ciclo de vida de copias del proveedor y no se utilizan como datos activos de la aplicación; el servicio alojado no promete un plazo concreto de eliminación de copias."
         ],
         "bullets": [
           "Datos locales: hasta que los borres, limpies los datos del sitio, uses navegación privada o el navegador los elimine.",
@@ -140,7 +140,7 @@
           "Tokens OAuth y enlaces de cuenta: mientras sean necesarios para la cuenta vinculada, conforme a revocación del proveedor y al procedimiento de eliminación.",
           "Registros de verificación y email: los primeros tienen campo de caducidad; los registros de entrega de email en PostgreSQL se eliminan automáticamente después de 30 días.",
           "Registros operativos: los registros de solicitudes almacenados en PostgreSQL se eliminan automáticamente después de 30 días. Los objetos de diagnóstico almacenados bajo el prefijo logs/ de Cloudflare R2 también están configurados para expirar automáticamente después de 30 días.",
-          "Copias de seguridad: la existencia, ubicación, conservación y calendario de borrado todavía se están finalizando para el servicio alojado; esta política no promete un plazo de eliminación de copias de seguridad."
+          "Copias de seguridad: cuando las proporcione el proveedor de alojamiento, pueden conservar temporalmente información eliminada conforme al ciclo de vida de copias del proveedor; no son datos activos de la aplicación y no se promete un plazo concreto de eliminación."
         ]
       },
       "rights": {
@@ -165,7 +165,7 @@
         "title": "Eliminación de cuenta y datos",
         "paragraphs": [
           "Los usuarios autenticados pueden eliminar permanentemente su cuenta desde los ajustes de la aplicación. Tras una confirmación explícita, el servicio elimina los datos del espacio cloud y los objetos de documentos asociados en Cloudflare R2 y después elimina la cuenta mediante el sistema de autenticación. Tras completarse, puede enviarse un correo de confirmación de la eliminación; su registro de entrega se conserva durante 30 días. Esta acción no se puede deshacer.",
-          "Los documentos almacenados únicamente en el navegador no se eliminan automáticamente porque son independientes de la cuenta cloud. Los registros de solicitudes de PostgreSQL, los registros de entrega de email y los logs de diagnóstico siguen sus periodos independientes de conservación de 30 días. Las solicitudes formales de privacidad y del RGPD también pueden enviarse a privacy@bitnexuslab.com. Parte de la información puede conservarse cuando lo exija la ley o sea necesaria para formular, ejercer o defender reclamaciones legales. No se promete un plazo de eliminación para las copias de seguridad porque su configuración sigue sin estar confirmada."
+          "Los documentos almacenados únicamente en el navegador no se eliminan automáticamente porque son independientes de la cuenta cloud. Los registros de solicitudes de PostgreSQL, los registros de entrega de email y los logs de diagnóstico siguen sus periodos independientes de conservación de 30 días. Las solicitudes formales de privacidad y del RGPD pueden enviarse a privacy@bitnexuslab.com. Parte de la información puede conservarse cuando lo exija la ley o sea necesaria para formular, ejercer o defender reclamaciones legales. Las copias de seguridad, cuando las proporcione el proveedor de alojamiento, pueden conservar temporalmente información eliminada conforme al ciclo de vida de copias del proveedor y no se utilizan como datos activos de la aplicación."
         ]
       },
       "security": {

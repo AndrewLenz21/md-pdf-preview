@@ -40,7 +40,7 @@
           "Session and security data: a server-side session identifier, session creation/update/expiry timestamps, IP address, and user-agent string. The browser also receives a necessary session cookie.",
           "OAuth account data: the provider access, refresh, and ID tokens and their expiry metadata may be stored server-side by the authentication implementation when returned by a provider. They are not displayed in the application.",
           "Workspace data: folder and document names, hierarchy, icons, colors, favorites, ordering, timestamps, revision metadata, file type, size, hash, and cloud document content when you choose cloud synchronization.",
-          "Email-delivery data: the email address, verification-email purpose, provider message identifier, delivery status, timestamps, quota date, and limited provider error information.",
+          "Email-delivery data: the email address, verification or account-deletion confirmation purpose, provider message identifier, delivery status, timestamps, quota date, and limited provider error information.",
           "Operational data: request identifier, endpoint, method, status, duration, user identifier when available, IP address, and bounded sanitized request/response or error information used for security and troubleshooting."
         ]
       },
@@ -115,23 +115,23 @@
         "bullets": [
           "Cloudflare Workers/OpenNext: hosts or delivers the Next.js application and may process request metadata at the network edge. Cloudflare R2 stores cloud document objects and related storage metadata.",
           "PostgreSQL: stores account, session, authentication, email-delivery, workspace metadata, and operational log records. The hosted service uses Supabase as its managed PostgreSQL provider. The production database is hosted on AWS in the eu-west-1 region (Europe – Ireland).",
-          "Resend: sends email-verification messages and processes the recipient email, name, verification link, delivery metadata, and webhook events.",
+          "Resend: sends email-verification and account-deletion confirmation messages and processes the recipient email, name, relevant link, delivery metadata, and webhook events.",
           "Google: receives OAuth requests and returns identity claims only when you select Google sign-in.",
           "GitHub: receives OAuth requests and returns profile and email data only when you select GitHub sign-in.",
-          "The hosted service currently uses Cloudflare for application delivery and R2 object storage, Supabase for managed PostgreSQL, Resend for verification emails, and Google or GitHub when users choose those authentication methods."
+          "The hosted service currently uses Cloudflare for application delivery and R2 object storage, Supabase for managed PostgreSQL, Resend for verification and account-deletion confirmation emails, and Google or GitHub when users choose those authentication methods."
         ]
       },
       "transfers": {
         "title": "International Transfers",
         "paragraphs": [
           "The repository does not prove that all processing remains inside the European Economic Area. Cloudflare, Resend, Google, GitHub, and Supabase may process data in countries outside the EEA depending on the account, region, and service configuration.",
-          "The specific international transfer mechanisms and supplementary safeguards applicable to each provider are still being finalized for the hosted deployment."
+          "Where required, transfers rely on legally recognized mechanisms described in the relevant provider terms, such as adequacy decisions, Standard Contractual Clauses, or the EU-US Data Privacy Framework where applicable. Provider-specific safeguards and sub-processors are governed by their current agreements and policies."
         ]
       },
       "retention": {
         "title": "Retention",
         "paragraphs": [
-          "The hosted service has several concrete retention and deletion mechanisms, but not every category has automated deletion. The following describes the current behavior; backup existence, location, retention, and deletion details are still being finalized for the hosted deployment."
+          "The hosted service has several concrete retention and deletion mechanisms, but not every category has automated deletion. The following describes the current behavior. Backup copies, where provided by the hosting provider, may temporarily retain deleted information according to the provider's backup lifecycle and are not used as active application data; the hosted service does not promise a specific backup deletion timeframe."
         ],
         "bullets": [
           "Local browser data: until you delete it, clear site data, use private browsing, or the browser removes it.",
@@ -140,7 +140,7 @@
           "OAuth tokens and account links: while needed for the linked authentication account, subject to provider revocation and account deletion procedures.",
           "Verification records and email-delivery records: verification records have an expiry field; PostgreSQL email-delivery records are automatically deleted after 30 days.",
           "Operational logs: PostgreSQL request logs are automatically deleted after 30 days. Diagnostic log objects stored under the Cloudflare R2 logs/ prefix are also configured to expire automatically after 30 days.",
-          "Backups: backup existence, location, retention, and deletion schedule are still being finalized for the hosted deployment; this policy does not promise a backup deletion timeframe."
+          "Backups: where provided by the hosting provider, may temporarily retain deleted information according to the provider's backup lifecycle; they are not active application data, and no specific deletion timeframe is promised."
         ]
       },
       "rights": {
@@ -165,7 +165,7 @@
         "title": "Account and Data Deletion",
         "paragraphs": [
           "Authenticated users can permanently delete their account from the application settings. After explicit confirmation, the service deletes the user's cloud workspace data and associated Cloudflare R2 document objects and then deletes the account through the authentication system. A deletion confirmation email may be sent after completion; its delivery record follows the 30-day email-delivery retention period. This action cannot be undone.",
-          "Local-only documents stored in the browser are not automatically deleted because they are separate from the cloud account. PostgreSQL request logs, email-delivery records, and diagnostic logs follow their separate 30-day retention periods. Formal GDPR and privacy requests can still be sent to privacy@bitnexuslab.com. Some information may need to be retained when required by law or necessary for the establishment, exercise, or defence of legal claims. No specific deletion timing is promised for backups because their configuration remains unresolved."
+          "Local-only documents stored in the browser are not automatically deleted because they are separate from the cloud account. PostgreSQL request logs, email-delivery records, and diagnostic logs follow their separate 30-day retention periods. Formal GDPR and privacy requests can be sent to privacy@bitnexuslab.com. Some information may need to be retained when required by law or necessary for the establishment, exercise, or defence of legal claims. Backup copies, where provided by the hosting provider, may temporarily retain deleted information according to the provider's backup lifecycle and are not used as active application data."
         ]
       },
       "security": {
