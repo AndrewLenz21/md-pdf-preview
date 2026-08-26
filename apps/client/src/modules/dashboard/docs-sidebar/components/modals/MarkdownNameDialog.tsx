@@ -6,6 +6,7 @@ export function MarkdownNameDialog({
   open,
   parentName,
   name,
+  submitting = false,
   onNameChange,
   onClose,
   onSubmit,
@@ -13,6 +14,7 @@ export function MarkdownNameDialog({
   open: boolean;
   parentName: string;
   name: string;
+  submitting?: boolean;
   onNameChange: (name: string) => void;
   onClose: () => void;
   onSubmit: () => void;
@@ -20,10 +22,11 @@ export function MarkdownNameDialog({
   return (
     <ModalShell
       open={open}
-      onClose={onClose}
+      onClose={submitting ? () => undefined : onClose}
       title="New markdown"
       description={`Create a markdown file in ${parentName}.`}
       closeLabel="Close markdown dialog"
+      closeOnEscape={!submitting}
     >
       <form
         className="space-y-5"
@@ -36,13 +39,15 @@ export function MarkdownNameDialog({
           label="File name"
           value={name}
           maxLength={500}
+          disabled={submitting}
           onChange={onNameChange}
           placeholder="Untitled"
           autoFocus
         />
         <DialogFormFooter
-          submitLabel="Create file"
+          submitLabel={submitting ? "Creating..." : "Create file"}
           disabled={!name.trim()}
+          busy={submitting}
           onCancel={onClose}
         />
       </form>

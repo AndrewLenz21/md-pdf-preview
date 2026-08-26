@@ -13,6 +13,7 @@ export function DialogTextField({
   maxLength,
   placeholder,
   autoFocus = false,
+  disabled = false,
 }: {
   label: string;
   value: string;
@@ -20,6 +21,7 @@ export function DialogTextField({
   maxLength?: number;
   placeholder?: string;
   autoFocus?: boolean;
+  disabled?: boolean;
 }) {
   const inputId = useId();
 
@@ -29,10 +31,11 @@ export function DialogTextField({
       <input
         id={inputId}
         autoFocus={autoFocus}
+        disabled={disabled}
         value={value}
         maxLength={maxLength}
         onChange={(event) => onChange(event.target.value)}
-        className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
+        className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
         placeholder={placeholder}
       />
     </label>

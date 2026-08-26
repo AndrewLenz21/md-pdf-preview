@@ -120,8 +120,7 @@ function getAncestorFolderIds(
 
   while (currentId) {
     ancestors.add(currentId);
-    currentId =
-      items.find((item) => item.id === currentId)?.parent_id ?? null;
+    currentId = items.find((item) => item.id === currentId)?.parent_id ?? null;
   }
 
   return ancestors;
@@ -152,8 +151,10 @@ export function DocsSidebar({
   );
   const [markdownDialog, setMarkdownDialog] =
     useState<MarkdownDialogState | null>(null);
+  const [markdownSubmitting, setMarkdownSubmitting] = useState(false);
   const [deleteFolderDialog, setDeleteFolderDialog] =
     useState<DeleteFolderDialogState | null>(null);
+  const [folderSubmitting, setFolderSubmitting] = useState(false);
   const [dragPreviewSource, setDragPreviewSource] =
     useState<DocumentSource | null>(null);
   const [cloudDropBlocked, setCloudDropBlocked] = useState(false);
@@ -181,9 +182,7 @@ export function DocsSidebar({
     (state) => state.hydrate,
   );
   const cloudIsHydrated = useCloudWorkspaceStore((state) => state.isHydrated);
-  const cloudIsHydrating = useCloudWorkspaceStore(
-    (state) => state.isHydrating,
-  );
+  const cloudIsHydrating = useCloudWorkspaceStore((state) => state.isHydrating);
   const cloudOperation = useCloudWorkspaceStore((state) => state.operation);
   const cloudError = useCloudWorkspaceStore((state) => state.error);
   const cloudIsSaving = useCloudWorkspaceStore((state) => state.isSaving);
@@ -383,9 +382,7 @@ export function DocsSidebar({
   const isCloudUnauthenticated = displaySource === "cloud" && !canUseCloud;
   const isWorkspaceTransferActive = workspaceTransfer !== null;
   const cloudBusy =
-    cloudIsHydrating ||
-    cloudOperation !== null ||
-    cloudIsSaving;
+    cloudIsHydrating || cloudOperation !== null || cloudIsSaving;
   const cloudStatusVisible =
     !isWorkspaceTransferActive &&
     canUseCloud &&
@@ -486,13 +483,12 @@ export function DocsSidebar({
   });
   const rootDropActive = Boolean(
     dropTarget &&
-      (dropTarget.kind === "root" || dropTarget.kind === "source-toggle") &&
-      dropTarget.source === displaySource &&
-      (dropTarget.source !== "cloud" || canUseCloud),
+    (dropTarget.kind === "root" || dropTarget.kind === "source-toggle") &&
+    dropTarget.source === displaySource &&
+    (dropTarget.source !== "cloud" || canUseCloud),
   );
   const sourceBusy =
-    isWorkspaceTransferActive ||
-    (displaySource === "cloud" && cloudBusy);
+    isWorkspaceTransferActive || (displaySource === "cloud" && cloudBusy);
 
   const handleDelete = (id: string) => {
     void deleteDocument(displaySource, id)
@@ -512,9 +508,10 @@ export function DocsSidebar({
     const parentName =
       sourceItems.find(
         (item): item is WorkspaceFolderItem =>
-           isWorkspaceFolder(item) && folderId !== null && item.id === folderId,
+          isWorkspaceFolder(item) && folderId !== null && item.id === folderId,
       )?.name ?? "Workspace";
 
+    setMarkdownSubmitting(false);
     setMarkdownDialog({
       source,
       parentId: folderId,
@@ -531,6 +528,7 @@ export function DocsSidebar({
     parentId: string | null,
     source: DocumentSource = displaySource,
   ) => {
+    setFolderSubmitting(false);
     setFolderDialog({
       mode: "create",
       source,
@@ -599,6 +597,7 @@ export function DocsSidebar({
 
     const { folder, source } = folderActions;
     setFolderActions(null);
+    setFolderSubmitting(false);
     setFolderDialog({
       mode: "edit",
       source,
@@ -620,24 +619,25 @@ export function DocsSidebar({
   };
 
   const handleSaveMarkdown = () => {
-    if (!markdownDialog?.name.trim()) {
+    if (!markdownDialog?.name.trim() || markdownSubmitting) {
       return;
     }
 
+    setMarkdownSubmitting(true);
     void createDocument(
       markdownDialog.source,
       markdownDialog.name,
       markdownDialog.parentId,
     )
       .then((id) => {
-        if (id) {
-          onSelect(id);
+        if (!id) {
+          return;
         }
-        if (id) {
-          setMarkdownDialog(null);
-        }
+        onSelect(id);
+        setMarkdownDialog(null);
       })
-      .catch(() => undefined);
+      .catch(() => undefined)
+      .finally(() => setMarkdownSubmitting(false));
   };
 
   const handleDeleteFolder = () => {
@@ -645,10 +645,7 @@ export function DocsSidebar({
       return;
     }
 
-    void deleteFolder(
-      deleteFolderDialog.source,
-      deleteFolderDialog.folder.id,
-    )
+    void deleteFolder(deleteFolderDialog.source, deleteFolderDialog.folder.id)
       .then((deleted) => {
         if (!deleted) {
           return;
@@ -685,6 +682,7 @@ export function DocsSidebar({
   };
 
   const handleEditFolder = (folder: WorkspaceFolderItem) => {
+    setFolderSubmitting(false);
     setFolderDialog({
       mode: "edit",
       source: displaySource,
@@ -697,9 +695,11 @@ export function DocsSidebar({
   };
 
   const handleSaveFolder = () => {
-    if (!folderDialog?.name.trim()) {
+    if (!folderDialog?.name.trim() || folderSubmitting) {
       return;
     }
+
+    setFolderSubmitting(true);
 
     if (folderDialog.mode === "create") {
       void createFolder(
@@ -714,7 +714,8 @@ export function DocsSidebar({
             setFolderDialog(null);
           }
         })
-        .catch(() => undefined);
+        .catch(() => undefined)
+        .finally(() => setFolderSubmitting(false));
       return;
     } else if (folderDialog.folderId) {
       void renameFolder(
@@ -725,7 +726,8 @@ export function DocsSidebar({
         folderDialog.icon,
       )
         .then(() => setFolderDialog(null))
-        .catch(() => undefined);
+        .catch(() => undefined)
+        .finally(() => setFolderSubmitting(false));
       return;
     }
   };
@@ -857,14 +859,14 @@ export function DocsSidebar({
         <FolderTree
           items={sourceItems}
           source={displaySource}
-           selectedId={selectedId}
-           onSelect={onSelect}
-           onRename={(id, title) => renameDocument(displaySource, id, title)}
-           onDelete={handleDelete}
-           onMove={(id, folderId) => moveDocument(displaySource, id, folderId)}
-           onCopy={(id) => copyItem(displaySource, id)}
-           onPaste={(folderId) => pasteItem(displaySource, folderId)}
-           canPaste={canPasteInto(displaySource)}
+          selectedId={selectedId}
+          onSelect={onSelect}
+          onRename={(id, title) => renameDocument(displaySource, id, title)}
+          onDelete={handleDelete}
+          onMove={(id, folderId) => moveDocument(displaySource, id, folderId)}
+          onCopy={(id) => copyItem(displaySource, id)}
+          onPaste={(folderId) => pasteItem(displaySource, folderId)}
+          canPaste={canPasteInto(displaySource)}
           onToggleFavorite={(id) => toggleFavorite(displaySource, id)}
           onCreateDocument={handleCreateDocument}
           onCreateFolder={handleCreateFolder}
@@ -931,6 +933,7 @@ export function DocsSidebar({
         color={folderDialog?.color ?? "primary"}
         icon={folderDialog?.icon ?? "folder"}
         mobile={mobile}
+        submitting={folderSubmitting}
         onNameChange={(name) =>
           setFolderDialog((current) =>
             current ? { ...current, name } : current,
@@ -958,9 +961,7 @@ export function DocsSidebar({
           folderActions.folder.parent_id !== null
         }
         canCopy={folderActions !== null && !folderActions.isVirtualRoot}
-        canPaste={
-          folderActions !== null && canPasteInto(folderActions.source)
-        }
+        canPaste={folderActions !== null && canPasteInto(folderActions.source)}
         onClose={() => setFolderActions(null)}
         onNewFolder={handleNewFolderFromActions}
         onNewMarkdown={handleNewMarkdownFromActions}
@@ -973,6 +974,7 @@ export function DocsSidebar({
         open={markdownDialog !== null}
         parentName={markdownDialog?.parentName ?? "Workspace"}
         name={markdownDialog?.name ?? ""}
+        submitting={markdownSubmitting}
         onNameChange={(name) =>
           setMarkdownDialog((current) =>
             current ? { ...current, name } : current,

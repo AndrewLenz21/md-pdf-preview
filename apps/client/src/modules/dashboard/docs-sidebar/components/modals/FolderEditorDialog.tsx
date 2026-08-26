@@ -21,6 +21,7 @@ export function FolderEditorDialog({
   color,
   icon,
   mobile = false,
+  submitting = false,
   onNameChange,
   onColorChange,
   onIconChange,
@@ -33,6 +34,7 @@ export function FolderEditorDialog({
   color: DocumentFolderColor;
   icon: DocumentFolderIcon;
   mobile?: boolean;
+  submitting?: boolean;
   onNameChange: (name: string) => void;
   onColorChange: (color: DocumentFolderColor) => void;
   onIconChange: (icon: DocumentFolderIcon) => void;
@@ -44,11 +46,11 @@ export function FolderEditorDialog({
   return (
     <ModalShell
       open={open}
-      onClose={onClose}
+      onClose={submitting ? () => undefined : onClose}
       title={title}
       description="Choose a name, icon, and color for this folder."
       closeLabel="Close folder dialog"
-      closeOnEscape={!iconPickerOpen}
+      closeOnEscape={!iconPickerOpen && !submitting}
     >
       <form
         className="space-y-5"
@@ -70,6 +72,7 @@ export function FolderEditorDialog({
               label="Folder name"
               value={name}
               maxLength={200}
+              disabled={submitting}
               onChange={onNameChange}
               placeholder="New folder"
               autoFocus
@@ -105,8 +108,9 @@ export function FolderEditorDialog({
         </fieldset>
 
         <DialogFormFooter
-          submitLabel="Save folder"
+          submitLabel={submitting ? "Saving..." : "Save folder"}
           disabled={!name.trim()}
+          busy={submitting}
           onCancel={onClose}
         />
       </form>

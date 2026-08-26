@@ -7,25 +7,28 @@ export function DialogFormFooter({
   submitLabel,
   onCancel,
   disabled = false,
+  busy = false,
   cancelLabel = "Cancel",
 }: {
   submitLabel: string;
   onCancel: () => void;
   disabled?: boolean;
+  busy?: boolean;
   cancelLabel?: string;
 }) {
   return (
     <div className="flex justify-end gap-2 border-t border-border/70 pt-4">
       <button
         type="button"
-        className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        disabled={busy}
+        className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
         onClick={onCancel}
       >
         {cancelLabel}
       </button>
       <button
         type="submit"
-        disabled={disabled}
+        disabled={disabled || busy}
         className="rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50"
       >
         {submitLabel}

@@ -32,10 +32,7 @@ import {
 } from "./workspace-items.store";
 
 export type CloudWorkspaceOperation =
-  | "hydrate"
-  | "metadata"
-  | "transfer"
-  | "copy";
+  "hydrate" | "metadata" | "transfer" | "copy";
 
 type CloudWorkspaceStoreState = WorkspaceItemsStoreState & {
   isHydrated: boolean;
@@ -137,9 +134,7 @@ function getFolderSubtreeIds(items: WorkspaceItem[], folderId: string) {
   const collect = (currentId: string) => {
     folderIds.add(currentId);
     items
-      .filter(
-        (item) => isWorkspaceFolder(item) && item.parent_id === currentId,
-      )
+      .filter((item) => isWorkspaceFolder(item) && item.parent_id === currentId)
       .forEach((item) => collect(item.id));
   };
 
@@ -182,7 +177,9 @@ export const useCloudWorkspaceStore = create<CloudWorkspaceStoreState>(
       const existing = get().items.find((item) => item.id === apiItem.id);
       const currentContent =
         content ??
-        (existing && isWorkspaceDocument(existing) ? existing.content : undefined);
+        (existing && isWorkspaceDocument(existing)
+          ? existing.content
+          : undefined);
       const nextItem = mapCloudWorkspaceItem(apiItem, currentContent);
 
       set((state) => ({
@@ -256,7 +253,18 @@ export const useCloudWorkspaceStore = create<CloudWorkspaceStoreState>(
               saveGeneration === hydrationGeneration &&
               (!saveUserId || get().userId === saveUserId)
             ) {
-              set({ error: apiError });
+              if (document.storage_status === "pending") {
+                set((state) => ({
+                  error: apiError,
+                  items: state.items.map((item) =>
+                    item.id === documentId && isWorkspaceDocument(item)
+                      ? { ...item, storage_status: "failed" }
+                      : item,
+                  ),
+                }));
+              } else {
+                set({ error: apiError });
+              }
             }
             throw apiError;
           } finally {
@@ -264,7 +272,7 @@ export const useCloudWorkspaceStore = create<CloudWorkspaceStoreState>(
               setSaving(documentId, false);
             }
           }
-      });
+        });
 
       contentSaveQueues.set(documentId, next);
       void next.then(
@@ -320,11 +328,10 @@ export const useCloudWorkspaceStore = create<CloudWorkspaceStoreState>(
               icon: changes.icon ?? item.icon,
             }
           : {}),
-        favorite:
-          isWorkspaceDocument(item)
-            ? changes.favorite ?? item.favorite === true
-            : false,
-        sortOrder: isWorkspaceDocument(item) ? item.sort_order ?? 0 : 0,
+        favorite: isWorkspaceDocument(item)
+          ? (changes.favorite ?? item.favorite === true)
+          : false,
+        sortOrder: isWorkspaceDocument(item) ? (item.sort_order ?? 0) : 0,
       });
       replaceApiItem(updated);
     };
@@ -380,7 +387,11 @@ export const useCloudWorkspaceStore = create<CloudWorkspaceStoreState>(
           const loadedDocuments = Object.fromEntries(
             apiItems
               .filter((item) => item.type === "document")
-              .map((item) => [item.id, false]),
+              .map((item) => [
+                item.id,
+                item.storageStatus === "pending" ||
+                  item.storageStatus === "failed",
+              ]),
           );
 
           set({
@@ -530,20 +541,17 @@ export const useCloudWorkspaceStore = create<CloudWorkspaceStoreState>(
       saveDocumentContent,
 
       createFolderRemote: async (name, parentId, color, icon) =>
-        runMetadata(
-          async () => {
-            const created = await workspaceApi.createItem({
-              parentId,
-              name: name.trim(),
-              type: "folder",
-              color,
-              icon,
-            });
-            replaceApiItem(created);
-            return created.id;
-          },
-          null,
-        ),
+        runMetadata(async () => {
+          const created = await workspaceApi.createItem({
+            parentId,
+            name: name.trim(),
+            type: "folder",
+            color,
+            icon,
+          });
+          replaceApiItem(created);
+          return created.id;
+        }, null),
 
       renameFolderRemote: async (folderId, name, color, icon) => {
         const folder = get().items.find(
@@ -560,66 +568,49 @@ export const useCloudWorkspaceStore = create<CloudWorkspaceStoreState>(
       },
 
       deleteFolderRemote: async (folderId) =>
-        runMetadata(
-          async () => {
-            await workspaceApi.deleteItem(folderId);
-            const deletedIds = getFolderSubtreeIds(get().items, folderId);
-            set((state) => ({
-              items: state.items.filter((item) => !deletedIds.has(item.id)),
-              collapsedFolderIds: state.collapsedFolderIds.filter(
-                (id) => !deletedIds.has(id),
-              ),
-            }));
-            return true;
-          },
-          false,
-        ),
+        runMetadata(async () => {
+          await workspaceApi.deleteItem(folderId);
+          const deletedIds = getFolderSubtreeIds(get().items, folderId);
+          set((state) => ({
+            items: state.items.filter((item) => !deletedIds.has(item.id)),
+            collapsedFolderIds: state.collapsedFolderIds.filter(
+              (id) => !deletedIds.has(id),
+            ),
+          }));
+          return true;
+        }, false),
 
       createDocumentRemote: async (title, parentId) =>
-        runMetadata(
-          async () => {
-            const trimmedTitle = title?.trim();
-            const created = await workspaceApi.createItem({
-              parentId,
-              name: trimmedTitle || "Untitled",
-              type: "document",
-            });
-            const document = mapCloudWorkspaceItem(
-              created,
-              createInitialMarkdown(trimmedTitle),
-            );
-            if (!isWorkspaceDocument(document)) {
-              return null;
-            }
-            replaceApiItem(created, document.content);
-            set((state) => ({
-              contentLoadedByDocumentId: {
-                ...state.contentLoadedByDocumentId,
-                [created.id]: true,
-              },
-            }));
+        runMetadata(async () => {
+          const trimmedTitle = title?.trim();
+          const created = await workspaceApi.createItem({
+            parentId,
+            name: trimmedTitle || "Untitled",
+            type: "document",
+          });
+          const document = mapCloudWorkspaceItem(
+            created,
+            createInitialMarkdown(trimmedTitle),
+          );
+          if (!isWorkspaceDocument(document)) {
+            return null;
+          }
+          replaceApiItem(created, document.content);
+          set((state) => ({
+            contentLoadedByDocumentId: {
+              ...state.contentLoadedByDocumentId,
+              [created.id]: true,
+            },
+          }));
 
-            try {
-              await saveDocumentContent(created.id, document.content, document);
-            } catch (error) {
-              try {
-                await workspaceApi.deleteItem(created.id);
-              } catch (cleanupError) {
-                console.error(
-                  "[CloudWorkspaceStore] failed to clean up document after upload failure:",
-                  cleanupError,
-                );
-              }
-              set((state) => ({
-                items: state.items.filter((item) => item.id !== created.id),
-              }));
-              throw error;
-            }
-
-            return created.id;
-          },
-          null,
-        ),
+          // Return the metadata ID immediately; the initial R2 upload uses the same serialized queue.
+          void saveDocumentContent(
+            created.id,
+            document.content,
+            document,
+          ).catch(() => undefined);
+          return created.id;
+        }, null),
 
       renameDocumentRemote: async (documentId, title) => {
         const document = get().items.find(
@@ -682,16 +673,13 @@ export const useCloudWorkspaceStore = create<CloudWorkspaceStoreState>(
       },
 
       deleteDocumentRemote: async (documentId) =>
-        runMetadata(
-          async () => {
-            await workspaceApi.deleteItem(documentId);
-            set((state) => ({
-              items: state.items.filter((item) => item.id !== documentId),
-            }));
-            return true;
-          },
-          false,
-        ),
+        runMetadata(async () => {
+          await workspaceApi.deleteItem(documentId);
+          set((state) => ({
+            items: state.items.filter((item) => item.id !== documentId),
+          }));
+          return true;
+        }, false),
 
       setCloudOperation: (operation) => set({ operation }),
       setCloudError: (error) => set({ error }),
