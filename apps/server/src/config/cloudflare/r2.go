@@ -20,15 +20,25 @@ type R2Storage struct {
 	Client        *s3.Client
 	PresignClient *s3.PresignClient
 	BucketName    string
+	// EnvironmentPrefix keeps objects isolated when environments share one bucket.
+	EnvironmentPrefix string
 }
 
 var Storage *R2Storage
+
+// ValidateEnvironment ensures the application cannot start without an isolated R2 namespace.
+func ValidateEnvironment() error {
+	_, err := parseEnvironmentPrefix(os.Getenv("APP_ENV"))
+	return err
+}
 
 func InitR2() {
 	accessKey := os.Getenv("R2_ACCESS_KEY_ID")
 	secretKey := os.Getenv("R2_SECRET_ACCESS_KEY")
 	endpoint := os.Getenv("R2_ENDPOINT")
 	bucketName := os.Getenv("R2_BUCKET_NAME")
+	// APP_ENV is required to prevent development and production objects from sharing paths.
+	environmentPrefix, err := parseEnvironmentPrefix(os.Getenv("APP_ENV"))
 
 	logging.Printf(
 		"🔐 [R2] credentials loaded access_key_len=%d secret_key_len=%d endpoint_set=%t bucket_set=%t",
@@ -38,7 +48,7 @@ func InitR2() {
 		bucketName != "",
 	)
 
-	if accessKey == "" || secretKey == "" || endpoint == "" || bucketName == "" {
+	if accessKey == "" || secretKey == "" || endpoint == "" || bucketName == "" || err != nil {
 		logging.Println("⚠️ [R2] configuration incomplete; R2 features are disabled")
 		return
 	}
@@ -68,9 +78,10 @@ func InitR2() {
 	}
 
 	Storage = &R2Storage{
-		Client:        client,
-		PresignClient: s3.NewPresignClient(client),
-		BucketName:    bucketName,
+		Client:            client,
+		PresignClient:     s3.NewPresignClient(client),
+		BucketName:        bucketName,
+		EnvironmentPrefix: environmentPrefix,
 	}
 
 	logging.Printf("✅ [R2] connected endpoint=%q bucket=%q", endpoint, bucketName)
@@ -81,6 +92,8 @@ func (storage *R2Storage) InitiateMultipartUpload(
 	key string,
 	contentType string,
 ) (string, error) {
+	key = storage.prefixedObjectKey(key)
+
 	input := &s3.CreateMultipartUploadInput{
 		Bucket:      aws.String(storage.BucketName),
 		Key:         aws.String(key),
@@ -105,6 +118,8 @@ func (storage *R2Storage) PresignUploadPart(
 	uploadID string,
 	partNumber int,
 ) (string, error) {
+	key = storage.prefixedObjectKey(key)
+
 	input := &s3.UploadPartInput{
 		Bucket:     aws.String(storage.BucketName),
 		Key:        aws.String(key),
@@ -128,6 +143,8 @@ func (storage *R2Storage) CompleteMultipartUpload(
 	uploadID string,
 	parts []types.CompletedPart,
 ) error {
+	key = storage.prefixedObjectKey(key)
+
 	input := &s3.CompleteMultipartUploadInput{
 		Bucket:   aws.String(storage.BucketName),
 		Key:      aws.String(key),
@@ -149,6 +166,8 @@ func (storage *R2Storage) AbortMultipartUpload(
 	key string,
 	uploadID string,
 ) error {
+	key = storage.prefixedObjectKey(key)
+
 	input := &s3.AbortMultipartUploadInput{
 		Bucket:   aws.String(storage.BucketName),
 		Key:      aws.String(key),
@@ -167,6 +186,8 @@ func (storage *R2Storage) PresignUploadURL(
 	key string,
 	contentType string,
 ) (string, error) {
+	key = storage.prefixedObjectKey(key)
+
 	input := &s3.PutObjectInput{
 		Bucket:      aws.String(storage.BucketName),
 		Key:         aws.String(key),
@@ -187,6 +208,8 @@ func (storage *R2Storage) PresignDownloadURL(
 	ctx context.Context,
 	key string,
 ) (string, error) {
+	key = storage.prefixedObjectKey(key)
+
 	input := &s3.GetObjectInput{
 		Bucket: aws.String(storage.BucketName),
 		Key:    aws.String(key),
@@ -214,13 +237,14 @@ func (storage *R2Storage) ListObjectKeys(ctx context.Context, prefix string) ([]
 	if prefix == "" {
 		return nil, fmt.Errorf("R2 object prefix cannot be empty")
 	}
+	physicalPrefix := storage.prefixedObjectKey(prefix)
 
 	keys := make([]string, 0)
 	var continuationToken *string
 	for {
 		response, err := storage.Client.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
 			Bucket:            aws.String(storage.BucketName),
-			Prefix:            aws.String(prefix),
+			Prefix:            aws.String(physicalPrefix),
 			ContinuationToken: continuationToken,
 		})
 		if err != nil {
@@ -228,7 +252,7 @@ func (storage *R2Storage) ListObjectKeys(ctx context.Context, prefix string) ([]
 		}
 
 		for _, object := range response.Contents {
-			if key := aws.ToString(object.Key); key != "" {
+			if key := storage.logicalObjectKey(aws.ToString(object.Key)); key != "" {
 				keys = append(keys, key)
 			}
 		}
@@ -243,6 +267,8 @@ func (storage *R2Storage) ListObjectKeys(ctx context.Context, prefix string) ([]
 }
 
 func (storage *R2Storage) DeleteObject(ctx context.Context, key string) error {
+	key = storage.prefixedObjectKey(key)
+
 	if _, err := storage.Client.DeleteObject(ctx, &s3.DeleteObjectInput{
 		Bucket: aws.String(storage.BucketName),
 		Key:    aws.String(key),
@@ -262,7 +288,8 @@ func (storage *R2Storage) DeleteObjects(ctx context.Context, keys []string) erro
 		end := min(start+1000, len(keys))
 		objects := make([]types.ObjectIdentifier, 0, end-start)
 		for _, key := range keys[start:end] {
-			objects = append(objects, types.ObjectIdentifier{Key: aws.String(key)})
+			physicalKey := storage.prefixedObjectKey(key)
+			objects = append(objects, types.ObjectIdentifier{Key: aws.String(physicalKey)})
 		}
 
 		response, err := storage.Client.DeleteObjects(ctx, &s3.DeleteObjectsInput{
@@ -303,6 +330,7 @@ func (storage *R2Storage) PutObject(
 	if bucketName == "" {
 		return fmt.Errorf("R2 bucket name cannot be empty")
 	}
+	key = storage.prefixedObjectKey(key)
 
 	input := &s3.PutObjectInput{
 		Bucket:      aws.String(bucketName),
@@ -324,4 +352,41 @@ func (storage *R2Storage) PutObject(
 	}
 
 	return nil
+}
+
+func parseEnvironmentPrefix(value string) (string, error) {
+	prefix := strings.ToLower(strings.TrimSpace(value))
+	if prefix == "" {
+		return "", fmt.Errorf("APP_ENV cannot be empty")
+	}
+
+	for _, character := range prefix {
+		if (character < 'a' || character > 'z') &&
+			(character < '0' || character > '9') &&
+			character != '-' && character != '_' {
+			return "", fmt.Errorf("APP_ENV contains invalid characters")
+		}
+	}
+
+	return prefix, nil
+}
+
+func (storage *R2Storage) prefixedObjectKey(key string) string {
+	key = strings.TrimSpace(key)
+
+	prefix := strings.Trim(storage.EnvironmentPrefix, "/")
+	if prefix == "" || strings.HasPrefix(key, prefix+"/") {
+		return key
+	}
+
+	return prefix + "/" + strings.TrimLeft(key, "/")
+}
+
+func (storage *R2Storage) logicalObjectKey(key string) string {
+	prefix := strings.Trim(storage.EnvironmentPrefix, "/")
+	if prefix == "" {
+		return key
+	}
+
+	return strings.TrimPrefix(key, prefix+"/")
 }

@@ -53,7 +53,7 @@ npm run build --filter=server
 
 Health check: `curl.exe http://localhost:8080/health`
 
-> **Note:** Migrations in `src/config/postgres/migrations/` run automatically at startup. The PostgreSQL pool starts independently, so a database outage never blocks the HTTP server.
+> **Note:** Migrations in `src/config/postgres/migrations/` run automatically at startup. The HTTP server and application routes start only after the PostgreSQL pool and schema are ready.
 
 ### PostgreSQL operational retention
 
@@ -62,10 +62,10 @@ The migrations retain PostgreSQL operational records for 30 days:
 - `request_logs`: 30 days
 - `email_deliveries`: 30 days
 
-Cleanup runs daily at 03:30 UTC through the `pg_cron` job named
-`md_pdf_preview_daily_retention_cleanup`. The migration creates the cleanup
-functions even when `pg_cron` is unavailable. In that case, run both functions
-manually using the configured `DB_SCHEMA`:
+The migration always creates the cleanup functions without requiring `pg_cron`.
+Configure the cleanup schedule separately if `pg_cron` is available. If no
+schedule is configured, run both functions manually using the configured
+`DB_SCHEMA`:
 
 ```sql
 SELECT <DB_SCHEMA>.fn_request_logs_cleanup();

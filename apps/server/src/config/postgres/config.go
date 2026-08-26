@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -17,14 +18,18 @@ var (
 	poolClosed bool
 )
 
-func CreateConnectionPool() {
+const databaseStartupTimeout = 30 * time.Second
+
+func CreateConnectionPool() error {
 	databaseConfig, err := LoadConfig()
 	if err != nil {
 		logging.Printf("❌ [postgres] startup failed: %v", err)
-		return
+		return err
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	// The production database is remote, so schema bootstrap needs more time than
+	// the local development path, especially when several DDL statements are run.
+	ctx, cancel := context.WithTimeout(context.Background(), databaseStartupTimeout)
 	defer cancel()
 
 	logging.Printf("🐘 [postgres] creating connection pool for schema %s", databaseConfig.DatabaseSchema)
@@ -32,7 +37,7 @@ func CreateConnectionPool() {
 	poolConfig, err := pgxpool.ParseConfig(databaseConfig.DatabaseURL)
 	if err != nil {
 		logging.Printf("❌ [postgres] startup failed: parse database configuration: %v", err)
-		return
+		return err
 	}
 
 	poolConfig.ConnConfig.RuntimeParams["search_path"] = databaseConfig.DatabaseSchema
@@ -41,19 +46,19 @@ func CreateConnectionPool() {
 	databasePool, err := pgxpool.NewWithConfig(ctx, poolConfig)
 	if err != nil {
 		logging.Printf("❌ [postgres] startup failed: open database pool: %v", err)
-		return
+		return err
 	}
 
 	if err := databasePool.Ping(ctx); err != nil {
 		databasePool.Close()
 		logging.Printf("❌ [postgres] startup failed: database ping failed: %v", err)
-		return
+		return err
 	}
 
 	if err := migrations.BootstrapSchema(ctx, databasePool, databaseConfig.DatabaseSchema); err != nil {
 		databasePool.Close()
 		logging.Printf("❌ [postgres] startup failed: database bootstrap failed: %v", err)
-		return
+		return err
 	}
 
 	poolMutex.Lock()
@@ -61,12 +66,13 @@ func CreateConnectionPool() {
 		poolMutex.Unlock()
 		databasePool.Close()
 		logging.Println("⚠️ [postgres] startup cancelled during shutdown")
-		return
+		return fmt.Errorf("database startup cancelled during shutdown")
 	}
 
 	pool = databasePool
 	poolMutex.Unlock()
 	logging.Printf("✅ [postgres] pool connected; schema %s and Better Auth tables are ready", databaseConfig.DatabaseSchema)
+	return nil
 }
 
 func GetPool() (*pgxpool.Pool, bool) {

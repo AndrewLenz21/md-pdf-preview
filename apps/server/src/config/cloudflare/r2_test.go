@@ -43,9 +43,10 @@ func TestPresignURLsUseConfiguredR2Endpoint(t *testing.T) {
 		options.BaseEndpoint = aws.String("https://account.r2.cloudflarestorage.com")
 	})
 	storage := &R2Storage{
-		Client:        client,
-		PresignClient: s3.NewPresignClient(client),
-		BucketName:    "documents",
+		Client:            client,
+		PresignClient:     s3.NewPresignClient(client),
+		BucketName:        "documents",
+		EnvironmentPrefix: "prod",
 	}
 
 	uploadURL, err := storage.PresignUploadURL(
@@ -69,6 +70,9 @@ func TestPresignURLsUseConfiguredR2Endpoint(t *testing.T) {
 	if parsedUploadURL.Query().Get("x-id") != "PutObject" {
 		t.Fatal("upload URL should target the PutObject operation")
 	}
+	if parsedUploadURL.Path != "/prod/files/user/document/content.txt" {
+		t.Fatalf("unexpected upload URL path: %s", parsedUploadURL.Path)
+	}
 
 	downloadURL, err := storage.PresignDownloadURL(
 		context.Background(),
@@ -86,12 +90,17 @@ func TestPresignURLsUseConfiguredR2Endpoint(t *testing.T) {
 	if parsedDownloadURL.Host != "documents.account.r2.cloudflarestorage.com" {
 		t.Fatalf("unexpected download URL host: %s", parsedDownloadURL.Host)
 	}
+	if parsedDownloadURL.Path != "/prod/files/user/document/content.txt" {
+		t.Fatalf("unexpected download URL path: %s", parsedDownloadURL.Path)
+	}
 }
 
 func TestPutObjectOmitsEmptyContentEncoding(t *testing.T) {
 	var requestHeaders http.Header
+	var requestPath string
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		requestHeaders = request.Header.Clone()
+		requestPath = request.URL.Path
 		writer.WriteHeader(http.StatusOK)
 	}))
 	defer server.Close()
@@ -111,7 +120,7 @@ func TestPutObjectOmitsEmptyContentEncoding(t *testing.T) {
 		options.BaseEndpoint = aws.String(server.URL)
 		options.UsePathStyle = true
 	})
-	storage := &R2Storage{Client: client, BucketName: "documents"}
+	storage := &R2Storage{Client: client, BucketName: "documents", EnvironmentPrefix: "dev"}
 
 	if err := storage.PutObject(
 		context.Background(),
@@ -130,34 +139,39 @@ func TestPutObjectOmitsEmptyContentEncoding(t *testing.T) {
 	if contentType := requestHeaders.Get("Content-Type"); contentType != "application/gzip" {
 		t.Fatalf("unexpected Content-Type: %q", contentType)
 	}
+	if requestPath != "/documents/dev/logs/test.json.gz" {
+		t.Fatalf("unexpected request path: %q", requestPath)
+	}
 }
 
 func TestListObjectKeysFollowsR2Pagination(t *testing.T) {
 	var continuationTokens []string
+	var prefixes []string
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		continuationTokens = append(continuationTokens, request.URL.Query().Get("continuation-token"))
+		prefixes = append(prefixes, request.URL.Query().Get("prefix"))
 		writer.Header().Set("Content-Type", "application/xml")
 		if request.URL.Query().Get("continuation-token") == "" {
 			_, _ = writer.Write([]byte(`<?xml version="1.0" encoding="UTF-8"?>
 <ListBucketResult>
   <Name>documents</Name>
-  <Prefix>files/user/</Prefix>
+	  <Prefix>dev/files/user/</Prefix>
   <KeyCount>1</KeyCount>
   <MaxKeys>1</MaxKeys>
   <IsTruncated>true</IsTruncated>
   <NextContinuationToken>page-2</NextContinuationToken>
-  <Contents><Key>files/user/one/content.txt</Key></Contents>
+  <Contents><Key>dev/files/user/one/content.txt</Key></Contents>
 </ListBucketResult>`))
 			return
 		}
 		_, _ = writer.Write([]byte(`<?xml version="1.0" encoding="UTF-8"?>
 <ListBucketResult>
   <Name>documents</Name>
-  <Prefix>files/user/</Prefix>
+	  <Prefix>dev/files/user/</Prefix>
   <KeyCount>1</KeyCount>
   <MaxKeys>1</MaxKeys>
   <IsTruncated>false</IsTruncated>
-  <Contents><Key>files/user/two/content.txt</Key></Contents>
+  <Contents><Key>dev/files/user/two/content.txt</Key></Contents>
 </ListBucketResult>`))
 	}))
 	defer server.Close()
@@ -177,7 +191,7 @@ func TestListObjectKeysFollowsR2Pagination(t *testing.T) {
 		options.BaseEndpoint = aws.String(server.URL)
 		options.UsePathStyle = true
 	})
-	storage := &R2Storage{Client: client, BucketName: "documents"}
+	storage := &R2Storage{Client: client, BucketName: "documents", EnvironmentPrefix: "dev"}
 
 	keys, err := storage.ListObjectKeys(context.Background(), "files/user/")
 	if err != nil {
@@ -190,5 +204,58 @@ func TestListObjectKeysFollowsR2Pagination(t *testing.T) {
 	}
 	if len(continuationTokens) != 2 || continuationTokens[1] != "page-2" {
 		t.Fatalf("continuation tokens = %#v, want [\"\" \"page-2\"]", continuationTokens)
+	}
+	if len(prefixes) != 2 || prefixes[0] != "dev/files/user/" || prefixes[1] != "dev/files/user/" {
+		t.Fatalf("prefixes = %#v, want [\"dev/files/user/\" \"dev/files/user/\"]", prefixes)
+	}
+}
+
+func TestParseEnvironmentPrefix(t *testing.T) {
+	tests := []struct {
+		name    string
+		value   string
+		want    string
+		wantErr bool
+	}{
+		{name: "lowercases value", value: " Prod ", want: "prod"},
+		{name: "allows environment separators", value: "preview-1", want: "preview-1"},
+		{name: "rejects empty value", value: " ", wantErr: true},
+		{name: "rejects path separators", value: "prod/files", wantErr: true},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			actual, err := parseEnvironmentPrefix(test.value)
+			if test.wantErr {
+				if err == nil {
+					t.Fatal("parseEnvironmentPrefix() should return an error")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("parseEnvironmentPrefix() error = %v", err)
+			}
+			if actual != test.want {
+				t.Fatalf("parseEnvironmentPrefix() = %q, want %q", actual, test.want)
+			}
+		})
+	}
+}
+
+func TestR2ObjectKeyPrefixIsIdempotent(t *testing.T) {
+	storage := &R2Storage{EnvironmentPrefix: "prod"}
+
+	key := storage.prefixedObjectKey("files/user/document/content.txt")
+	if key != "prod/files/user/document/content.txt" {
+		t.Fatalf("key = %q, want %q", key, "prod/files/user/document/content.txt")
+	}
+
+	key = storage.prefixedObjectKey(key)
+	if key != "prod/files/user/document/content.txt" {
+		t.Fatalf("already-prefixed key = %q, want %q", key, "prod/files/user/document/content.txt")
+	}
+
+	if logical := storage.logicalObjectKey(key); logical != "files/user/document/content.txt" {
+		t.Fatalf("logical key = %q, want %q", logical, "files/user/document/content.txt")
 	}
 }

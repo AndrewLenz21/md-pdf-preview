@@ -43,10 +43,6 @@ func BootstrapSchema(ctx context.Context, pool *pgxpool.Pool, schema string) err
 		}
 	}
 
-	if err := configureRetentionCron(ctx, tx, schema); err != nil {
-		return fmt.Errorf("configure PostgreSQL retention: %w", err)
-	}
-
 	if err := tx.Commit(ctx); err != nil {
 		return fmt.Errorf("commit database bootstrap transaction: %w", err)
 	}

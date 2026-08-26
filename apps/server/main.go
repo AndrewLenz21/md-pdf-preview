@@ -20,14 +20,21 @@ func main() {
 	if err := environment.Load(".env"); err != nil {
 		logging.Printf("⚠️ [environment] failed to load .env: %v", err)
 	}
+	if err := cloudflare.ValidateEnvironment(); err != nil {
+		logging.Printf("❌ [environment] startup aborted: %v", err)
+		os.Exit(1)
+	}
 
 	cloudflare.InitR2()
 
-	// PostgreSQL starts independently so a database outage never blocks Echo.
-	go postgres.CreateConnectionPool()
-
 	// Close shared resources when the process receives a termination signal.
 	go listenForShutdown()
+
+	// Register and expose application routes only after PostgreSQL is ready.
+	if err := postgres.CreateConnectionPool(); err != nil {
+		logging.Printf("❌ [startup] server aborted: PostgreSQL is unavailable: %v", err)
+		os.Exit(1)
+	}
 
 	server.NewServer()
 	server.StartRoutes()

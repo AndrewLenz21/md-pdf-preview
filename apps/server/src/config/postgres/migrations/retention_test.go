@@ -34,21 +34,6 @@ func TestRetentionFunctionsUseConfiguredSchema(t *testing.T) {
 	}
 }
 
-func TestRetentionCronCommandUsesConfiguredSchema(t *testing.T) {
-	command := retentionCronCommand("tenant_data")
-	want := "SELECT tenant_data.fn_request_logs_cleanup(); SELECT tenant_data.fn_email_deliveries_cleanup();"
-
-	if command != want {
-		t.Fatalf("retentionCronCommand() = %q, want %q", command, want)
-	}
-	if retentionCronJobName != "md_pdf_preview_daily_retention_cleanup" {
-		t.Fatalf("retention job name changed unexpectedly: %q", retentionCronJobName)
-	}
-	if retentionCronSchedule != "30 3 * * *" {
-		t.Fatalf("retention cron schedule changed unexpectedly: %q", retentionCronSchedule)
-	}
-}
-
 func TestOperationalRetentionTablesHaveCreatedAtIndexes(t *testing.T) {
 	if !strings.Contains(strings.Join(loggerSchemaStatements, "\n"), "request_logs_created_at_idx") {
 		t.Fatal("request_logs must have a created_at index")
