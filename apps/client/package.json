@@ -9,7 +9,7 @@
     "build": "vinext build",
     "build:next": "next build",
     "preview": "vinext build && vinext start",
-    "deploy": "vinext-cloudflare deploy",
+    "deploy": "wrangler deploy --config ./dist/server/wrangler.json --keep-vars",
     "check:vinext": "vinext check",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "start": "vinext start",
