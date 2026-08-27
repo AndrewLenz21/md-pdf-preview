@@ -15,7 +15,13 @@
 
 # next.js
 /.next/
+/.open-next/
 /out/
+
+# Vinext and Cloudflare Workers
+/.vinext/
+/.wrangler/
+/dist/
 
 # production
 /build
