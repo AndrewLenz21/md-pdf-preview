@@ -132,8 +132,22 @@ Coverage includes controllers, services, repositories, and middlewares (API key,
 
 See [`.env.example`](./.env.example) for the full list with comments. Key variables:
 
+### Deployment environments
+
+`APP_ENV` identifies the runtime environment, not the Git branch. The server supports
+only these two values:
+
+| Git branch | `APP_ENV` |
+| ---------- | --------- |
+| `develop`  | `dev`     |
+| `main`     | `prod`    |
+
+Configure this mapping in Dokploy. Keep `APP_ENV` independent from the branch name;
+the value is also used as the environment prefix for Cloudflare R2 object keys.
+
 | Variable | Description |
 | -------- | ----------- |
+| `APP_ENV` | Runtime environment: `dev` or `prod` |
 | `DATABASE_URL` | PostgreSQL connection string |
 | `DB_SCHEMA` | PostgreSQL schema name |
 | `SERVER_PORT` | HTTP port (default `8080`) |

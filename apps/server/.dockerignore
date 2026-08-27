@@ -1,0 +1,13 @@
+.git/
+.cache/
+.turbo/
+build/
+tmp/
+node_modules/
+
+.env
+.env.*
+!.env.example
+
+*.exe
+*.test
