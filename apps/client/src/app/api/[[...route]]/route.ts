@@ -1,12 +1,9 @@
 import { Hono } from "hono";
-import { handle } from "hono/vercel";
 
 import { auth } from "@/core/auth";
 import authEmailRouter from "./AuthEmailRouter";
 import resendWebhookRouter from "./ResendWebhookRouter";
 import workspaceRouter from "./WorkspaceRouter";
-
-export const runtime = "nodejs";
 
 const app = new Hono().basePath("/api");
 
@@ -26,8 +23,12 @@ app.onError((error, context) => {
   );
 });
 
-export const GET = handle(app);
-export const POST = handle(app);
-export const PUT = handle(app);
-export const DELETE = handle(app);
-export const PATCH = handle(app);
+const handle = (request: Request) => app.fetch(request);
+
+export {
+  handle as GET,
+  handle as POST,
+  handle as PUT,
+  handle as DELETE,
+  handle as PATCH,
+};

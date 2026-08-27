@@ -19,7 +19,7 @@
 
 The project has two deployable pieces:
 
-1. **Client** — a Next.js 16 app (App Router) with server API routes (Hono). Deployed to **Cloudflare**. The dashboard works in local-only mode with no backend at all; cloud sync requires the server.
+1. **Client** — a Next.js 16-compatible Vinext app (App Router) with server API routes (Hono). Deployed to **Cloudflare Workers**. The dashboard works in local-only mode with no backend at all; cloud sync requires the server.
 2. **Server** — a Go binary (Echo) that provides the workspace API, PostgreSQL persistence, and Cloudflare R2 presigned URLs.
 
 The development and deployment instructions in this repository target **Windows 10/11 with PowerShell**. The npm scripts for the Go server use Windows command syntax.
@@ -67,22 +67,25 @@ npm run build:client        # client only
 npm run build:server        # server only
 
 # Cloudflare Worker
-npm run preview:client      # build and preview with workerd
-npm run deploy:client       # build and deploy with Wrangler
+npm run preview:client      # build and locally preview the Vinext client
+npm run deploy:client       # manually build and deploy with Vinext
 ```
 
-The regular Next.js output is produced by `apps/client/.next`. The Cloudflare
-deployment output is produced by `apps/client/.open-next` and is not committed.
+The Vinext build output is produced by `apps/client/.vinext` and is not committed.
 
 ### Deploy (Cloudflare)
 
-The client is deployed as a **Cloudflare Worker** using OpenNext and Wrangler,
-not as a static Pages site. Before the first deployment:
+The client is deployed as a **Cloudflare Worker** using Vinext, not as a static
+Pages site. Before the first deployment:
 
 1. Install dependencies with `npm install`.
 2. Authenticate Wrangler with `npx wrangler login`.
 3. Configure the client variables in **Workers & Pages → md-pdf-preview-client → Settings → Variables and Secrets**.
 4. Deploy with `npm run deploy:client`.
+
+This repository does not configure automatic deployments. A future GitHub Actions
+workflow should run the same command and provide `CLOUDFLARE_API_TOKEN` and
+`CLOUDFLARE_ACCOUNT_ID` as GitHub secrets.
 
 For local Worker preview, copy `apps/client/.dev.vars.example` to
 `apps/client/.dev.vars` with PowerShell and keep the application values in the
@@ -93,12 +96,8 @@ Copy-Item apps/client/.dev.vars.example apps/client/.dev.vars
 ```
 
 The `wrangler.jsonc` file enables the `nodejs_compat` compatibility flag needed
-by the Next.js API routes. The Worker name can be changed in
+by Better Auth and the PostgreSQL client. The Worker name can be changed in
 `apps/client/wrangler.jsonc` before the first deploy.
-
-> **Windows:** OpenNext reports that Windows is not its primary supported build
-> environment. If the local build behaves inconsistently, run the same commands
-> from WSL or the Cloudflare Workers Build pipeline.
 
 ## Deploying the server
 
@@ -171,12 +170,12 @@ Test the production build locally before deploying:
 npm run preview:client
 ```
 
-`npm run start --workspace=client` still runs the standard Next.js server when a
-Node.js production preview is preferred.
+`npm run start --workspace=client` starts the Vinext Node.js production preview.
 
 ## Redeploy
 
-1. Push to the `main` branch (GitHub push triggers auto-deploy via the connected Git integration), or
-2. Go to **Cloudflare Dashboard → Workers & Pages → <your-project> → Deployments** and click **Create Deployment**.
+Run `npm run deploy:client` to deploy the current branch manually. A future
+GitHub Actions workflow may automate that command after its Cloudflare credentials
+are stored as repository secrets.
 
 For the server, rebuild and restart the binary with the new version.

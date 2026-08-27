@@ -194,13 +194,13 @@ npm run dev
 
 ```powershell
 npm run dev             # Run all apps in development
-npm run dev:client      # Run only the Next.js client
+npm run dev:client      # Run only the Vinext client
 npm run dev:server      # Run only the Go server
 npm run build           # Production build (all apps)
 npm run build:client    # Production build for the client
 npm run build:server    # Production build for the server
-npm run preview:client  # Preview the client in the Cloudflare runtime
-npm run deploy:client   # Build and deploy the client with Wrangler
+npm run preview:client  # Build and locally preview the Vinext client
+npm run deploy:client   # Manually deploy the client to Cloudflare Workers
 npm run lint            # ESLint + go vet
 npm run check-types     # TypeScript + Go tests
 npm run test --workspace=client   # Vitest (client)

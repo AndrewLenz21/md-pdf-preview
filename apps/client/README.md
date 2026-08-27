@@ -46,6 +46,34 @@ Open [http://localhost:3000](http://localhost:3000).
 
 Without a backend, the app runs in **local-only mode**: documents are stored in IndexedDB and cloud features report the backend as unavailable.
 
+## ☁️ Cloudflare Workers
+
+The client uses Vinext as its primary Next.js-compatible runtime for Cloudflare
+Workers. `nodejs_compat` remains enabled because Better Auth uses
+AsyncLocalStorage and the server routes use Node-compatible packages.
+
+```powershell
+# Vinext development runtime, backed by Cloudflare's Vite plugin
+npm run dev --workspace=client
+
+# Production build and local Node.js preview
+npm run preview --workspace=client
+
+# Manual Cloudflare Workers deployment
+npm run deploy --workspace=client
+```
+
+Deployments are not triggered automatically by this repository. A future GitHub
+Actions workflow can run the same deploy command with `CLOUDFLARE_API_TOKEN` and
+`CLOUDFLARE_ACCOUNT_ID` configured as GitHub secrets.
+
+Configure application secrets in Cloudflare Workers or the deployment environment;
+do not commit `.env.local`, `.dev.vars`, API tokens, or database credentials.
+
+`pg` is compatible with Workers through `nodejs_compat`. For production workloads,
+consider Cloudflare Hyperdrive to manage PostgreSQL connections without changing
+the Better Auth integration.
+
 ## 📂 Structure
 
 ```
