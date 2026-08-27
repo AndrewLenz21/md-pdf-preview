@@ -15,13 +15,13 @@ The server is **optional**. The client runs in local-only mode (IndexedDB) witho
 
 ## 🧱 Stack
 
-| Layer | Technology |
-| ----- | ---------- |
-| Framework | [Echo](https://echo.labstack.com) v4 |
-| Database | PostgreSQL via [pgx](https://github.com/jackc/pgx) v5 |
-| Storage | Cloudflare R2 via AWS SDK v2 (S3-compatible) |
-| Config | godotenv (`.env` file) |
-| Tests | Standard library + Echo test helpers |
+| Layer     | Technology                                            |
+| --------- | ----------------------------------------------------- |
+| Framework | [Echo](https://echo.labstack.com) v4                  |
+| Database  | PostgreSQL via [pgx](https://github.com/jackc/pgx) v5 |
+| Storage   | Cloudflare R2 via AWS SDK v2 (S3-compatible)          |
+| Config    | godotenv (`.env` file)                                |
+| Tests     | Standard library + Echo test helpers                  |
 
 ## 🚀 Getting Started
 
@@ -96,26 +96,26 @@ src/
 
 ## 🌐 API Endpoints
 
-| Method | Path | Description |
-| ------ | ---- | ----------- |
-| `GET` | `/health` | Health check |
-| `GET` | `/workspace/items` | List workspace items for the authenticated user |
-| `POST` | `/workspace/items` | Create a folder or document |
-| `GET` | `/workspace/items/:id` | Get a single item |
-| `PATCH` | `/workspace/items/:id` | Rename, move, favorite, reorder, recolor |
-| `DELETE` | `/workspace/items/:id` | Soft delete an item |
-| `POST` | `/workspace/documents/:id/upload-url` | Get an R2 presigned upload URL |
-| `POST` | `/workspace/documents/:id/upload-complete` | Confirm upload (stores metadata) |
-| `GET` | `/workspace/documents/:id/download-url` | Get an R2 presigned download URL |
+| Method   | Path                                       | Description                                     |
+| -------- | ------------------------------------------ | ----------------------------------------------- |
+| `GET`    | `/health`                                  | Health check                                    |
+| `GET`    | `/workspace/items`                         | List workspace items for the authenticated user |
+| `POST`   | `/workspace/items`                         | Create a folder or document                     |
+| `GET`    | `/workspace/items/:id`                     | Get a single item                               |
+| `PATCH`  | `/workspace/items/:id`                     | Rename, move, favorite, reorder, recolor        |
+| `DELETE` | `/workspace/items/:id`                     | Soft delete an item                             |
+| `POST`   | `/workspace/documents/:id/upload-url`      | Get an R2 presigned upload URL                  |
+| `POST`   | `/workspace/documents/:id/upload-complete` | Confirm upload (stores metadata)                |
+| `GET`    | `/workspace/documents/:id/download-url`    | Get an R2 presigned download URL                |
 
 ### Authentication
 
 Requests must include:
 
-| Header | Description |
-| ------ | ----------- |
-| `X-Api-Key` | Shared secret with the client (`INTERNAL_API_KEY`) |
-| `X-User-Id` | The authenticated user's ID (set by the client proxy) |
+| Header            | Description                                           |
+| ----------------- | ----------------------------------------------------- |
+| `X-Api-Key`       | Shared secret with the client (`INTERNAL_API_KEY`)    |
+| `X-User-Id`       | The authenticated user's ID (set by the client proxy) |
 | `X-Forwarded-For` | Client IP for rate limiting (set by the client proxy) |
 
 The server never exposes this API publicly — it is meant to be reached only through the Next.js proxy.
@@ -145,17 +145,17 @@ only these two values:
 Configure this mapping in Dokploy. Keep `APP_ENV` independent from the branch name;
 the value is also used as the environment prefix for Cloudflare R2 object keys.
 
-| Variable | Description |
-| -------- | ----------- |
-| `APP_ENV` | Runtime environment: `dev` or `prod` |
-| `DATABASE_URL` | PostgreSQL connection string |
-| `DB_SCHEMA` | PostgreSQL schema name |
-| `SERVER_PORT` | HTTP port (default `8080`) |
-| `INTERNAL_API_KEY` | Shared secret with the client |
-| `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` | R2 credentials |
-| `R2_ENDPOINT` | `https://<ACCOUNT_ID>.r2.cloudflarestorage.com` |
-| `R2_BUCKET_NAME` | R2 bucket name |
-| `ERROR_LOGGING_*` | Error logger queue size, workers, timeout |
+| Variable                                    | Description                                     |
+| ------------------------------------------- | ----------------------------------------------- |
+| `APP_ENV`                                   | Runtime environment: `dev` or `prod`            |
+| `DATABASE_URL`                              | PostgreSQL connection string                    |
+| `DB_SCHEMA`                                 | PostgreSQL schema name                          |
+| `SERVER_PORT`                               | HTTP port (default `8080`)                      |
+| `INTERNAL_API_KEY`                          | Shared secret with the client                   |
+| `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` | R2 credentials                                  |
+| `R2_ENDPOINT`                               | `https://<ACCOUNT_ID>.r2.cloudflarestorage.com` |
+| `R2_BUCKET_NAME`                            | R2 bucket name                                  |
+| `ERROR_LOGGING_*`                           | Error logger queue size, workers, timeout       |
 
 ## 📄 License
 
