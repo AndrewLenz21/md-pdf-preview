@@ -42,8 +42,8 @@ import type { LongPressDragItem } from "./longPressDrag";
 const TREE_INDENT = 8;
 const TREE_LAYOUT_ITEM_SELECTOR = "[data-tree-layout-id]";
 const TREE_LAYOUT_EASING = "cubic-bezier(0.22, 1, 0.36, 1)";
-const CLOUD_WORKSPACE_ROOT: WorkspaceFolderItem = {
-  id: "cloud-workspace-root",
+const WORKSPACE_ROOT: WorkspaceFolderItem = {
+  id: "workspace-root",
   type: "folder",
   parent_id: null,
   name: "Workspace",
@@ -202,6 +202,7 @@ function EmptyWorkspaceState({
   onCreateFolder?: () => void;
 }) {
   const isCloud = source === "cloud";
+  const isCloudUnauthenticated = isCloud && cloudUnauthenticated;
   const t = useTranslations("Dashboard.sidebar");
 
   return (
@@ -213,7 +214,7 @@ function EmptyWorkspaceState({
       >
         {isDropTarget && isCloud ? (
           <Cloud className="h-5 w-5" strokeWidth={1.7} />
-        ) : cloudUnauthenticated ? (
+        ) : isCloudUnauthenticated ? (
           <Cloud className="h-5 w-5" strokeWidth={1.7} />
         ) : (
           <Files className="h-5 w-5" strokeWidth={1.7} />
@@ -224,18 +225,18 @@ function EmptyWorkspaceState({
           ? isCloud
             ? t("dropCloud")
             : t("dropItem")
-          : cloudUnauthenticated
+          : isCloudUnauthenticated
             ? t("syncWorkspace")
             : t("emptyWorkspace")}
       </p>
       <p className="mt-1 max-w-[220px] text-xs leading-5 text-muted-foreground">
         {isDropTarget
           ? t("releaseItem")
-          : cloudUnauthenticated
+          : isCloudUnauthenticated
             ? t("signInDescription")
             : t("createFirst")}
       </p>
-      {cloudUnauthenticated ? (
+      {isCloudUnauthenticated ? (
         <div className="mt-5 flex items-center gap-2">
           <Link
             href="/auth/sign-in"
@@ -251,7 +252,7 @@ function EmptyWorkspaceState({
           </Link>
         </div>
       ) : null}
-      {!cloudUnauthenticated && (onCreateDocument || onCreateFolder) ? (
+      {!isCloudUnauthenticated && (onCreateDocument || onCreateFolder) ? (
         <div className="mt-5 flex items-center gap-2">
           {onCreateDocument ? (
             <button
@@ -383,8 +384,9 @@ export function FolderTree({
   const t = useTranslations("Dashboard.sidebar");
   const treeRef = useRef<HTMLDivElement>(null);
   const rootFolders = getChildFolders(items, null);
-  const isVirtualCloudRoot = source === "cloud" && !cloudUnauthenticated;
-  const folderOptions: DocumentFolderOption[] = isVirtualCloudRoot
+  const isVirtualRoot =
+    source === "local" || (source === "cloud" && !cloudUnauthenticated);
+  const folderOptions: DocumentFolderOption[] = isVirtualRoot
     ? [
         { id: null, label: t("root"), depth: 0 },
         ...rootFolders.flatMap((folder) => [
@@ -396,9 +398,7 @@ export function FolderTree({
         { id: folder.id, label: folder.name, depth: 0 },
         ...flattenFolders(items, folder.id, 1),
       ]);
-  const foldersToRender = isVirtualCloudRoot
-    ? [CLOUD_WORKSPACE_ROOT]
-    : rootFolders;
+  const foldersToRender = isVirtualRoot ? [WORKSPACE_ROOT] : rootFolders;
   const visibleDocuments = items.filter(
     (item): item is WorkspaceDocumentItem =>
       isWorkspaceDocument(item) && !item.deleted_at,
@@ -423,7 +423,7 @@ export function FolderTree({
       data-dnd-root-drop="true"
       data-dnd-source={source}
     >
-      {!isVirtualCloudRoot &&
+      {!isVirtualRoot &&
       !visibleDocuments.length &&
       !items.some(isWorkspaceFolder) ? (
         <EmptyWorkspaceState
@@ -435,7 +435,7 @@ export function FolderTree({
         />
       ) : (
         <>
-          {!isVirtualCloudRoot
+          {!isVirtualRoot
             ? rootDocuments.map((document) => (
                 <DocumentItem
                   key={document.id}
@@ -471,7 +471,7 @@ export function FolderTree({
               key={folder.id}
               folder={folder}
               depth={0}
-              isVirtualRoot={isVirtualCloudRoot}
+              isVirtualRoot={isVirtualRoot}
               items={items}
               source={source}
               selectedId={selectedId}
@@ -579,6 +579,7 @@ function FolderNode({
   const [folderMenuOpen, setFolderMenuOpen] = useState(false);
   const [folderMenuRendered, setFolderMenuRendered] = useState(false);
   const [folderMenuClosing, setFolderMenuClosing] = useState(false);
+  const isCloudUnauthenticated = source === "cloud" && cloudUnauthenticated;
   const expanded = !collapsedFolderIds.includes(folder.id);
   const folderLabel = isVirtualRoot ? t("root") : folder.name;
   const childParentId = isVirtualRoot ? null : folder.id;
@@ -699,7 +700,7 @@ function FolderNode({
               className={`text-[11px] tabular-nums ${depth === 0 ? "text-muted-foreground" : "text-muted-foreground/70"}`}
             />
           </button>
-          {!cloudUnauthenticated ? (
+          {!isCloudUnauthenticated ? (
             <button
               type="button"
               aria-label={
@@ -817,7 +818,7 @@ function FolderNode({
       {expanded ? (
         !hasChildren && depth === 0 ? (
           <EmptyWorkspaceState
-            cloudUnauthenticated={cloudUnauthenticated}
+            cloudUnauthenticated={isCloudUnauthenticated}
             isDropTarget={rootDropActive}
             source={source}
             onCreateDocument={
