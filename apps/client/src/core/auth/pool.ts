@@ -42,6 +42,8 @@ const authPool =
     ssl: {
       rejectUnauthorized: false,
     },
+    // Worker isolates must not reuse a TCP connection across requests.
+    maxUses: 1,
   });
 
 if (process.env.NODE_ENV !== "production") {

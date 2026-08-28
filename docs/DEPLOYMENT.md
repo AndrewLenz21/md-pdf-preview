@@ -19,7 +19,7 @@
 
 The project has two deployable pieces:
 
-1. **Client** — a Next.js 16-compatible Vinext app (App Router) with server API routes (Hono). Deployed to **Cloudflare Workers**. The dashboard works in local-only mode with no backend at all; cloud sync requires the server.
+1. **Client** — a Next.js 16 app (App Router) with server API routes (Hono), adapted for **Cloudflare Workers** by OpenNext. The dashboard works in local-only mode with no backend at all; cloud sync requires the server.
 2. **Server** — a Go binary (Echo) that provides the workspace API, PostgreSQL persistence, and Cloudflare R2 presigned URLs.
 
 The development and deployment instructions in this repository target **Windows 10/11 with PowerShell**. The npm scripts for the Go server use Windows command syntax.
@@ -67,25 +67,56 @@ npm run build:client        # client only
 npm run build:server        # server only
 
 # Cloudflare Worker
-npm run preview:client      # build and locally preview the Vinext client
-npm run deploy:client       # manually build and deploy with Vinext
+npm run preview:client      # build with OpenNext and preview in the Workers runtime
+npm run deploy:client       # build with OpenNext and deploy to Cloudflare
 ```
 
-The Vinext build output is produced by `apps/client/.vinext` and is not committed.
+The standard Next.js output is produced by `apps/client/.next`. OpenNext converts
+it into the Worker output in `apps/client/.open-next`; neither directory is
+committed.
 
 ### Deploy (Cloudflare)
 
-The client is deployed as a **Cloudflare Worker** using Vinext, not as a static
-Pages site. Before the first deployment:
+The client is deployed as a **Cloudflare Worker** using OpenNext and Wrangler,
+not as a static Pages site. Before the first deployment:
 
 1. Install dependencies with `npm install`.
 2. Authenticate Wrangler with `npx wrangler login`.
-3. Configure the client variables in **Workers & Pages → md-pdf-preview-client → Settings → Variables and Secrets**.
+3. Configure the client variables in **Workers & Pages → md-pdf-preview → Settings → Variables and Secrets**.
 4. Deploy with `npm run deploy:client`.
 
-This repository does not configure automatic deployments. A future GitHub Actions
-workflow should run the same command and provide `CLOUDFLARE_API_TOKEN` and
-`CLOUDFLARE_ACCOUNT_ID` as GitHub secrets.
+The deploy script passes `--keep-vars` to preserve the values configured in the
+Cloudflare dashboard. Configure the connected Cloudflare Worker with these
+Workers Builds settings:
+
+| Setting | Value |
+| ------- | ----- |
+| Root directory | `/apps/client` |
+| Production branch | `main` |
+| Preview branches | Disabled |
+| Build command | `npm run build` |
+| Deploy command | `npm run deploy` |
+
+The repository uses `main` as its production branch and `develop` for
+development. There is no Git branch named `production`; in Cloudflare,
+configure only the production deployment for `main`.
+
+The commands above are compatible with the current package scripts. `npm run
+build` runs the normal Next.js build, while `npm run deploy` runs the OpenNext
+build and deployment. This means Workers Builds performs the Next.js build once
+before the deploy script builds the Cloudflare bundle, which is expected but
+not optimal.
+
+For the more efficient OpenNext-native Workers Builds configuration, use these
+commands instead:
+
+```text
+Build command:  npx @opennextjs/cloudflare build
+Deploy command: npx @opennextjs/cloudflare deploy -- --keep-vars
+```
+
+Workers Builds needs the client variables in both **Build variables and secrets**
+(for `NEXT_PUBLIC_*` values and static generation) and **Runtime variables**.
 
 For local Worker preview, copy `apps/client/.dev.vars.example` to
 `apps/client/.dev.vars` with PowerShell and keep the application values in the
@@ -96,8 +127,9 @@ Copy-Item apps/client/.dev.vars.example apps/client/.dev.vars
 ```
 
 The `wrangler.jsonc` file enables the `nodejs_compat` compatibility flag needed
-by Better Auth and the PostgreSQL client. The Worker name can be changed in
-`apps/client/wrangler.jsonc` before the first deploy.
+by Next.js, Better Auth, and the PostgreSQL client. The Worker name can be
+changed in `apps/client/wrangler.jsonc` before the first deploy; update its
+`WORKER_SELF_REFERENCE` service binding to the same name.
 
 ## Deploying the server
 
@@ -200,12 +232,13 @@ Test the production build locally before deploying:
 npm run preview:client
 ```
 
-`npm run start --workspace=client` starts the Vinext Node.js production preview.
+`npm run start --workspace=client` starts the standard Next.js Node.js server;
+use `npm run preview:client` to test the Cloudflare Workers runtime.
 
 ## Redeploy
 
-Run `npm run deploy:client` to deploy the current branch manually. A future
-GitHub Actions workflow may automate that command after its Cloudflare credentials
-are stored as repository secrets.
+Run `npm run deploy:client` to deploy the current branch manually. Workers Builds
+can run the documented OpenNext build and deploy commands after the repository is
+connected to Cloudflare.
 
 For the server, rebuild and restart the binary with the new version.
