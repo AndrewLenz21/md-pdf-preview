@@ -1,0 +1,99 @@
+.pressroom {
+  --background: oklch(0.955 0.025 88);
+  --foreground: oklch(0.24 0.025 260);
+
+  --card: oklch(0.985 0.018 86);
+  --card-foreground: oklch(0.24 0.025 260);
+
+  --popover: oklch(0.99 0.014 86);
+  --popover-foreground: oklch(0.24 0.025 260);
+
+  --primary: oklch(0.48 0.17 255);
+  --primary-foreground: oklch(0.98 0.018 88);
+
+  --secondary: oklch(0.82 0.1 35);
+  --secondary-foreground: oklch(0.25 0.035 40);
+
+  --muted: oklch(0.92 0.03 86);
+  --muted-foreground: oklch(0.5 0.04 260);
+
+  --accent: oklch(0.89 0.06 85);
+  --accent-foreground: oklch(0.28 0.035 260);
+
+  --destructive: oklch(0.58 0.19 25);
+
+  --border: oklch(0.84 0.035 85);
+  --input: oklch(0.86 0.03 85);
+  --ring: oklch(0.48 0.17 255);
+
+  --chart-1: oklch(0.48 0.17 255);
+  --chart-2: oklch(0.58 0.15 175);
+  --chart-3: oklch(0.64 0.16 35);
+  --chart-4: oklch(0.57 0.14 315);
+  --chart-5: oklch(0.48 0.04 260);
+
+  --sidebar: oklch(0.925 0.035 86);
+  --sidebar-foreground: oklch(0.25 0.03 260);
+
+  --sidebar-primary: oklch(0.48 0.17 255);
+  --sidebar-primary-foreground: oklch(0.98 0.018 88);
+
+  --sidebar-accent: oklch(0.885 0.06 85);
+  --sidebar-accent-foreground: oklch(0.28 0.035 260);
+
+  --sidebar-border: oklch(0.83 0.04 85);
+  --sidebar-ring: oklch(0.48 0.17 255);
+
+  --source-bg: linear-gradient(
+    to bottom,
+    oklch(0.99 0.014 86),
+    oklch(0.935 0.035 82)
+  );
+
+  --nav-bg: linear-gradient(
+    180deg,
+    rgb(255 252 239 / 0.94) 0%,
+    rgb(246 236 207 / 0.88) 100%
+  );
+
+  --nav-border: rgb(150 125 83 / 0.24);
+  --nav-shadow: 0 18px 50px -24px rgb(118 91 42 / 0.24);
+  --nav-highlight: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgb(52 93 157 / 0.1) 50%,
+    transparent 100%
+  );
+
+  --logo-filter: none;
+
+  --notebook-bg: oklch(0.948 0.03 84);
+  --notebook-nav-bg: oklch(0.97 0.022 86);
+
+  --insight-grad-start: oklch(0.91 0.055 85 / 0.4);
+  --insight-grad-mid: oklch(0.92 0.045 35 / 0.28);
+  --insight-grad-end: oklch(0.99 0.012 86);
+
+  --insight-border: oklch(0.48 0.17 255 / 0.2);
+  --insight-icon-bg: oklch(0.48 0.17 255 / 0.12);
+  --insight-icon-text: oklch(0.42 0.15 255);
+
+  --insight-text: oklch(0.34 0.11 255);
+  --insight-text-sub: oklch(0.43 0.06 260 / 0.84);
+
+  --card-accent-from: oklch(0.99 0.012 86);
+  --card-accent-to: oklch(0.9 0.065 85 / 0.5);
+  --card-accent-ring: oklch(0.48 0.17 255 / 0.2);
+  --card-accent-fg: oklch(0.42 0.15 255);
+
+  --card-highlight: oklch(0.48 0.17 255 / 0.09);
+  --card-item-bg: oklch(0.925 0.035 84);
+
+  --source-pdf: oklch(0.61 0.18 28);
+  --source-doc: oklch(0.48 0.17 255);
+  --source-sheet: oklch(0.52 0.16 155);
+  --source-slide: oklch(0.66 0.16 48);
+  --source-media: oklch(0.55 0.17 305);
+  --source-web: oklch(0.51 0.13 215);
+  --source-text: oklch(0.42 0.025 260);
+}

@@ -1,0 +1,130 @@
+{
+  "emptyDocument": {
+    "title": "Seleziona o crea un file per iniziare",
+    "description": "Scegli un file dal tuo spazio di lavoro o creane uno nuovo per cominciare.",
+    "createFile": "Crea un file"
+  },
+  "newNote": {
+    "title": "Nuova nota",
+    "description": "Crea una nota in {parentName}.",
+    "closeDialog": "Chiudi la finestra della nuova nota",
+    "fileName": "Nome del file",
+    "placeholder": "Senza titolo",
+    "creating": "Creazione...",
+    "create": "Crea file",
+    "cancel": "Annulla"
+  },
+  "folderActions": {
+    "description": "Scegli un'azione per questa cartella.",
+    "closeDialog": "Chiudi le azioni della cartella",
+    "newFolder": "Nuova cartella",
+    "newNote": "Nuova nota",
+    "pasteHere": "Incolla qui",
+    "copy": "Copia",
+    "rename": "Cambia nome",
+    "delete": "Elimina"
+  },
+  "documentActions": {
+    "description": "Scegli un'azione per questa nota.",
+    "closeDialog": "Chiudi le azioni della nota",
+    "actionsLabel": "Azioni per {title}",
+    "moreOptions": "Altre opzioni per {title}",
+    "renameInput": "Cambia il nome di {title}",
+    "addFavorite": "Aggiungi ai preferiti",
+    "removeFavorite": "Rimuovi dai preferiti",
+    "rename": "Cambia nome",
+    "copy": "Copia",
+    "moveTo": "Sposta in",
+    "backToActions": "Torna alle azioni",
+    "delete": "Elimina"
+  },
+  "moveDocument": {
+    "title": "Sposta nota",
+    "description": "Scegli una destinazione per {title}.",
+    "closeDialog": "Chiudi la finestra di spostamento"
+  },
+  "renameDocument": {
+    "title": "Rinomina nota",
+    "description": "Rinomina {title}.",
+    "closeDialog": "Chiudi la finestra di rinomina",
+    "fileName": "Nome del file",
+    "save": "Salva nome",
+    "cancel": "Annulla"
+  },
+  "delete": {
+    "file": "nota",
+    "folder": "cartella",
+    "title": "Eliminare {itemType}?",
+    "folderDescription": "Eliminare {itemName} e tutto ciò che contiene?",
+    "fileDescription": "Eliminare {itemName}? Questa azione non può essere annullata.",
+    "closeDialog": "Chiudi la finestra per eliminare {itemType}",
+    "folderWarning": "Tutte le note e le sottocartelle di questa cartella verranno rimosse.",
+    "fileWarning": "Non potrai recuperare questa nota.",
+    "cancel": "Annulla",
+    "confirm": "Elimina {itemType}"
+  },
+  "folderEditor": {
+    "newTitle": "Nuova cartella",
+    "editTitle": "Modifica cartella",
+    "description": "Scegli nome, icona e colore per questa cartella.",
+    "closeDialog": "Chiudi la finestra della cartella",
+    "nameLabel": "Nome della cartella",
+    "placeholder": "Nuova cartella",
+    "color": "Colore",
+    "useColor": "Usa il colore {color} per la cartella",
+    "saving": "Salvataggio...",
+    "save": "Salva cartella",
+    "cancel": "Annulla",
+    "colors": {
+      "primary": "principale",
+      "blue": "blu",
+      "violet": "viola",
+      "amber": "ambra",
+      "rose": "rosa",
+      "emerald": "smeraldo"
+    }
+  },
+  "sidebar": {
+    "workspace": "Spazio di lavoro",
+    "descriptor": "Anteprima Markdown",
+    "backHome": "Torna alla pagina principale di Markdown Preview",
+    "createDocument": "Crea nuovo documento",
+    "collapse": "Comprimi barra laterale",
+    "transferring": "Trasferimento degli elementi dello spazio di lavoro",
+    "loadingCloud": "Caricamento dei file nel cloud...",
+    "savingCloud": "Salvataggio delle modifiche nel cloud...",
+    "retry": "Riprova",
+    "newNote": "Nuova nota",
+    "newFolder": "Nuova cartella",
+    "pasteHere": "Incolla qui",
+    "copy": "Copia",
+    "editFolder": "Modifica cartella",
+    "delete": "Elimina",
+    "moveToFolder": "Sposta in {folderName}",
+    "createIn": "Crea in {folderName}",
+    "rootActions": "Azioni della cartella {folderName}",
+    "root": "Spazio di lavoro",
+    "folder": "Cartella",
+    "document": "Documento",
+    "dropCloud": "Rilascia qui per salvare il tuo primo elemento nel cloud",
+    "dropItem": "Rilascia qui per aggiungere il tuo primo elemento",
+    "syncWorkspace": "Sincronizza il tuo spazio di lavoro",
+    "emptyWorkspace": "Il tuo spazio di lavoro è vuoto",
+    "releaseItem": "Rilascia qui il file o la cartella per continuare.",
+    "signInDescription": "Accedi per sincronizzare i tuoi file Markdown tra i dispositivi.",
+    "createFirst": "Crea la tua prima cartella o il tuo primo file Markdown per iniziare.",
+    "signIn": "Accedi",
+    "signUp": "Registrati"
+  },
+  "storage": {
+    "toggleLabel": "Cambia l'archiviazione dei file",
+    "device": "Locale",
+    "cloud": "Cloud",
+    "deviceTooltip": "File salvati su questo dispositivo",
+    "cloudTooltip": "File sincronizzati con il tuo account",
+    "deviceFiles": "Questo dispositivo",
+    "cloudFiles": "Cloud sincronizzato",
+    "deviceWorkspace": "Spazio di lavoro del dispositivo",
+    "cloudWorkspace": "Spazio di lavoro nel cloud"
+  }
+}

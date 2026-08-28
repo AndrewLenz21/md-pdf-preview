@@ -167,6 +167,14 @@ export function SignInForm() {
             className="mt-1.5 w-full rounded-md border border-input bg-background px-3 py-2 text-foreground outline-none transition-colors focus:border-ring focus:ring-2 focus:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-60"
           />
         </label>
+        <div className="-mt-2 text-right text-xs">
+          <Link
+            href="/auth/forgot-password"
+            className="text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground"
+          >
+            {t("forgotPassword")}
+          </Link>
+        </div>
       </div>
       {emailNotVerified ? (
         <>

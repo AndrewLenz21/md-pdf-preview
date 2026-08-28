@@ -58,6 +58,7 @@ describe("LandingPage", () => {
   it("renders the English hero, sections, and footer", () => {
     renderLanding("en", enMessages);
 
+    expect(screen.getByText("Markdown PDF Preview")).toBeTruthy();
     expect(
       screen.getByRole("heading", {
         name: /Write once\. Preview every page\./i,
@@ -73,7 +74,12 @@ describe("LandingPage", () => {
       screen.getByRole("heading", { name: "Built for precision" }),
     ).toBeTruthy();
     expect(screen.getAllByRole("listitem")).toHaveLength(10);
-    expect(screen.getByText("View the source on GitHub")).toBeTruthy();
+    expect(
+      screen
+        .getByRole("link", { name: "See what it can do" })
+        .getAttribute("href"),
+    ).toBe("#tour");
+    expect(screen.getByRole("link", { name: "GitHub" })).toBeTruthy();
   });
 
   it("renders the Spanish hero and calls to action", () => {

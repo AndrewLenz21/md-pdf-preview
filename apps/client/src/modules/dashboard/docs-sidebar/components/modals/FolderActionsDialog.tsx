@@ -6,6 +6,7 @@ import {
   Pencil,
   Trash2,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { ModalShell } from "@/shared/components/ModalShell";
 
@@ -36,13 +37,15 @@ export function FolderActionsDialog({
   onRename: () => void;
   onDelete: () => void;
 }) {
+  const t = useTranslations("Dashboard.folderActions");
+
   return (
     <ModalShell
       open={open}
       onClose={onClose}
       title={folderName}
-      description="Choose an action for this folder."
-      closeLabel="Close folder actions"
+      description={t("description")}
+      closeLabel={t("closeDialog")}
       maxWidth="max-w-sm"
     >
       <div className="space-y-1">
@@ -55,7 +58,7 @@ export function FolderActionsDialog({
             className="h-4 w-4 text-muted-foreground"
             strokeWidth={1.7}
           />
-          New folder
+          {t("newFolder")}
         </button>
         <button
           type="button"
@@ -66,7 +69,7 @@ export function FolderActionsDialog({
             className="h-4 w-4 text-muted-foreground"
             strokeWidth={1.7}
           />
-          New markdown
+          {t("newNote")}
         </button>
         <button
           type="button"
@@ -78,7 +81,7 @@ export function FolderActionsDialog({
             className="h-4 w-4 text-muted-foreground"
             strokeWidth={1.7}
           />
-          Paste here
+          {t("pasteHere")}
         </button>
         {canCopy ? (
           <button
@@ -87,7 +90,7 @@ export function FolderActionsDialog({
             onClick={onCopy}
           >
             <Copy className="h-4 w-4 text-muted-foreground" strokeWidth={1.7} />
-            Copy
+            {t("copy")}
           </button>
         ) : null}
         {canRenameDelete ? (
@@ -102,7 +105,7 @@ export function FolderActionsDialog({
                 className="h-4 w-4 text-muted-foreground"
                 strokeWidth={1.7}
               />
-              Change name
+              {t("rename")}
             </button>
             <button
               type="button"
@@ -110,7 +113,7 @@ export function FolderActionsDialog({
               onClick={onDelete}
             >
               <Trash2 className="h-4 w-4" strokeWidth={1.7} />
-              Delete
+              {t("delete")}
             </button>
           </>
         ) : null}

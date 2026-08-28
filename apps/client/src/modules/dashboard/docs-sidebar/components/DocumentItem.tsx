@@ -5,6 +5,7 @@ import {
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react";
+import { useTranslations } from "next-intl";
 import {
   ChevronLeft,
   Copy,
@@ -71,6 +72,7 @@ export function DocumentItem({
   onDragPointerDown?: (event: ReactPointerEvent<HTMLDivElement>) => void;
   onDragClickCapture?: (event: ReactMouseEvent<HTMLDivElement>) => void;
 }) {
+  const t = useTranslations("Dashboard.documentActions");
   const itemRef = useRef<HTMLDivElement>(null);
   const closeMenuTimerRef = useRef<number | undefined>(undefined);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -191,7 +193,7 @@ export function DocumentItem({
           autoFocus
           value={draftTitle}
           maxLength={500}
-          aria-label={`Rename ${displayTitle}`}
+          aria-label={t("renameInput", { title: displayTitle })}
           className="min-w-0 flex-1 rounded-md border border-ring/60 bg-background px-2 py-1.5 text-sm font-medium text-foreground outline-none ring-2 ring-ring/20"
           onChange={(event) => setDraftTitle(event.target.value)}
           onBlur={commitRename}
@@ -233,7 +235,7 @@ export function DocumentItem({
       <button
         type="button"
         data-dnd-ignore="true"
-        aria-label={`More options for ${displayTitle}`}
+        aria-label={t("moreOptions", { title: displayTitle })}
         aria-expanded={mobile ? mobileActionsOpen : menuOpen}
         aria-haspopup={mobile ? "dialog" : "menu"}
         className="mr-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground opacity-70 transition-colors hover:bg-background/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:opacity-0 sm:group-hover/document:opacity-100 sm:group-focus-within/document:opacity-100"
@@ -242,13 +244,13 @@ export function DocumentItem({
           openMenu();
         }}
       >
-        <MoreHorizontal className="h-4 w-4" strokeWidth={1.8} />
+        <MoreHorizontal className="h-5 w-5" strokeWidth={1.8} />
       </button>
 
       {menuRendered ? (
         <div
           role="menu"
-          aria-label={`${displayTitle} actions`}
+          aria-label={t("actionsLabel", { title: displayTitle })}
           className={`${menuClosing ? "workspace-menu-popover-exit" : "workspace-menu-popover-enter"} absolute right-1 top-[calc(100%-0.25rem)] z-50 w-52 overflow-hidden rounded-xl border border-border bg-background p-1.5 shadow-xl`}
         >
           {menuView === "actions" ? (
@@ -266,7 +268,7 @@ export function DocumentItem({
                   className={`h-3.5 w-3.5 ${favorite ? "fill-current text-primary" : "text-muted-foreground"}`}
                   strokeWidth={1.7}
                 />
-                {favorite ? "Remove from Favorites" : "Add to Favorites"}
+                {favorite ? t("removeFavorite") : t("addFavorite")}
               </button>
               <button
                 type="button"
@@ -279,7 +281,7 @@ export function DocumentItem({
                 }}
               >
                 <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
-                Rename
+                {t("rename")}
               </button>
               <button
                 type="button"
@@ -291,7 +293,7 @@ export function DocumentItem({
                 }}
               >
                 <Copy className="h-3.5 w-3.5 text-muted-foreground" />
-                Copy
+                {t("copy")}
               </button>
               <button
                 type="button"
@@ -300,7 +302,7 @@ export function DocumentItem({
                 onClick={() => setMenuView("move")}
               >
                 <FolderInput className="h-3.5 w-3.5 text-muted-foreground" />
-                Move To
+                {t("moveTo")}
               </button>
               <div className="my-1 border-t border-border/70" />
               <button
@@ -312,7 +314,7 @@ export function DocumentItem({
                 }}
               >
                 <Trash2 className="h-3.5 w-3.5" />
-                Delete
+                {t("delete")}
               </button>
             </>
           ) : (
@@ -324,7 +326,7 @@ export function DocumentItem({
                 onClick={() => setMenuView("actions")}
               >
                 <ChevronLeft className="h-3.5 w-3.5" />
-                Move To
+                {t("moveTo")}
               </button>
               <div className="my-1 border-t border-border/70" />
               <div className="docs-sidebar-scroll max-h-64 overflow-y-auto">

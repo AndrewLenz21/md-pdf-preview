@@ -1,4 +1,5 @@
 import { ModalShell } from "@/shared/components/ModalShell";
+import { useTranslations } from "next-intl";
 
 import type { DocumentFolderOption } from "../DocumentItem";
 
@@ -17,13 +18,15 @@ export function DocumentMoveDialog({
   onClose: () => void;
   onMove: (folderId: string | null) => void;
 }) {
+  const t = useTranslations("Dashboard.moveDocument");
+
   return (
     <ModalShell
       open={open}
       onClose={onClose}
-      title="Move file"
-      description={`Choose a destination for ${displayTitle}.`}
-      closeLabel="Close move dialog"
+      title={t("title")}
+      description={t("description", { title: displayTitle })}
+      closeLabel={t("closeDialog")}
       maxWidth="max-w-sm"
     >
       <div className="max-h-72 space-y-1 overflow-y-auto">

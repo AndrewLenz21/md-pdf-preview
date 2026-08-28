@@ -1,7 +1,11 @@
 export { AuthPageShell } from "./components/AuthPageShell";
+export { ForgotPasswordForm } from "./components/ForgotPasswordForm";
+export { ResetPasswordForm } from "./components/ResetPasswordForm";
 export { SignInForm } from "./components/SignInForm";
 export { SignUpForm } from "./components/SignUpForm";
 export { SocialAuthButtons } from "./components/SocialAuthButtons";
 export { sendVerificationEmail } from "./services/sendVerificationEmail";
+export { requestPasswordReset } from "./services/requestPasswordReset";
+export { resetPassword } from "./services/resetPassword";
 export { signIn } from "./services/signIn";
 export { signUp } from "./services/signUp";

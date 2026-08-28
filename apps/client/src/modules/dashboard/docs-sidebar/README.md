@@ -6,7 +6,7 @@ Displays and manipulates the workspace folder and file tree.
 | --- | --- |
 | Tree | Shows folders, documents, hierarchy, and expanded state |
 | Actions | Create, rename, copy, move, favorite, and delete |
-| Sources | Switches between Session Files and Cloud Files |
+| Sources | Switches between files saved on this device and cloud-synced files |
 | Drag-and-drop | Moves or transfers items between folders and sources |
 | Dialogs | Centralizes confirmations and metadata editing |
 

@@ -17,6 +17,31 @@
     background-attachment: fixed;
   }
 
+  html.pressroom body {
+    background-color: var(--background);
+    background-image:
+      linear-gradient(
+        to right,
+        color-mix(in oklab, var(--primary) 5%, transparent) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        to bottom,
+        color-mix(in oklab, var(--primary) 5%, transparent) 1px,
+        transparent 1px
+      ),
+      radial-gradient(
+        ellipse 70% 45% at 50% 0%,
+        color-mix(in oklab, var(--secondary) 11%, transparent),
+        transparent 72%
+      );
+    background-attachment: fixed;
+    background-size:
+      32px 32px,
+      32px 32px,
+      100% 100%;
+  }
+
   html.pink body {
     background-image:
       radial-gradient(
@@ -98,6 +123,40 @@
     will-change: opacity, filter, transform;
   }
 
+  @keyframes landing-typewriter {
+    0%,
+    8% {
+      width: 0;
+    }
+
+    40%,
+    62% {
+      width: 20ch;
+    }
+
+    94%,
+    100% {
+      width: 0;
+    }
+  }
+
+  @keyframes landing-caret {
+    50% {
+      border-color: transparent;
+    }
+  }
+
+  .landing-typewriter {
+    display: inline-block;
+    overflow: hidden;
+    max-width: 100%;
+    white-space: nowrap;
+    border-right: 2px solid var(--source-doc);
+    animation:
+      landing-typewriter 6000ms steps(20, end) 250ms infinite,
+      landing-caret 700ms step-end 250ms infinite;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .animate-marquee,
     .navigation-overlay,
@@ -116,6 +175,12 @@
     }
 
     .landing-reveal {
+      animation: none;
+    }
+
+    .landing-typewriter {
+      width: auto;
+      border-right: 0;
       animation: none;
     }
 

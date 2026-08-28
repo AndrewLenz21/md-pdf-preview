@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildAccountDeletionEmailContent,
+  buildPasswordResetEmailContent,
   buildVerificationEmailContent,
   resolveEmailLocale,
 } from "./emailContent";
@@ -68,6 +69,32 @@ describe("buildVerificationEmailContent", () => {
     });
 
     expect(withoutName.html).toContain("there");
+  });
+});
+
+describe("buildPasswordResetEmailContent", () => {
+  it("includes localized reset copy and the reset URL", () => {
+    const { subject, html } = buildPasswordResetEmailContent({
+      locale: "es",
+      name: "Ana",
+      resetUrl: "https://example.com/reset-password/token-123",
+    });
+
+    expect(subject).toContain("Restablece");
+    expect(html).toContain("https://example.com/reset-password/token-123");
+    expect(html).toContain("Ana");
+    expect(html).toContain("Restablecer mi contraseña");
+  });
+
+  it("escapes the reset URL before placing it in HTML", () => {
+    const { html } = buildPasswordResetEmailContent({
+      locale: "en",
+      name: "there",
+      resetUrl: 'https://example.com/reset?token="unsafe"',
+    });
+
+    expect(html).not.toContain('token="unsafe"');
+    expect(html).toContain("&quot;unsafe&quot;");
   });
 });
 

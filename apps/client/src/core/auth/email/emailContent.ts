@@ -46,6 +46,15 @@ interface EmailCopy {
   expires: string;
 }
 
+interface PasswordResetEmailCopy {
+  subject: string;
+  greeting: string;
+  action: string;
+  button: string;
+  fallback: string;
+  expires: string;
+}
+
 interface AccountDeletionEmailCopy {
   subject: string;
   greeting: string;
@@ -87,6 +96,33 @@ const CONTENT: Record<EmailLocale, EmailCopy> = {
     button: "Verifica la mia email",
     fallback:
       "Se il pulsante non funziona, copia e incolla questo link nel browser:",
+    expires: "Il link è valido per 1 ora.",
+  },
+};
+
+const PASSWORD_RESET_CONTENT: Record<EmailLocale, PasswordResetEmailCopy> = {
+  en: {
+    subject: "Reset your password",
+    greeting: "Hi {name},",
+    action: "Use the link below to choose a new password for your account:",
+    button: "Reset my password",
+    fallback: "If the button doesn't work, copy and paste this link into your browser:",
+    expires: "This link is valid for 1 hour.",
+  },
+  es: {
+    subject: "Restablece tu contraseña",
+    greeting: "¡Hola {name}!",
+    action: "Usa el siguiente enlace para elegir una nueva contraseña para tu cuenta:",
+    button: "Restablecer mi contraseña",
+    fallback: "Si el botón no funciona, copia y pega este enlace en tu navegador:",
+    expires: "El enlace es válido durante 1 hora.",
+  },
+  it: {
+    subject: "Reimposta la tua password",
+    greeting: "Ciao {name},",
+    action: "Usa il link seguente per scegliere una nuova password per il tuo account:",
+    button: "Reimposta la mia password",
+    fallback: "Se il pulsante non funziona, copia e incolla questo link nel browser:",
     expires: "Il link è valido per 1 ora.",
   },
 };
@@ -143,6 +179,35 @@ export function buildVerificationEmailContent({
   const html = [
     `<p>${escapeHtml(copy.greeting.replace("{name}", displayName))}</p>`,
     `<p>${escapeHtml(copy.welcome)}</p>`,
+    `<p>${escapeHtml(copy.action)}</p>`,
+    `<p style="margin: 24px 0;">`,
+    `<a href="${safeUrl}" style="display: inline-block; background-color: #4f46e5; color: #ffffff; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: 600;">${escapeHtml(copy.button)}</a>`,
+    `</p>`,
+    `<p style="color: #6b7280; font-size: 14px;">${escapeHtml(copy.fallback)}<br />${safeUrl}</p>`,
+    `<p style="color: #6b7280; font-size: 14px;">${escapeHtml(copy.expires)}</p>`,
+  ].join("\n");
+
+  return {
+    subject: copy.subject,
+    html: `<div style="font-family: Arial, Helvetica, sans-serif; color: #111827; line-height: 1.6;">${html}</div>`,
+  };
+}
+
+export function buildPasswordResetEmailContent({
+  locale,
+  name,
+  resetUrl,
+}: {
+  locale: EmailLocale;
+  name: string;
+  resetUrl: string;
+}): { subject: string; html: string } {
+  const copy = PASSWORD_RESET_CONTENT[locale];
+  const displayName = name.trim() || FALLBACK_GREETING[locale];
+  const safeUrl = escapeHtml(resetUrl);
+
+  const html = [
+    `<p>${escapeHtml(copy.greeting.replace("{name}", displayName))}</p>`,
     `<p>${escapeHtml(copy.action)}</p>`,
     `<p style="margin: 24px 0;">`,
     `<a href="${safeUrl}" style="display: inline-block; background-color: #4f46e5; color: #ffffff; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: 600;">${escapeHtml(copy.button)}</a>`,

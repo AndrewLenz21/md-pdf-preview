@@ -8,7 +8,7 @@ import {
   LibraryBig,
   Loader2,
 } from "lucide-react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { Link } from "@/core/i18n";
@@ -21,6 +21,7 @@ import type {
   WorkspaceFolderItem,
 } from "@/modules/dashboard/document/model/document.types";
 import {
+  createInitialMarkdown,
   isWorkspaceDocument,
   isWorkspaceFolder,
   useWorkspaceClipboardStore,
@@ -72,6 +73,7 @@ type MarkdownDialogState = {
   parentId: string | null;
   parentName: string;
   name: string;
+  pastedContent: string | null;
 };
 
 type DeleteFolderDialogState = {
@@ -142,6 +144,9 @@ export function DocsSidebar({
   mobile?: boolean;
 }) {
   const locale = useLocale();
+  const tStorage = useTranslations("Dashboard.storage");
+  const tSidebar = useTranslations("Dashboard.sidebar");
+  const tFolderEditor = useTranslations("Dashboard.folderEditor");
   const { data: session, isPending: sessionPending } = authClient.useSession();
   const [folderDialog, setFolderDialog] = useState<FolderDialogState | null>(
     null,
@@ -221,6 +226,12 @@ export function DocsSidebar({
   );
   const createCloudDocument = useCloudWorkspaceStore(
     (state) => state.createDocumentRemote,
+  );
+  const scheduleLocalContentUpdate = useLocalWorkspaceStore(
+    (state) => state.scheduleContentUpdate,
+  );
+  const scheduleCloudContentUpdate = useCloudWorkspaceStore(
+    (state) => state.scheduleContentUpdate,
   );
   const renameLocalDocument = useLocalWorkspaceStore(
     (state) => state.renameDocument,
@@ -509,7 +520,7 @@ export function DocsSidebar({
       sourceItems.find(
         (item): item is WorkspaceFolderItem =>
           isWorkspaceFolder(item) && folderId !== null && item.id === folderId,
-      )?.name ?? "Workspace";
+      )?.name ?? tSidebar("root");
 
     setMarkdownSubmitting(false);
     setMarkdownDialog({
@@ -517,6 +528,7 @@ export function DocsSidebar({
       parentId: folderId,
       parentName,
       name: "",
+      pastedContent: null,
     });
   };
 
@@ -624,14 +636,24 @@ export function DocsSidebar({
     }
 
     setMarkdownSubmitting(true);
-    void createDocument(
-      markdownDialog.source,
-      markdownDialog.name,
-      markdownDialog.parentId,
-    )
+    const { source, name, parentId, pastedContent } = markdownDialog;
+    void createDocument(source, name, parentId)
       .then((id) => {
         if (!id) {
           return;
+        }
+        if (pastedContent) {
+          const scheduleContentUpdate =
+            source === "local"
+              ? scheduleLocalContentUpdate
+              : scheduleCloudContentUpdate;
+          scheduleContentUpdate(
+            id,
+            createInitialMarkdown(name) + pastedContent,
+          );
+          (source === "local"
+            ? flushLocalPendingContent
+            : flushCloudPendingContent)(id);
         }
         onSelect(id);
         setMarkdownDialog(null);
@@ -741,7 +763,7 @@ export function DocsSidebar({
           <Link
             href="/"
             locale={locale}
-            aria-label="Back to Markdown Preview landing page"
+            aria-label={tSidebar("backHome")}
             className="flex items-center gap-2.5 rounded-md transition-opacity hover:opacity-80"
           >
             <span
@@ -751,16 +773,18 @@ export function DocsSidebar({
               <Logo className="h-6 w-6" />
             </span>
             <div>
-              <p className="text-sm font-semibold text-foreground">Workspace</p>
+              <p className="text-sm font-semibold text-foreground">
+                {tSidebar("workspace")}
+              </p>
               <p className="text-[11px] text-muted-foreground">
-                Markdown Preview
+                {tSidebar("descriptor")}
               </p>
             </div>
           </Link>
           <div className="flex items-center gap-1">
             <button
               type="button"
-              aria-label="Create new document"
+              aria-label={tSidebar("createDocument")}
               disabled={
                 isCloudUnauthenticated ||
                 (displaySource === "cloud" && cloudBusy)
@@ -772,8 +796,8 @@ export function DocsSidebar({
             </button>
             <button
               type="button"
-              aria-label="Collapse sidebar"
-              title="Collapse sidebar"
+              aria-label={tSidebar("collapse")}
+              title={tSidebar("collapse")}
               className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
               onClick={onCollapse}
             >
@@ -785,8 +809,8 @@ export function DocsSidebar({
 
       <div className="shrink-0 px-3 pb-2 pt-3">
         <div className="px-2">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex min-w-max shrink-0 items-center gap-2 text-sm font-semibold text-foreground">
+          <div className="flex min-w-0 items-center justify-between gap-2">
+            <div className="flex min-w-0 flex-1 items-center gap-2 text-sm font-semibold text-foreground">
               <LibraryBig
                 className="h-4 w-4 shrink-0 text-primary"
                 strokeWidth={1.7}
@@ -795,13 +819,15 @@ export function DocsSidebar({
                 key={displaySource}
                 className="sidebar-source-title-enter truncate"
               >
-                {displaySource === "local" ? "Session Files" : "Cloud Files"}
+                {tStorage(
+                  displaySource === "local" ? "deviceFiles" : "cloudFiles",
+                )}
               </span>
               {isWorkspaceTransferActive ? (
                 <span
                   role="status"
-                  aria-label="Transferring workspace items"
-                  title="Transferring workspace items"
+                  aria-label={tSidebar("transferring")}
+                  title={tSidebar("transferring")}
                   className="text-muted-foreground"
                 >
                   <Loader2
@@ -829,12 +855,12 @@ export function DocsSidebar({
             {cloudIsHydrating || (!cloudIsHydrated && !cloudError) ? (
               <span className="flex items-center gap-2">
                 <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
-                Loading cloud files...
+                {tSidebar("loadingCloud")}
               </span>
             ) : cloudOperation !== null ? (
               <span className="flex items-center gap-2">
                 <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
-                Saving cloud changes...
+                {tSidebar("savingCloud")}
               </span>
             ) : cloudError ? (
               <div className="flex items-center justify-between gap-3">
@@ -844,7 +870,7 @@ export function DocsSidebar({
                   className="shrink-0 font-semibold text-foreground hover:underline"
                   onClick={() => void hydrateCloudWorkspace()}
                 >
-                  Retry
+                  {tSidebar("retry")}
                 </button>
               </div>
             ) : null}
@@ -900,7 +926,7 @@ export function DocsSidebar({
               ? ((dragPreviewItem.source === "cloud" ? cloudItems : localItems)
                   .filter(isWorkspaceFolder)
                   .find((folder) => folder.id === dragPreviewItem.id)?.name ??
-                "Folder")
+                tSidebar("folder"))
               : (() => {
                   const documents = (
                     dragPreviewItem.source === "cloud" ? cloudItems : localItems
@@ -910,7 +936,7 @@ export function DocsSidebar({
                   );
                   return (
                     documents.find((item) => item.id === dragPreviewItem.id)
-                      ?.name ?? "Document"
+                      ?.name ?? tSidebar("document")
                   );
                 })()
           }
@@ -928,7 +954,11 @@ export function DocsSidebar({
       </div>
       <FolderEditorDialog
         open={folderDialog !== null}
-        title={folderDialog?.mode === "edit" ? "Edit folder" : "New folder"}
+        title={
+          folderDialog?.mode === "edit"
+            ? tFolderEditor("editTitle")
+            : tFolderEditor("newTitle")
+        }
         name={folderDialog?.name ?? ""}
         color={folderDialog?.color ?? "primary"}
         icon={folderDialog?.icon ?? "folder"}
@@ -954,7 +984,11 @@ export function DocsSidebar({
       />
       <FolderActionsDialog
         open={folderActions !== null}
-        folderName={folderActions?.folder.name ?? "Workspace"}
+        folderName={
+          folderActions?.isVirtualRoot
+            ? tSidebar("root")
+            : (folderActions?.folder.name ?? tSidebar("root"))
+        }
         canRenameDelete={
           folderActions !== null &&
           !folderActions.isVirtualRoot &&
@@ -972,12 +1006,26 @@ export function DocsSidebar({
       />
       <MarkdownNameDialog
         open={markdownDialog !== null}
-        parentName={markdownDialog?.parentName ?? "Workspace"}
+        parentName={markdownDialog?.parentName ?? tSidebar("root")}
         name={markdownDialog?.name ?? ""}
+        source={markdownDialog?.source ?? "local"}
         submitting={markdownSubmitting}
         onNameChange={(name) =>
           setMarkdownDialog((current) =>
             current ? { ...current, name } : current,
+          )
+        }
+        onLongPaste={(text) =>
+          setMarkdownDialog((current) =>
+            current
+              ? {
+                  ...current,
+                  name: current.name.trim() ? current.name : "Untitled",
+                  pastedContent: current.pastedContent
+                    ? `${current.pastedContent}\n\n${text}`
+                    : text,
+                }
+              : current,
           )
         }
         onClose={() => setMarkdownDialog(null)}

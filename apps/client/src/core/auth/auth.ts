@@ -8,6 +8,7 @@ import {
   sendVerificationEmail,
 } from "./email/verificationEmail";
 import { sendAccountDeletionConfirmationEmail } from "./email/accountDeletionEmail";
+import { sendPasswordResetEmail } from "./email/passwordResetEmail";
 import { createAuthPool, requiredEnvironmentVariable } from "./pool";
 import appServer from "@/lib/backend/server";
 
@@ -65,6 +66,9 @@ function createAuthWithPool(authPool: Pool) {
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: true,
+      revokeSessionsOnPasswordReset: true,
+      sendResetPassword: (data, request) =>
+        sendPasswordResetEmail(authPool, data, request),
       onExistingUserSignUp: (data, request) =>
         resendVerificationEmailToExistingUser(
           authPool,

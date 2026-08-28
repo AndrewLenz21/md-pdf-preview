@@ -2,6 +2,7 @@ import { getRequestConfig } from "next-intl/server";
 
 import { getNavigationMessages } from "@/modules/navigation/i18n";
 import { getAuthMessages } from "@/modules/auth/i18n";
+import { getDashboardMessages } from "@/modules/dashboard/i18n";
 import { getLandingMessages } from "@/modules/landing/i18n";
 import { getLegalMessages } from "@/modules/legal/i18n";
 
@@ -18,6 +19,7 @@ export default getRequestConfig(async ({ requestLocale }) => {
     messages: {
       Navigation: await getNavigationMessages(locale),
       Auth: await getAuthMessages(locale),
+      Dashboard: await getDashboardMessages(locale),
       Landing: await getLandingMessages(locale),
       Legal: await getLegalMessages(locale),
     },

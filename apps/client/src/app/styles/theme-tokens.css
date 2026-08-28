@@ -167,6 +167,7 @@
 @custom-variant sky (&:is(.sky *));
 @custom-variant ocean (&:is(.ocean *));
 @custom-variant pink (&:is(.pink *));
+@custom-variant pressroom (&:is(.pressroom *));
 
 @theme inline {
   --color-background: var(--background);
@@ -297,9 +298,21 @@
   --document-muted: var(--muted-foreground);
   --document-border: var(--border);
   --document-callout-info: color-mix(in oklab, var(--primary) 8%, var(--card));
-  --document-callout-success: color-mix(in oklab, var(--chart-2) 12%, var(--card));
-  --document-callout-warning: color-mix(in oklab, var(--chart-4) 13%, var(--card));
-  --document-callout-danger: color-mix(in oklab, var(--destructive) 9%, var(--card));
+  --document-callout-success: color-mix(
+    in oklab,
+    var(--chart-2) 12%,
+    var(--card)
+  );
+  --document-callout-warning: color-mix(
+    in oklab,
+    var(--chart-4) 13%,
+    var(--card)
+  );
+  --document-callout-danger: color-mix(
+    in oklab,
+    var(--destructive) 9%,
+    var(--card)
+  );
 
   --markdown-editor-max-width: 72rem;
   --markdown-editor-padding-inline: 3rem;

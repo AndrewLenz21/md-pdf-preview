@@ -21,8 +21,11 @@ var emailDeliveriesSchemaStatements = []string{
 		CONSTRAINT email_deliveries_status_check
 			CHECK (status IN ('reserved', 'accepted', 'delivered', 'bounced', 'failed', 'suppressed', 'request_failed', 'cancelled')),
 		CONSTRAINT email_deliveries_purpose_check
-			CHECK (purpose IN ('email_verification', 'account_deletion'))
+			CHECK (purpose IN ('email_verification', 'password_reset', 'account_deletion'))
 	)`,
+	`ALTER TABLE email_deliveries DROP CONSTRAINT IF EXISTS email_deliveries_purpose_check`,
+	`ALTER TABLE email_deliveries ADD CONSTRAINT email_deliveries_purpose_check
+		CHECK (purpose IN ('email_verification', 'password_reset', 'account_deletion'))`,
 	`CREATE INDEX IF NOT EXISTS email_deliveries_quota_date_idx ON email_deliveries (quota_date)`,
 	`CREATE INDEX IF NOT EXISTS email_deliveries_status_idx ON email_deliveries (status)`,
 	`CREATE INDEX IF NOT EXISTS email_deliveries_email_idx ON email_deliveries (email)`,

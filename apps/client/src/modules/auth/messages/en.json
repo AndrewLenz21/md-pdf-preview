@@ -23,6 +23,36 @@
     "existingAccount": "Already have an account?",
     "existingAccountLink": "Sign in"
   },
+  "forgotPassword": {
+    "title": "Forgot your password?",
+    "description": "Enter your email and we'll send you a link to reset your password.",
+    "email": "Email",
+    "submit": "Send reset link",
+    "loading": "Sending...",
+    "error": "Unable to send a password reset email.",
+    "dailyLimit": "We've reached today's email limit. Please try again tomorrow.",
+    "cooldown": "A password reset email was sent recently. Please wait a few minutes before trying again.",
+    "successTitle": "Check your inbox",
+    "successMessage": "If an account exists for {email}, we'll send a password reset link shortly.",
+    "backToSignIn": "Back to sign in"
+  },
+  "resetPassword": {
+    "title": "Set a new password",
+    "description": "Choose a new password for your account.",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "submit": "Reset password",
+    "loading": "Resetting password...",
+    "error": "Unable to reset your password.",
+    "passwordMismatch": "Passwords do not match.",
+    "passwordTooShort": "Password must be at least 8 characters.",
+    "passwordTooLong": "Password must be 128 characters or fewer.",
+    "invalidToken": "This reset link is invalid or has expired. Request a new one.",
+    "requestNewLink": "Request a new reset link",
+    "successTitle": "Password reset",
+    "successDescription": "Your password has been updated. You can now sign in.",
+    "signIn": "Go to sign in"
+  },
   "signIn": {
     "title": "Sign in",
     "email": "Email",
@@ -44,7 +74,8 @@
     "dailyLimit": "We've reached today's registration limit. Please try again tomorrow.",
     "cooldown": "We just sent you a verification email. Please wait a few minutes before requesting another one.",
     "newAccount": "Don't have an account?",
-    "newAccountLink": "Sign up"
+    "newAccountLink": "Sign up",
+    "forgotPassword": "Forgot password?"
   },
   "navigation": {
     "backHome": "Back to MarkDown Preview"
