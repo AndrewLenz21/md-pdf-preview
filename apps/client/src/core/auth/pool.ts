@@ -1,7 +1,7 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { Pool } from "pg";
 
-const DEFAULT_DATABASE_SCHEMA = "app2";
+const DEFAULT_DATABASE_SCHEMA = "your_schema";
 const DATABASE_SCHEMA_PATTERN = /^[a-z_][a-z0-9_]*$/;
 
 export function requiredEnvironmentVariable(name: string) {
@@ -48,39 +48,4 @@ export function createAuthPool(): Pool {
     connectionString: connectionUrl.toString(),
     maxUses: 1,
   });
-}
-
-/**
- * Temporary compatibility pool.
- * Still uses DATABASE_URL directly for consumers that have not yet
- * migrated to request-scoped Hyperdrive access.
- */
-function createLegacyAuthPool(): Pool {
-  const databaseUrl = requiredEnvironmentVariable("DATABASE_URL");
-  const databaseConnectionUrl = new URL(databaseUrl);
-
-  databaseConnectionUrl.searchParams.delete("sslmode");
-
-  return new Pool({
-    connectionString: databaseConnectionUrl.toString(),
-    options: `-c search_path=${getDatabaseSchema()}`,
-    ssl: {
-      rejectUnauthorized: false,
-    },
-    maxUses: 1,
-  });
-}
-
-/**
- * Temporary compatibility export.
- * Remove after all consumers use createAuthPool().
- */
-const globalForAuth = globalThis as typeof globalThis & {
-  authPool?: Pool;
-};
-
-export const authPool = globalForAuth.authPool ?? createLegacyAuthPool();
-
-if (process.env.NODE_ENV !== "production") {
-  globalForAuth.authPool = authPool;
 }

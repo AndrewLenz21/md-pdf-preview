@@ -79,9 +79,9 @@
         "alt": "Moviendo archivos y carpetas dentro del espacio de trabajo Sesión"
       },
       "cloud": {
-        "title": "Mueve carpetas a la Nube",
-        "description": "Los usuarios autenticados pueden mover carpetas entre Sesión y Nube.",
-        "alt": "Moviendo una carpeta entre los espacios de trabajo Sesión y Nube"
+        "title": "Mueve carpetas y archivos entre Local y la Nube",
+        "description": "Lleva tus carpetas y archivos Markdown de Local a la Nube y viceversa.",
+        "alt": "Moviendo una carpeta o un archivo Markdown entre Local y la Nube"
       },
       "desktop": {
         "title": "Espacio de trabajo en escritorio",

@@ -8,7 +8,7 @@ import {
   sendVerificationEmail,
 } from "./email/verificationEmail";
 import { sendAccountDeletionConfirmationEmail } from "./email/accountDeletionEmail";
-import { authPool, createAuthPool, requiredEnvironmentVariable } from "./pool";
+import { createAuthPool, requiredEnvironmentVariable } from "./pool";
 import appServer from "@/lib/backend/server";
 
 const identifyMissingEmailSignInUser = createAuthMiddleware(async (context) => {
@@ -189,14 +189,22 @@ function createAuthWithPool(authPool: Pool) {
   return auth;
 }
 
-export function createAuth() {
+export async function createAuth() {
   const authPool = createAuthPool();
-  const auth = createAuthWithPool(authPool);
 
-  return { auth, authPool };
+  try {
+    const auth = createAuthWithPool(authPool);
+    return { auth, authPool };
+  } catch (error) {
+    try {
+      await authPool.end();
+    } catch (closeError) {
+      console.error(
+        "[Auth] failed to close auth pool after setup error:",
+        closeError,
+      );
+    }
+
+    throw error;
+  }
 }
-
-/**
- * Temporary compatibility export. Remove after API consumers use createAuth().
- */
-export const auth = createAuthWithPool(authPool);

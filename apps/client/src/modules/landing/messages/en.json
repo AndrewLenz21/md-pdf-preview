@@ -79,9 +79,9 @@
         "alt": "Moving files and folders inside the Session workspace"
       },
       "cloud": {
-        "title": "Move folders to Cloud",
-        "description": "Authenticated users can move workspace folders between Session and Cloud.",
-        "alt": "Moving a folder between Session and Cloud workspaces"
+        "title": "Move folders and files between Local and Cloud",
+        "description": "Move your folders and Markdown files from Local to Cloud and back again.",
+        "alt": "Moving a folder or Markdown file between Local and Cloud"
       },
       "desktop": {
         "title": "Desktop workspace",

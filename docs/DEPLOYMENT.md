@@ -183,6 +183,48 @@ automatically at startup).
 - **PostgreSQL** — use any provider: Supabase, Neon, Railway, or self-hosted. Set `DATABASE_URL` and `DB_SCHEMA`.
 - **Cloudflare R2** — create a bucket and an API token with read/write permissions. The server generates presigned URLs; documents are uploaded directly by the client to R2.
 
+### PostgreSQL application role
+
+Use a dedicated PostgreSQL login for the application instead of a Supabase owner,
+`postgres`, or another administrative role. This is fundamental when the client
+connects through Hyperdrive: the Worker and Better Auth need only the permissions
+to read and write the application's schema, not to administer the database.
+
+Run the following as a database administrator, replacing `<DB_SCHEMA>` with the
+configured PostgreSQL schema name and the password with a unique generated
+secret. Store the resulting connection string in Cloudflare and Dokploy secrets;
+never commit it to an `.env` example or source file.
+
+```sql
+CREATE ROLE md_pdf_preview
+WITH LOGIN
+PASSWORD '<GENERATED_PASSWORD>';
+
+GRANT USAGE ON SCHEMA <DB_SCHEMA> TO md_pdf_preview;
+
+GRANT SELECT, INSERT, UPDATE, DELETE
+ON ALL TABLES IN SCHEMA <DB_SCHEMA>
+TO md_pdf_preview;
+
+GRANT USAGE, SELECT
+ON ALL SEQUENCES IN SCHEMA <DB_SCHEMA>
+TO md_pdf_preview;
+
+ALTER ROLE md_pdf_preview
+SET search_path TO <DB_SCHEMA>, public;
+```
+
+Set `DB_SCHEMA` to the same schema name used above. The client also sets
+`search_path` in its Hyperdrive connection string so each Worker connection
+resolves Better Auth tables such as `verification` in the configured schema. The
+role-level setting is a safe default for direct connections and other application
+processes.
+
+This role intentionally has no schema or DDL privileges. Apply migrations with
+the schema owner or a separate migration role before running the application;
+new tables and sequences also need equivalent grants before the application role
+can use them.
+
 ## Environment variables
 
 ### Client (`apps/client/.env.example`)

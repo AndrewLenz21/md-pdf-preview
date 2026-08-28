@@ -1,9 +1,17 @@
+/*=============================================================================
+ * ✉️ AUTH EMAIL ROUTER
+ *=============================================================================
+ * Handles email-based authentication workflows (user registration & email
+ * verification resends). Enforces daily quota limits, request cooldowns,
+ * and maintains email delivery reservation tracking.
+ *=============================================================================*/
+
+/*===== 📦 IMPORTS =====*/
 import { Hono } from "hono";
 import type { Context } from "hono";
 import type { Next } from "hono";
 import type { Pool } from "pg";
 
-import { createAuth } from "@/core/auth/auth";
 import {
   EMAIL_ATTEMPT_ID_HEADER,
   EMAIL_ATTEMPT_KIND_HEADER,
@@ -18,33 +26,43 @@ import {
   reserveEmailDelivery,
   secondsUntilQuotaReset,
 } from "@/core/auth/email/emailQuota";
+import { readJSONBody } from "@/lib/server/hono";
+import { type RequestAuth, withRequestAuth } from "@/lib/server/request-auth";
 
+/*===== ⚙️ CONSTANTS & TYPES =====*/
+
+// Minimum time delay (5 minutes) allowed between consecutive verification resend requests
 const RESEND_COOLDOWN_MS = 5 * 60 * 1000;
 
+// Type definition for Hono context environment containing request auth variables
 type AuthEmailEnv = {
-  Variables: {
-    auth: ReturnType<typeof createAuth>["auth"];
-    authPool: Pool;
-  };
+  Variables: RequestAuth;
 };
+
+/*===== 🔐 ROUTER INITIALIZATION & MIDDLEWARE =====*/
 
 const authEmailRouter = new Hono<AuthEmailEnv>();
 
-async function withRequestAuth(context: Context<AuthEmailEnv>, next: Next) {
-  const { auth, authPool } = createAuth();
-  context.set("auth", auth);
-  context.set("authPool", authPool);
-
-  try {
+/**
+ * Middleware that injects request authentication context (`auth` & `authPool`) into Hono's environment variables.
+ */
+async function attachRequestAuth(context: Context<AuthEmailEnv>, next: Next) {
+  return withRequestAuth(async ({ auth, authPool }) => {
+    context.set("auth", auth);
+    context.set("authPool", authPool);
     return await next();
-  } finally {
-    await authPool.end();
-  }
+  });
 }
 
-authEmailRouter.use("/sign-up/email", withRequestAuth);
-authEmailRouter.use("/send-verification-email", withRequestAuth);
+// Apply authentication middleware to email auth routes
+authEmailRouter.use("/sign-up/email", attachRequestAuth);
+authEmailRouter.use("/send-verification-email", attachRequestAuth);
 
+/*===== 🛠️ HELPER FUNCTIONS & QUOTA MANAGEMENT =====*/
+
+/**
+ * Returns a standardized 429 Too Many Requests HTTP response when the daily registration quota is reached.
+ */
 function dailyLimitResponse(context: Context) {
   return context.json(
     {
@@ -57,27 +75,10 @@ function dailyLimitResponse(context: Context) {
   );
 }
 
-async function readJSONBody(context: Context) {
-  try {
-    return {
-      ok: true as const,
-      value: (await context.req.json()) as Record<string, unknown>,
-    };
-  } catch (error) {
-    console.error("[AuthEmailRouter] invalid JSON request body:", error);
-    return {
-      ok: false as const,
-      response: context.json(
-        {
-          code: "INVALID_REQUEST_BODY",
-          message: "Request body must be valid JSON.",
-        },
-        400,
-      ),
-    };
-  }
-}
-
+/**
+ * Attempts to reserve an email delivery slot for a given address.
+ * Handles quota limits and cooldown errors gracefully by returning pre-formatted error responses.
+ */
 async function reserveAttempt(
   context: Context,
   authPool: Pool,
@@ -118,6 +119,9 @@ async function reserveAttempt(
   }
 }
 
+/**
+ * Enriches request headers with delivery attempt tracking metadata before delegating to Better Auth.
+ */
 function withAttemptHeaders(
   context: Context,
   reservation: { id: string },
@@ -129,16 +133,27 @@ function withAttemptHeaders(
   return headers;
 }
 
+/*===== 📨 EMAIL AUTH ENDPOINTS =====*/
+
+/**
+ * 📝 POST /sign-up/email
+ * Registers a new user account with email authentication.
+ * Reserves an email slot, invokes Better Auth API, and manages delivery state rollbacks on failure.
+ */
 authEmailRouter.post("/sign-up/email", async (context) => {
   const auth = context.get("auth");
   const authPool = context.get("authPool");
-  const body = await readJSONBody(context);
+  const body = await readJSONBody<Record<string, unknown>>(
+    context,
+    "AuthEmailRouter",
+  );
   if (!body.ok) {
     return body.response;
   }
 
   const email = typeof body.value.email === "string" ? body.value.email : "";
 
+  // Reserve a quota/delivery slot before attempting sign-up
   const reservation = await reserveAttempt(context, authPool, email);
   if (!reservation.ok) {
     return reservation.response;
@@ -204,10 +219,18 @@ authEmailRouter.post("/sign-up/email", async (context) => {
   );
 });
 
+/**
+ * 🔄 POST /send-verification-email
+ * Resends a verification email to an unverified user account.
+ * Enforces cooldown timers and checks email delivery statuses.
+ */
 authEmailRouter.post("/send-verification-email", async (context) => {
   const auth = context.get("auth");
   const authPool = context.get("authPool");
-  const body = await readJSONBody(context);
+  const body = await readJSONBody<Record<string, unknown>>(
+    context,
+    "AuthEmailRouter",
+  );
   if (!body.ok) {
     return body.response;
   }
@@ -221,6 +244,7 @@ authEmailRouter.post("/send-verification-email", async (context) => {
     );
   }
 
+  // Reserve delivery slot with resend cooldown applied
   const reservation = await reserveAttempt(
     context,
     authPool,
@@ -285,4 +309,6 @@ authEmailRouter.post("/send-verification-email", async (context) => {
   return response;
 });
 
+/*===== 📤 ROUTER EXPORT =====*/
 export default authEmailRouter;
+
