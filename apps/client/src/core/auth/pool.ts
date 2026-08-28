@@ -39,10 +39,15 @@ export function createAuthPool(): Pool {
   };
 
   const cloudflareEnv = env as AppCloudflareEnv;
+  const connectionUrl = new URL(cloudflareEnv.HYPERDRIVE.connectionString);
+
+  connectionUrl.searchParams.set(
+    "options",
+    `-c search_path=${getDatabaseSchema()}`,
+  );
 
   return new Pool({
-    connectionString: cloudflareEnv.HYPERDRIVE.connectionString,
-    options: `-c search_path=${getDatabaseSchema()}`,
+    connectionString: connectionUrl.toString(),
     maxUses: 1,
   });
 }
