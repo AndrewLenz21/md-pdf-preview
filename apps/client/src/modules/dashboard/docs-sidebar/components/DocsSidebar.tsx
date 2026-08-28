@@ -403,15 +403,10 @@ export function DocsSidebar({
       cloudOperation !== null ||
       cloudError !== null);
   const sourceItems = displaySource === "local" ? localItems : cloudItems;
-  const sourceFolders = sourceItems.filter(isWorkspaceFolder);
   const collapsedFolderIds =
     displaySource === "local"
       ? localCollapsedFolderIds
       : cloudCollapsedFolderIds;
-  const rootFolderId =
-    displaySource === "local"
-      ? sourceFolders.find((folder) => folder.parent_id === null)?.id
-      : null;
   const {
     draggingItem,
     dragPosition,
@@ -427,19 +422,8 @@ export function DocsSidebar({
         return false;
       }
 
-      const destinationItems =
-        target.source === "local"
-          ? useLocalWorkspaceStore.getState().items
-          : useCloudWorkspaceStore.getState().items;
       const destinationParentId =
-        target.kind === "folder"
-          ? target.folderId
-          : target.source === "local"
-            ? destinationItems.find(
-                (candidate) =>
-                  isWorkspaceFolder(candidate) && candidate.parent_id === null,
-              )?.id
-            : null;
+        target.kind === "folder" ? target.folderId : null;
 
       const resolvedDestinationParentId = destinationParentId ?? null;
 
@@ -533,7 +517,7 @@ export function DocsSidebar({
   };
 
   const handleCreateRootDocument = () => {
-    handleCreateDocument(rootFolderId ?? null);
+    handleCreateDocument(null);
   };
 
   const handleCreateFolder = (
@@ -559,7 +543,7 @@ export function DocsSidebar({
       source: displaySource,
       folder,
       createParentId,
-      isVirtualRoot: createParentId === null && displaySource === "cloud",
+      isVirtualRoot: createParentId === null,
     });
   };
 
