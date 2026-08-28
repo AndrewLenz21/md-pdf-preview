@@ -417,5 +417,7 @@ describe("Markdown document model", () => {
     expect(css).toContain(".dashboard-workspace > :not(.print-document-preview)");
     expect(css).toContain(".print-document-preview .document-preview-stage");
     expect(css).toContain(".print-document-preview .document-page-frame:last-child");
+    expect(css).toContain(".document-markdown-block pre");
+    expect(css).toContain("var(--document-page) 94%");
   });
 });

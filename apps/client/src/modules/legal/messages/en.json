@@ -18,7 +18,7 @@
       "controller": {
         "title": "Data Controller",
         "paragraphs": [
-          "The Data Controller is Lenz Villanueva Andrew Angel Giovanny, sole proprietor trading as Bitnexus Lab, established in Italy. Privacy contact: privacy@bitnexuslab.com. Address: Milan, Italy.",
+          "The Data Controller is Bitnexus Lab, a sole proprietorship operated by Lenz Villanueva Andrew Angel Giovanny, established in Italy. Milan, Italy. Privacy contact: privacy@bitnexuslab.com.",
           "The open-source repository and a hosted instance are separate contexts. The operator of a self-hosted deployment is responsible for its own controller information, providers, retention rules, and privacy notice."
         ]
       },
@@ -113,18 +113,19 @@
           "The following services and infrastructure are verifiable for the hosted deployment. Exact legal entities, service plans, contractual terms, and some transfer details may vary by provider configuration."
         ],
         "bullets": [
-          "Cloudflare Workers/OpenNext: hosts or delivers the Next.js application and may process request metadata at the network edge. Cloudflare R2 stores cloud document objects and related storage metadata.",
-          "PostgreSQL: stores account, session, authentication, email-delivery, workspace metadata, and operational log records. The hosted service uses Supabase as its managed PostgreSQL provider. The production database is hosted on AWS in the eu-west-1 region (Europe – Ireland).",
+          "Cloudflare: Cloudflare Workers, through OpenNext, runs the Next.js application and server-side API functionality. Better Auth runs server-side in the same Worker and connects through Cloudflare Hyperdrive to the hosted service's Supabase PostgreSQL database. Cloudflare R2 stores cloud document objects and applicable diagnostic and storage data; its R2 configuration uses Cloudflare's WNAM jurisdiction / North America location configuration.",
+          "Supabase: provides the managed PostgreSQL database. Account, authentication, session, email-delivery, workspace, and operational records are stored in PostgreSQL. The production database is hosted on AWS in the us-west-1 region (United States).",
+          "Oracle Cloud: a separate Go backend runs on Oracle Cloud infrastructure in Phoenix, United States. It supports workspace persistence, Cloudflare R2 presigned URLs, and related server functionality.",
           "Resend: sends email-verification and account-deletion confirmation messages and processes the recipient email, name, relevant link, delivery metadata, and webhook events.",
           "Google: receives OAuth requests and returns identity claims only when you select Google sign-in.",
           "GitHub: receives OAuth requests and returns profile and email data only when you select GitHub sign-in.",
-          "The hosted service currently uses Cloudflare for application delivery and R2 object storage, Supabase for managed PostgreSQL, Resend for verification and account-deletion confirmation emails, and Google or GitHub when users choose those authentication methods."
+          "The hosted service uses Cloudflare, Supabase, Oracle Cloud, Resend, and, when you choose those authentication methods, Google or GitHub."
         ]
       },
       "transfers": {
         "title": "International Transfers",
         "paragraphs": [
-          "The repository does not prove that all processing remains inside the European Economic Area. Cloudflare, Resend, Google, GitHub, and Supabase may process data in countries outside the EEA depending on the account, region, and service configuration.",
+          "The hosted production infrastructure includes processing and storage in the United States: the Supabase PostgreSQL database is hosted on AWS in us-west-1, and the separate Go backend runs on Oracle Cloud infrastructure in Phoenix. Cloudflare R2 is configured with WNAM. The Next.js application and Better Auth run in Cloudflare Workers through OpenNext, and Better Auth connects to Supabase PostgreSQL through Cloudflare Hyperdrive. Cloudflare, Resend, Google, GitHub, and other providers may also process data outside the EEA according to their infrastructure and contractual configuration.",
           "Where required, transfers rely on legally recognized mechanisms described in the relevant provider terms, such as adequacy decisions, Standard Contractual Clauses, or the EU-US Data Privacy Framework where applicable. Provider-specific safeguards and sub-processors are governed by their current agreements and policies."
         ]
       },
@@ -184,20 +185,20 @@
       "contact": {
         "title": "Contact",
         "paragraphs": [
-          "Privacy requests and questions: privacy@bitnexuslab.com. Data Controller: Lenz Villanueva Andrew Angel Giovanny, sole proprietor trading as Bitnexus Lab, established in Italy. Address: Milan, Italy."
+          "Privacy requests and questions: privacy@bitnexuslab.com. Data Controller: Bitnexus Lab, a sole proprietorship operated by Lenz Villanueva Andrew Angel Giovanny, established in Italy. Milan, Italy."
         ]
       }
     }
   },
   "terms": {
     "title": "Terms of Service",
-    "summary": "These terms govern use of the hosted md-pdf-preview service operated by the project owner. They do not replace the open-source license for the repository.",
+    "summary": "These terms govern use of the hosted md-pdf-preview service operated by Bitnexus Lab, a sole proprietorship operated by Lenz Villanueva Andrew Angel Giovanny, established in Italy. Milan, Italy. They do not replace the open-source license for the repository.",
     "sections": {
       "acceptance": {
         "title": "1. Acceptance",
         "paragraphs": [
           "By using the hosted service, you agree to these Terms of Service and the Privacy Policy. If you do not agree, do not create an account or use the hosted service.",
-          "The hosted service is operated by Bitnexus Lab di Lenz Villanueva Andrew Angel Giovanny. Privacy contact: privacy@bitnexuslab.com."
+          "The hosted service is operated by Bitnexus Lab, a sole proprietorship operated by Lenz Villanueva Andrew Angel Giovanny, established in Italy. Milan, Italy. Privacy contact: privacy@bitnexuslab.com."
         ]
       },
       "eligibility": {
@@ -260,13 +261,13 @@
         "title": "10. Open-Source Distinction",
         "paragraphs": [
           "The source code in the repository is separately licensed under the MIT License. The MIT License governs copying, modification, and redistribution of the source code and its notice requirements.",
-          "These Terms govern use of the hosted instance operated by the project owner. Running a self-hosted copy does not automatically make its operator subject to these hosted-service Terms; a self-hosted operator must provide its own terms and privacy information where required."
+          "These Terms govern use of the hosted instance operated by Bitnexus Lab, a sole proprietorship operated by Lenz Villanueva Andrew Angel Giovanny, established in Italy. Milan, Italy. Running a self-hosted copy does not automatically make its operator subject to these hosted-service Terms; a self-hosted operator must provide its own terms and privacy information where required."
         ]
       },
       "thirdParties": {
         "title": "11. Third-Party Services",
         "paragraphs": [
-          "The service depends on infrastructure and authentication providers including Cloudflare, PostgreSQL hosting, Resend, Google, and GitHub as described in the Privacy Policy. A provider may have separate terms, limits, or outages."
+          "The service relies on providers including Cloudflare, Supabase, Oracle Cloud, Resend, Google, and GitHub, as described in the Privacy Policy. A provider may have separate terms, limits, or outages."
         ]
       },
       "availability": {
@@ -321,7 +322,7 @@
       "contact": {
         "title": "20. Contact",
         "paragraphs": [
-          "Questions about the hosted service or these Terms: privacy@bitnexuslab.com. Operator: Bitnexus Lab di Lenz Villanueva Andrew Angel Giovanny. Address: Milan, Italy."
+          "Questions about the hosted service or these Terms: privacy@bitnexuslab.com. Operator: Bitnexus Lab, a sole proprietorship operated by Lenz Villanueva Andrew Angel Giovanny, established in Italy. Milan, Italy."
         ]
       }
     }
@@ -365,7 +366,7 @@
       "contact": {
         "title": "Contact",
         "paragraphs": [
-          "Questions about cookies or browser storage: privacy@bitnexuslab.com. The operator is Bitnexus Lab di Lenz Villanueva Andrew Angel Giovanny."
+          "Questions about cookies or browser storage: privacy@bitnexuslab.com. The operator is Bitnexus Lab, a sole proprietorship operated by Lenz Villanueva Andrew Angel Giovanny, established in Italy. Milan, Italy."
         ]
       }
     },
