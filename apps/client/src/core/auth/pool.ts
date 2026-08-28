@@ -39,12 +39,10 @@ export function createAuthPool(): Pool {
   };
 
   const cloudflareEnv = env as AppCloudflareEnv;
+  const databaseSchema = getDatabaseSchema();
   const connectionUrl = new URL(cloudflareEnv.HYPERDRIVE.connectionString);
 
-  connectionUrl.searchParams.set(
-    "options",
-    `-c search_path=${getDatabaseSchema()}`,
-  );
+  connectionUrl.searchParams.set("options", `-c search_path=${databaseSchema}`);
 
   return new Pool({
     connectionString: connectionUrl.toString(),
