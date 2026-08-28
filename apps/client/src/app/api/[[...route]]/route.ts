@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 
-import { auth } from "@/core/auth";
+import { createAuth } from "@/core/auth/auth";
+
 import authEmailRouter from "./AuthEmailRouter";
 import resendWebhookRouter from "./ResendWebhookRouter";
 import workspaceRouter from "./WorkspaceRouter";
@@ -8,12 +9,24 @@ import workspaceRouter from "./WorkspaceRouter";
 const app = new Hono().basePath("/api");
 
 app.route("/auth", authEmailRouter);
-app.all("/auth/*", (context) => auth.handler(context.req.raw));
+
+app.all("/auth/*", async (context) => {
+  const { auth, authPool } = createAuth();
+
+  try {
+    return await auth.handler(context.req.raw);
+  } finally {
+    await authPool.end();
+  }
+});
+
 app.route("/workspace", workspaceRouter);
+
 app.route("/webhooks/resend", resendWebhookRouter);
 
 app.onError((error, context) => {
   console.error("[ApiRouter] unhandled API error:", error);
+
   return context.json(
     {
       code: "INTERNAL_API_ERROR",

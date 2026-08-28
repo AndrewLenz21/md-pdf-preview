@@ -23,19 +23,14 @@ function getDatabaseSchema() {
   return schema;
 }
 
-const databaseUrl = requiredEnvironmentVariable("DATABASE_URL");
-const databaseConnectionUrl = new URL(databaseUrl);
+export function createAuthPool(): Pool {
+  const databaseUrl = requiredEnvironmentVariable("DATABASE_URL");
+  const databaseConnectionUrl = new URL(databaseUrl);
 
-// pg lets URL SSL options override the TLS object, so configure TLS explicitly.
-databaseConnectionUrl.searchParams.delete("sslmode");
+  // pg lets URL SSL options override the TLS object, so configure TLS explicitly.
+  databaseConnectionUrl.searchParams.delete("sslmode");
 
-const globalForAuth = globalThis as typeof globalThis & {
-  authPool?: Pool;
-};
-
-const authPool =
-  globalForAuth.authPool ??
-  new Pool({
+  return new Pool({
     connectionString: databaseConnectionUrl.toString(),
     options: `-c search_path=${getDatabaseSchema()}`,
     // Supabase poolers require TLS but do not provide a Node-trusted CA chain.
@@ -45,9 +40,18 @@ const authPool =
     // Worker isolates must not reuse a TCP connection across requests.
     maxUses: 1,
   });
+}
+
+/**
+ * Temporary compatibility export. Remove after all consumers use
+ * createAuthPool() with request-scoped auth.
+ */
+const globalForAuth = globalThis as typeof globalThis & {
+  authPool?: Pool;
+};
+
+export const authPool = globalForAuth.authPool ?? createAuthPool();
 
 if (process.env.NODE_ENV !== "production") {
   globalForAuth.authPool = authPool;
 }
-
-export { authPool };
