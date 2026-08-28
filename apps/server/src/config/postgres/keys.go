@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-const DefaultSchema = "app2"
+const DefaultSchema = "your_schema"
 
 var schemaIdentifierPattern = regexp.MustCompile(`^[a-z_][a-z0-9_]*$`)
 

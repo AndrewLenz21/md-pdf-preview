@@ -79,9 +79,9 @@
         "alt": "Spostamento di file e cartelle nel workspace Session"
       },
       "cloud": {
-        "title": "Sposta cartelle nel Cloud",
-        "description": "Gli utenti autenticati possono spostare le cartelle tra Session e Cloud.",
-        "alt": "Spostamento di una cartella tra i workspace Session e Cloud"
+        "title": "Sposta cartelle e file tra Locale e Cloud",
+        "description": "Sposta le tue cartelle e i file Markdown da Locale al Cloud e viceversa.",
+        "alt": "Spostamento di una cartella o di un file Markdown tra Locale e Cloud"
       },
       "desktop": {
         "title": "Workspace desktop",

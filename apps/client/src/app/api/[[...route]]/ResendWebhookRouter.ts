@@ -1,3 +1,11 @@
+/*=============================================================================
+ * 🔔 RESEND WEBHOOK ROUTER
+ *=============================================================================
+ * Handles incoming webhooks from Resend (verified via Svix) to track email
+ * delivery statuses (e.g. delivered, bounced, failed) asynchronously.
+ *=============================================================================*/
+
+/*===== 📦 IMPORTS =====*/
 import { Hono } from "hono";
 import { Webhook } from "svix";
 
@@ -5,11 +13,20 @@ import { WEBHOOK_EVENT_STATUS } from "@/core/auth/email/emailDeliveries";
 import * as emailDeliveryRepository from "@/core/auth/email/emailDeliveryRepository";
 import { createAuthPool } from "@/core/auth/pool";
 
+/*===== ⚙️ ROUTER INITIALIZATION =====*/
 const resendWebhookRouter = new Hono();
 
+/*===== 📬 WEBHOOK ENDPOINT & VERIFICATION =====*/
+
+/**
+ * 📩 POST /
+ * Webhook handler endpoint for Resend events.
+ * Verifies cryptographic signatures using Svix headers and updates delivery records in the database.
+ */
 resendWebhookRouter.post("/", async (context) => {
   const secret = process.env.RESEND_WEBHOOK_SECRET?.trim();
 
+  // Ensure secret is present before processing
   if (!secret) {
     console.warn(
       "[ResendWebhookRouter] RESEND_WEBHOOK_SECRET is not configured; ignoring webhook.",
@@ -27,6 +44,7 @@ resendWebhookRouter.post("/", async (context) => {
 
   let event: { type?: unknown; data?: unknown };
 
+  // 🔑 Verify webhook signature headers via Svix
   try {
     event = new Webhook(secret).verify(payload, {
       "svix-id": context.req.header("svix-id") ?? "",
@@ -47,12 +65,14 @@ resendWebhookRouter.post("/", async (context) => {
     );
   }
 
+  // Parse event status and extract provider message ID
   const status =
     typeof event.type === "string"
       ? WEBHOOK_EVENT_STATUS[event.type]
       : undefined;
   const providerMessageId = (event.data as { id?: unknown } | undefined)?.id;
 
+  // Ignore unsupported or unmapped webhook events
   if (!status || typeof providerMessageId !== "string") {
     return context.json(
       { code: "WEBHOOK_EVENT_IGNORED", message: "Webhook event ignored." },
@@ -62,6 +82,7 @@ resendWebhookRouter.post("/", async (context) => {
 
   const deliveredAt = event.type === "email.delivered" ? new Date() : undefined;
 
+  // 🗄️ Connect to database and update email delivery status
   const authPool = createAuthPool();
 
   try {
@@ -83,4 +104,6 @@ resendWebhookRouter.post("/", async (context) => {
   }
 });
 
+/*===== 📤 ROUTER EXPORT =====*/
 export default resendWebhookRouter;
+

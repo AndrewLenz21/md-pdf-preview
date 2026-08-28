@@ -2,7 +2,7 @@ package migrations
 
 import "fmt"
 
-const retentionDefaultSchema = "app2"
+const retentionDefaultSchema = "your_schema"
 
 // retentionSchemaStatements contains only the cleanup functions. The functions
 // qualify their tables so their behavior does not depend on a cron worker's

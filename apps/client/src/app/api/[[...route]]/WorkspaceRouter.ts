@@ -1,9 +1,21 @@
+/*=============================================================================
+ * 📁 WORKSPACE ROUTER
+ *=============================================================================
+ * Proxies client workspace requests (workspace items & document management)
+ * to the backend application server while enforcing session authentication.
+ *=============================================================================*/
+
+/*===== 📦 IMPORTS =====*/
 import { Hono } from "hono";
 import type { Context } from "hono";
 
-import { createAuth } from "@/core/auth/auth";
 import appServer from "@/lib/backend/server";
+import { readJSONBody } from "@/lib/server/hono";
+import { withRequestAuth } from "@/lib/server/request-auth";
 
+/*===== ⚙️ TYPES & ROUTER SETUP =====*/
+
+// Hono environment context storing the authenticated user ID
 type WorkspaceEnv = {
   Variables: {
     userID: string;
@@ -14,10 +26,14 @@ type WorkspaceContext = Context<WorkspaceEnv>;
 
 const workspaceRouter = new Hono<WorkspaceEnv>();
 
-workspaceRouter.use("*", async (context, next) => {
-  const { auth, authPool } = createAuth();
+/*===== 🔑 AUTHENTICATION MIDDLEWARE =====*/
 
-  try {
+/**
+ * 🔒 Protects all workspace endpoints by verifying the session token with Better Auth.
+ * Sets the authenticated `userID` in the context variables or rejects unauthenticated requests.
+ */
+workspaceRouter.use("*", (context, next) =>
+  withRequestAuth(async ({ auth }) => {
     let session;
 
     try {
@@ -50,11 +66,14 @@ workspaceRouter.use("*", async (context, next) => {
 
     context.set("userID", session.user.id);
     return await next();
-  } finally {
-    await authPool.end();
-  }
-});
+  }),
+);
 
+/*===== 📝 WORKSPACE ITEMS API ENDPOINTS =====*/
+
+/**
+ * 📋 GET /items - List all workspace items for the current user
+ */
 workspaceRouter.get("/items", (context) =>
   proxyBackend(context, "GET /workspace/items", () =>
     appServer
@@ -63,8 +82,11 @@ workspaceRouter.get("/items", (context) =>
   ),
 );
 
+/**
+ * ➕ POST /items - Create a new item in the user's workspace
+ */
 workspaceRouter.post("/items", async (context) => {
-  const body = await readJSONBody(context);
+  const body = await readJSONBody(context, "WorkspaceRouter");
   if (!body.ok) {
     return body.response;
   }
@@ -76,6 +98,9 @@ workspaceRouter.post("/items", async (context) => {
   );
 });
 
+/**
+ * 🔍 GET /items/:itemID - Fetch details for a specific workspace item
+ */
 workspaceRouter.get("/items/:itemID", (context) =>
   proxyBackend(context, "GET /workspace/items/:itemID", () =>
     appServer
@@ -84,8 +109,11 @@ workspaceRouter.get("/items/:itemID", (context) =>
   ),
 );
 
+/**
+ * ✏️ PATCH /items/:itemID - Update an existing workspace item
+ */
 workspaceRouter.patch("/items/:itemID", async (context) => {
-  const body = await readJSONBody(context);
+  const body = await readJSONBody(context, "WorkspaceRouter");
   if (!body.ok) {
     return body.response;
   }
@@ -97,6 +125,9 @@ workspaceRouter.patch("/items/:itemID", async (context) => {
   );
 });
 
+/**
+ * 🗑️ DELETE /items/:itemID - Delete a workspace item
+ */
 workspaceRouter.delete("/items/:itemID", (context) =>
   proxyBackend(context, "DELETE /workspace/items/:itemID", () =>
     appServer
@@ -105,8 +136,13 @@ workspaceRouter.delete("/items/:itemID", (context) =>
   ),
 );
 
+/*===== 📄 WORKSPACE DOCUMENTS API ENDPOINTS =====*/
+
+/**
+ * 📤 POST /documents/:documentID/upload-url - Generate presigned URL for document upload
+ */
 workspaceRouter.post("/documents/:documentID/upload-url", async (context) => {
-  const body = await readJSONBody(context);
+  const body = await readJSONBody(context, "WorkspaceRouter");
   if (!body.ok) {
     return body.response;
   }
@@ -124,10 +160,13 @@ workspaceRouter.post("/documents/:documentID/upload-url", async (context) => {
   );
 });
 
+/**
+ * ✅ POST /documents/:documentID/upload-complete - Notify backend that document upload completed
+ */
 workspaceRouter.post(
   "/documents/:documentID/upload-complete",
   async (context) => {
-    const body = await readJSONBody(context);
+    const body = await readJSONBody(context, "WorkspaceRouter");
     if (!body.ok) {
       return body.response;
     }
@@ -146,6 +185,9 @@ workspaceRouter.post(
   },
 );
 
+/**
+ * 📥 GET /documents/:documentID/download-url - Get pre-signed download URL for a document
+ */
 workspaceRouter.get("/documents/:documentID/download-url", (context) =>
   proxyBackend(
     context,
@@ -159,24 +201,12 @@ workspaceRouter.get("/documents/:documentID/download-url", (context) =>
   ),
 );
 
-async function readJSONBody(context: WorkspaceContext) {
-  try {
-    return { ok: true as const, value: await context.req.json() };
-  } catch (error) {
-    console.error("[WorkspaceRouter] invalid JSON request body:", error);
-    return {
-      ok: false as const,
-      response: context.json(
-        {
-          code: "INVALID_REQUEST_BODY",
-          message: "Request body must be valid JSON.",
-        },
-        400,
-      ),
-    };
-  }
-}
+/*===== 🔄 BACKEND PROXY HELPER & HEADERS =====*/
 
+/**
+ * Helper function to forward client API requests to the internal backend app server,
+ * standardizing error handling and header forwarding.
+ */
 async function proxyBackend(
   context: WorkspaceContext,
   operation: string,
@@ -210,6 +240,9 @@ async function proxyBackend(
   }
 }
 
+/**
+ * Selectively forwards response headers from backend responses (e.g. content-type, content-disposition).
+ */
 function forwardResponseHeaders(source: Headers) {
   const target = new Headers();
 
@@ -227,4 +260,6 @@ function forwardResponseHeaders(source: Headers) {
   return target;
 }
 
+/*===== 📤 ROUTER EXPORT =====*/
 export default workspaceRouter;
+

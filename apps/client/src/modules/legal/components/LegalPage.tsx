@@ -70,7 +70,13 @@ function BulletList({ t, path }: { t: LegalTranslation; path: string }) {
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <section className="border-t border-border/70 pt-8 first:border-t-0 first:pt-0">
       <h2 className="text-xl font-semibold tracking-[-0.02em] text-foreground sm:text-2xl">
@@ -106,7 +112,9 @@ function PolicyHeader({
           <dt className="inline font-semibold text-foreground">
             {t("dates.effective")}:
           </dt>{" "}
-          <dd className="inline">{formatDate(LEGAL_DATES.effective, locale)}</dd>
+          <dd className="inline">
+            {formatDate(LEGAL_DATES.effective, locale)}
+          </dd>
         </div>
         <div>
           <dt className="inline font-semibold text-foreground">
@@ -167,7 +175,7 @@ function PrivacyDocument({ t }: { t: LegalTranslation }) {
         <TextBlocks t={t} path="privacy.sections.rights.paragraphs" />
         <BulletList t={t} path="privacy.sections.rights.bullets" />
         <p className="mt-4 text-sm leading-7 text-muted-foreground">
-          {t("privacy.sections.rights.complaint")} {" "}
+          {t("privacy.sections.rights.complaint")}{" "}
           <a
             href="https://www.garanteprivacy.it/"
             target="_blank"
@@ -249,16 +257,25 @@ function CookiesDocument({ t }: { t: LegalTranslation }) {
       </Section>
       <Section title={t("cookies.table.title")}>
         <div className="mt-2 overflow-x-auto rounded-xl border border-border">
-          <table className="w-full min-w-[760px] border-collapse text-left text-sm">
+          <table className="w-full min-w-190 border-collapse text-left text-sm">
             <thead className="bg-muted/50 text-xs uppercase tracking-wide text-muted-foreground">
               <tr>
-                {(["name", "provider", "purpose", "category", "duration"] as const).map(
-                  (column) => (
-                    <th key={column} className="border-b border-border px-4 py-3 font-semibold">
-                      {t(`cookies.table.columns.${column}`)}
-                    </th>
-                  ),
-                )}
+                {(
+                  [
+                    "name",
+                    "provider",
+                    "purpose",
+                    "category",
+                    "duration",
+                  ] as const
+                ).map((column) => (
+                  <th
+                    key={column}
+                    className="border-b border-border px-4 py-3 font-semibold"
+                  >
+                    {t(`cookies.table.columns.${column}`)}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
@@ -319,16 +336,28 @@ export function LegalPage({ document }: { document: LegalDocument }) {
           aria-label={t("related.label")}
           className="mt-12 flex flex-wrap gap-x-6 gap-y-3 border-t border-border/70 pt-6 text-sm font-medium"
         >
-          <Link href="/terms" className="text-muted-foreground underline underline-offset-4 hover:text-foreground">
+          <Link
+            href="/terms"
+            className="text-muted-foreground underline underline-offset-4 hover:text-foreground"
+          >
             {t("related.terms")}
           </Link>
-          <Link href="/privacy" className="text-muted-foreground underline underline-offset-4 hover:text-foreground">
+          <Link
+            href="/privacy"
+            className="text-muted-foreground underline underline-offset-4 hover:text-foreground"
+          >
             {t("related.privacy")}
           </Link>
-          <Link href="/cookies" className="text-muted-foreground underline underline-offset-4 hover:text-foreground">
+          <Link
+            href="/cookies"
+            className="text-muted-foreground underline underline-offset-4 hover:text-foreground"
+          >
             {t("related.cookies")}
           </Link>
-          <Link href="/" className="text-muted-foreground underline underline-offset-4 hover:text-foreground">
+          <Link
+            href="/"
+            className="text-muted-foreground underline underline-offset-4 hover:text-foreground"
+          >
             {t("related.home")}
           </Link>
         </nav>

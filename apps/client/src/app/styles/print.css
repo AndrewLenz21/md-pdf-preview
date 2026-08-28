@@ -44,6 +44,17 @@
       print-color-adjust: exact !important;
     }
 
+    .document-preview-root[data-document-mode="preview"]
+      .document-markdown-block
+      pre {
+      background: color-mix(
+        in oklab,
+        var(--document-page) 94%,
+        var(--document-border) 6%
+      ) !important;
+      color: var(--document-text) !important;
+    }
+
     .document-preview-root[data-document-mode="preview"] .document-preview-canvas {
       display: block !important;
       min-height: 0 !important;
