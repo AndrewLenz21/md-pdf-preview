@@ -38,7 +38,7 @@ export function ModalShell({
 }: {
   open: boolean;
   onClose: () => void;
-  title: string;
+  title: React.ReactNode;
   description?: string;
   closeLabel: string;
   closeOnEscape?: boolean;

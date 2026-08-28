@@ -14,6 +14,7 @@ export type EmailDeliveryStatus =
 
 export const EMAIL_PURPOSE = {
   EMAIL_VERIFICATION: "email_verification",
+  PASSWORD_RESET: "password_reset",
   ACCOUNT_DELETION: "account_deletion",
 } as const;
 
@@ -64,4 +65,4 @@ export const WEBHOOK_EVENT_STATUS: Record<string, EmailDeliveryStatus> = {
 export const EMAIL_ATTEMPT_ID_HEADER = "x-email-attempt-id";
 export const EMAIL_ATTEMPT_KIND_HEADER = "x-email-attempt-kind";
 
-export type EmailAttemptKind = "sign-up" | "resend";
+export type EmailAttemptKind = "sign-up" | "password-reset" | "resend";

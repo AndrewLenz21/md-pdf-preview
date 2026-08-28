@@ -23,6 +23,36 @@
     "existingAccount": "Hai già un account?",
     "existingAccountLink": "Accedi"
   },
+  "forgotPassword": {
+    "title": "Hai dimenticato la password?",
+    "description": "Inserisci la tua email e ti invieremo un link per reimpostare la password.",
+    "email": "Email",
+    "submit": "Invia link di reimpostazione",
+    "loading": "Invio in corso...",
+    "error": "Impossibile inviare l'email di reimpostazione.",
+    "dailyLimit": "Abbiamo raggiunto il limite giornaliero di email. Riprova domani.",
+    "cooldown": "Un'email di reimpostazione è stata inviata di recente. Attendi qualche minuto prima di riprovare.",
+    "successTitle": "Controlla la tua casella di posta",
+    "successMessage": "Se esiste un account per {email}, invieremo a breve un link per reimpostare la password.",
+    "backToSignIn": "Torna all'accesso"
+  },
+  "resetPassword": {
+    "title": "Imposta una nuova password",
+    "description": "Scegli una nuova password per il tuo account.",
+    "newPassword": "Nuova password",
+    "confirmPassword": "Conferma password",
+    "submit": "Reimposta password",
+    "loading": "Reimpostazione della password...",
+    "error": "Impossibile reimpostare la password.",
+    "passwordMismatch": "Le password non coincidono.",
+    "passwordTooShort": "La password deve contenere almeno 8 caratteri.",
+    "passwordTooLong": "La password deve contenere al massimo 128 caratteri.",
+    "invalidToken": "Questo link di reimpostazione non è valido o è scaduto. Richiedine uno nuovo.",
+    "requestNewLink": "Richiedi un nuovo link di reimpostazione",
+    "successTitle": "Password reimpostata",
+    "successDescription": "La tua password è stata aggiornata. Ora puoi accedere.",
+    "signIn": "Vai all'accesso"
+  },
   "signIn": {
     "title": "Accedi",
     "email": "Email",
@@ -44,7 +74,8 @@
     "dailyLimit": "Abbiamo raggiunto il limite di registrazioni di oggi. Riprova domani.",
     "cooldown": "Ti abbiamo appena inviato un'email di verifica. Attendi qualche minuto prima di richiederne un'altra.",
     "newAccount": "Non hai un account?",
-    "newAccountLink": "Registrati"
+    "newAccountLink": "Registrati",
+    "forgotPassword": "Hai dimenticato la password?"
   },
   "navigation": {
     "backHome": "Torna a MarkDown Preview"

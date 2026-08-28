@@ -8,14 +8,17 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, FilePlus2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { DocsSidebar } from "@/modules/dashboard/docs-sidebar";
+import { MarkdownNameDialog } from "@/modules/dashboard/docs-sidebar/components/modals/MarkdownNameDialog";
 import { authClient } from "@/lib/auth-client";
 import {
   DashboardBottomNav,
   type MobileDashboardSection,
 } from "@/modules/dashboard/mobile-navigation";
 import {
+  createInitialMarkdown,
   useDocumentEditorStore,
   isWorkspaceDocument,
   useCloudWorkspaceStore,
@@ -34,6 +37,7 @@ import {
   type EditingActions,
 } from "@/modules/dashboard/preview/utils/editingActions";
 import type { WorkspaceDocumentItem } from "@/modules/dashboard/document/model/document.types";
+import type { DocumentSource } from "@/modules/dashboard/document/model/document.types";
 import type { DocumentEditorMode } from "@/modules/dashboard/types/editor.types";
 import { useMediaQuery } from "@/shared/hooks/useMediaQuery";
 import {
@@ -49,7 +53,13 @@ const DESKTOP_SIDEBAR_MAX_WIDTH = 600;
 const DESKTOP_SIDEBAR_COLLAPSED_STORAGE_KEY =
   "md-pdf-preview:desktop-sidebar-collapsed";
 
-function EmptyDocumentState() {
+function EmptyDocumentState({
+  onCreateDocument,
+}: {
+  onCreateDocument?: () => void;
+}) {
+  const t = useTranslations("Dashboard.emptyDocument");
+
   return (
     <div className="flex h-full min-h-0 w-full flex-1 items-center justify-center px-6 text-center">
       <div className="flex max-w-sm flex-col items-center">
@@ -59,12 +69,20 @@ function EmptyDocumentState() {
         >
           📝
         </span>
-        <p className="text-base font-semibold text-foreground">
-          Select or create a file to start
-        </p>
+        <p className="text-base font-semibold text-foreground">{t("title")}</p>
         <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          Choose a file from your workspace or create a new one to begin.
+          {t("description")}
         </p>
+        {onCreateDocument ? (
+          <button
+            type="button"
+            onClick={onCreateDocument}
+            className="mt-6 flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+          >
+            <FilePlus2 className="h-4 w-4" strokeWidth={1.8} />
+            {t("createFile")}
+          </button>
+        ) : null}
       </div>
     </div>
   );
@@ -76,9 +94,10 @@ function readDesktopSidebarCollapsed() {
   }
 
   try {
-    return window.localStorage.getItem(
-      DESKTOP_SIDEBAR_COLLAPSED_STORAGE_KEY,
-    ) === "true";
+    return (
+      window.localStorage.getItem(DESKTOP_SIDEBAR_COLLAPSED_STORAGE_KEY) ===
+      "true"
+    );
   } catch {
     return false;
   }
@@ -101,6 +120,7 @@ function writeDesktopSidebarCollapsed(collapsed: boolean) {
 
 export function DashboardWorkspace() {
   const { data: session, isPending: sessionPending } = authClient.useSession();
+  const t = useTranslations("Dashboard.storage");
   const activeSource = useWorkspaceSessionStore((state) => state.activeSource);
   const localItems = useLocalWorkspaceStore((state) => state.items);
   const cloudItems = useCloudWorkspaceStore((state) => state.items);
@@ -109,9 +129,7 @@ export function DashboardWorkspace() {
   );
   const cloudIsHydrated = useCloudWorkspaceStore((state) => state.isHydrated);
   const cloudUserId = useCloudWorkspaceStore((state) => state.userId);
-  const cloudIsHydrating = useCloudWorkspaceStore(
-    (state) => state.isHydrating,
-  );
+  const cloudIsHydrating = useCloudWorkspaceStore((state) => state.isHydrating);
   const cloudAccessDisabled = useCloudWorkspaceStore(
     (state) => state.cloudAccessDisabled,
   );
@@ -149,6 +167,12 @@ export function DashboardWorkspace() {
   const scheduleCloudContentUpdate = useCloudWorkspaceStore(
     (state) => state.scheduleContentUpdate,
   );
+  const createLocalDocument = useLocalWorkspaceStore(
+    (state) => state.createDocument,
+  );
+  const createCloudDocument = useCloudWorkspaceStore(
+    (state) => state.createDocumentRemote,
+  );
   const flushLocalPendingContent = useLocalWorkspaceStore(
     (state) => state.flushPendingContent,
   );
@@ -172,6 +196,12 @@ export function DashboardWorkspace() {
   );
   const [mobileSection, setMobileSection] =
     useState<MobileDashboardSection>("files");
+  const [emptyDocumentDialog, setEmptyDocumentDialog] = useState<{
+    source: DocumentSource;
+    name: string;
+    pastedContent: string | null;
+  } | null>(null);
+  const [emptyDocumentSubmitting, setEmptyDocumentSubmitting] = useState(false);
   const { activeDialog, openDialog, closeDialog } = usePreferencesDialog();
   const isDesktopViewport = useMediaQuery("(min-width: 1024px)");
   const [mobileTransitionDirection, setMobileTransitionDirection] = useState<
@@ -458,9 +488,7 @@ export function DashboardWorkspace() {
         return;
       }
 
-      useLocalWorkspaceStore
-        .getState()
-        .flushPendingContent(selectedDocumentId);
+      useLocalWorkspaceStore.getState().flushPendingContent(selectedDocumentId);
     };
 
     window.addEventListener("keydown", handleSaveShortcut);
@@ -524,6 +552,54 @@ export function DashboardWorkspace() {
       section === "preview" ? "forward" : "backward",
     );
     setMobileSection(section);
+  };
+
+  const openEmptyDocumentDialog = () => {
+    setEmptyDocumentSubmitting(false);
+    setEmptyDocumentDialog({
+      source: activeSource,
+      name: "",
+      pastedContent: null,
+    });
+  };
+
+  const saveEmptyDocument = () => {
+    if (!emptyDocumentDialog?.name.trim() || emptyDocumentSubmitting) {
+      return;
+    }
+
+    setEmptyDocumentSubmitting(true);
+    const { source, name, pastedContent } = emptyDocumentDialog;
+    const created =
+      source === "local"
+        ? Promise.resolve(createLocalDocument(name))
+        : createCloudDocument(name, null);
+
+    void created
+      .then((id) => {
+        if (!id) {
+          return;
+        }
+
+        if (pastedContent) {
+          const scheduleContentUpdate =
+            source === "local"
+              ? scheduleLocalContentUpdate
+              : scheduleCloudContentUpdate;
+          scheduleContentUpdate(
+            id,
+            createInitialMarkdown(name) + pastedContent,
+          );
+          (source === "local"
+            ? flushLocalPendingContent
+            : flushCloudPendingContent)(id);
+        }
+
+        selectDocumentInStore(id, source);
+        setEmptyDocumentDialog(null);
+      })
+      .catch(() => undefined)
+      .finally(() => setEmptyDocumentSubmitting(false));
   };
 
   const openDocsSidebarSettings = () => openDialog("settings");
@@ -603,16 +679,16 @@ export function DashboardWorkspace() {
         {isDesktopViewport !== false ? (
           <div className="relative hidden h-full min-h-0 flex-col lg:flex">
             {desktopSidebarCollapsed ? (
-            <button
-              type="button"
-              ref={desktopSidebarToggleRef}
-              aria-label="Open sidebar"
-              title="Open sidebar"
-              className={`absolute left-3 z-30 flex h-8 w-8 items-center justify-center rounded-md border border-border/80 bg-background/90 text-muted-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${selectedDocument ? "top-[4.5rem]" : "top-3"}`}
-              onClick={expandDesktopSidebar}
-            >
-              <ChevronRight className="h-4 w-4" strokeWidth={1.7} />
-            </button>
+              <button
+                type="button"
+                ref={desktopSidebarToggleRef}
+                aria-label="Open sidebar"
+                title="Open sidebar"
+                className={`absolute left-3 z-30 flex h-8 w-8 items-center justify-center rounded-md border border-border/80 bg-background/90 text-muted-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${selectedDocument ? "top-[4.5rem]" : "top-3"}`}
+                onClick={expandDesktopSidebar}
+              >
+                <ChevronRight className="h-4 w-4" strokeWidth={1.7} />
+              </button>
             ) : null}
             {selectedDocument ? (
               <>
@@ -623,9 +699,7 @@ export function DashboardWorkspace() {
                   editingActions={desktopEditingActions}
                   splitMode={isPreviewMode}
                 />
-                <div
-                  className="flex h-0 min-h-0 min-w-0 flex-1 overflow-hidden"
-                >
+                <div className="flex h-0 min-h-0 min-w-0 flex-1 overflow-hidden">
                   <section
                     className={`relative h-full min-h-0 min-w-0 transition-[width] duration-300 ease-out ${isDesktopSplit ? (isPreviewMode ? "w-1/2" : "w-full") : "w-full"}`}
                   >
@@ -710,16 +784,16 @@ export function DashboardWorkspace() {
                 scrollScope="mobile"
                 onModeChange={changeEditorMode}
                 onMobileClear={() => changeMobileSection("files")}
-                  onContentChange={(content) =>
-                    scheduleContentUpdate(selectedDocument.id, content)
-                  }
-                  editable={!isWorkspaceTransferActive}
-                  modeTransitionDirection={modeTransitionDirection}
+                onContentChange={(content) =>
+                  scheduleContentUpdate(selectedDocument.id, content)
+                }
+                editable={!isWorkspaceTransferActive}
+                modeTransitionDirection={modeTransitionDirection}
                 pageBreakMarkers={mobilePageBreakMarkers}
                 scrollContainerRef={mobileDocumentScrollRef}
               />
             ) : (
-              <EmptyDocumentState />
+              <EmptyDocumentState onCreateDocument={openEmptyDocumentDialog} />
             )}
           </div>
         ) : null}
@@ -749,6 +823,38 @@ export function DashboardWorkspace() {
       <DashboardBottomNav
         activeSection={mobileSection}
         onChange={changeMobileSection}
+      />
+
+      <MarkdownNameDialog
+        open={emptyDocumentDialog !== null}
+        parentName={
+          emptyDocumentDialog?.source === "cloud"
+            ? t("cloudWorkspace")
+            : t("deviceWorkspace")
+        }
+        name={emptyDocumentDialog?.name ?? ""}
+        source={emptyDocumentDialog?.source ?? "local"}
+        submitting={emptyDocumentSubmitting}
+        onNameChange={(name) =>
+          setEmptyDocumentDialog((current) =>
+            current ? { ...current, name } : current,
+          )
+        }
+        onLongPaste={(text) =>
+          setEmptyDocumentDialog((current) =>
+            current
+              ? {
+                  ...current,
+                  name: current.name.trim() ? current.name : "Untitled",
+                  pastedContent: current.pastedContent
+                    ? `${current.pastedContent}\n\n${text}`
+                    : text,
+                }
+              : current,
+          )
+        }
+        onClose={() => setEmptyDocumentDialog(null)}
+        onSubmit={saveEmptyDocument}
       />
 
       <PreferencesDialogHost

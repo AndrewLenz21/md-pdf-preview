@@ -7,6 +7,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type RefObject,
 } from "react";
+import { useTranslations } from "next-intl";
 import {
   ChevronRight,
   Cloud,
@@ -201,6 +202,7 @@ function EmptyWorkspaceState({
   onCreateFolder?: () => void;
 }) {
   const isCloud = source === "cloud";
+  const t = useTranslations("Dashboard.sidebar");
 
   return (
     <div
@@ -220,18 +222,18 @@ function EmptyWorkspaceState({
       <p className="text-sm font-semibold text-foreground">
         {isDropTarget
           ? isCloud
-            ? "Drop to save your first Cloud item"
-            : "Drop to add your first item"
+            ? t("dropCloud")
+            : t("dropItem")
           : cloudUnauthenticated
-          ? "Sync your workspace"
-          : "Your workspace is empty"}
+            ? t("syncWorkspace")
+            : t("emptyWorkspace")}
       </p>
       <p className="mt-1 max-w-[220px] text-xs leading-5 text-muted-foreground">
         {isDropTarget
-          ? "Release the file or folder here to continue."
+          ? t("releaseItem")
           : cloudUnauthenticated
-          ? "Sign in to sync your Markdown files across devices."
-          : "Create your first folder or Markdown file to get started."}
+            ? t("signInDescription")
+            : t("createFirst")}
       </p>
       {cloudUnauthenticated ? (
         <div className="mt-5 flex items-center gap-2">
@@ -239,13 +241,13 @@ function EmptyWorkspaceState({
             href="/auth/sign-in"
             className="rounded-lg border border-border px-3 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-accent"
           >
-            Sign In
+            {t("signIn")}
           </Link>
           <Link
             href="/auth/sign-up"
             className="rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Sign Up
+            {t("signUp")}
           </Link>
         </div>
       ) : null}
@@ -257,7 +259,7 @@ function EmptyWorkspaceState({
               className="rounded-lg border border-border px-3 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-accent"
               onClick={onCreateDocument}
             >
-              New file
+              {t("newNote")}
             </button>
           ) : null}
           {onCreateFolder ? (
@@ -266,7 +268,7 @@ function EmptyWorkspaceState({
               className="rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
               onClick={onCreateFolder}
             >
-              New folder
+              {t("newFolder")}
             </button>
           ) : null}
         </div>
@@ -286,7 +288,10 @@ function FolderDropLabel({
   count: number;
   className: string;
 }) {
-  const label = isDropTarget ? `Move to ${folderName}` : String(count);
+  const t = useTranslations("Dashboard.sidebar");
+  const label = isDropTarget
+    ? t("moveToFolder", { folderName })
+    : String(count);
   const [visibleLabel, setVisibleLabel] = useState(label);
   const [phase, setPhase] = useState<"visible" | "enter">("visible");
 
@@ -375,12 +380,13 @@ export function FolderTree({
   ) => void;
   onDragClickCapture: (event: ReactMouseEvent<HTMLDivElement>) => void;
 }) {
+  const t = useTranslations("Dashboard.sidebar");
   const treeRef = useRef<HTMLDivElement>(null);
   const rootFolders = getChildFolders(items, null);
   const isVirtualCloudRoot = source === "cloud" && !cloudUnauthenticated;
   const folderOptions: DocumentFolderOption[] = isVirtualCloudRoot
     ? [
-        { id: null, label: CLOUD_WORKSPACE_ROOT.name, depth: 0 },
+        { id: null, label: t("root"), depth: 0 },
         ...rootFolders.flatMap((folder) => [
           { id: folder.id, label: folder.name, depth: 1 },
           ...flattenFolders(items, folder.id, 2),
@@ -436,12 +442,12 @@ export function FolderTree({
                   documentId={document.id}
                   displayTitle={document.name}
                   favorite={document.favorite === true}
-                   selected={document.id === selectedId}
-                   onSelect={() => onSelect(document.id)}
-                   onRename={(title) => onRename(document.id, title)}
-                   onDelete={() => onDelete(document.id)}
-                   onCopy={() => onCopy(document.id)}
-                   onMove={(folderId) => onMove(document.id, folderId)}
+                  selected={document.id === selectedId}
+                  onSelect={() => onSelect(document.id)}
+                  onRename={(title) => onRename(document.id, title)}
+                  onDelete={() => onDelete(document.id)}
+                  onCopy={() => onCopy(document.id)}
+                  onMove={(folderId) => onMove(document.id, folderId)}
                   onToggleFavorite={() => onToggleFavorite(document.id)}
                   folderId={null}
                   folderOptions={folderOptions}
@@ -470,13 +476,13 @@ export function FolderTree({
               source={source}
               selectedId={selectedId}
               folderOptions={folderOptions}
-               onSelect={onSelect}
-               onRename={onRename}
-               onDelete={onDelete}
-               onMove={onMove}
-               onCopy={onCopy}
-               onPaste={onPaste}
-               canPaste={canPaste}
+              onSelect={onSelect}
+              onRename={onRename}
+              onDelete={onDelete}
+              onMove={onMove}
+              onCopy={onCopy}
+              onPaste={onPaste}
+              canPaste={canPaste}
               onToggleFavorite={onToggleFavorite}
               onCreateDocument={onCreateDocument}
               onCreateFolder={onCreateFolder}
@@ -567,12 +573,14 @@ function FolderNode({
   ) => void;
   onDragClickCapture: (event: ReactMouseEvent<HTMLDivElement>) => void;
 }) {
+  const t = useTranslations("Dashboard.sidebar");
   const folderItemRef = useRef<HTMLDivElement>(null);
   const closeFolderMenuTimerRef = useRef<number | undefined>(undefined);
   const [folderMenuOpen, setFolderMenuOpen] = useState(false);
   const [folderMenuRendered, setFolderMenuRendered] = useState(false);
   const [folderMenuClosing, setFolderMenuClosing] = useState(false);
   const expanded = !collapsedFolderIds.includes(folder.id);
+  const folderLabel = isVirtualRoot ? t("root") : folder.name;
   const childParentId = isVirtualRoot ? null : folder.id;
   const childFolders = getChildFolders(items, childParentId);
   const childDocuments = getDocumentsInFolder(items, childParentId);
@@ -680,13 +688,13 @@ function FolderNode({
             <span
               className={`docs-sidebar-dnd-label min-w-0 flex-1 truncate text-sm ${depth === 0 ? "font-semibold" : "font-medium"}`}
             >
-              {folder.name}
+              {folderLabel}
             </span>
             <FolderDropLabel
               isDropTarget={
                 dropTargetFolderId === folder.id && draggingItem !== null
               }
-              folderName={folder.name}
+              folderName={folderLabel}
               count={childDocuments.length || childFolders.length}
               className={`text-[11px] tabular-nums ${depth === 0 ? "text-muted-foreground" : "text-muted-foreground/70"}`}
             />
@@ -696,8 +704,8 @@ function FolderNode({
               type="button"
               aria-label={
                 mobile
-                  ? `Create in ${folder.name}`
-                  : `Folder actions for ${folder.name}`
+                  ? t("createIn", { folderName: folderLabel })
+                  : t("rootActions", { folderName: folderLabel })
               }
               aria-expanded={mobile ? undefined : folderMenuOpen}
               aria-haspopup={mobile ? "dialog" : "menu"}
@@ -705,24 +713,21 @@ function FolderNode({
               className="mr-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground opacity-70 transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:opacity-0 sm:group-hover/folder:opacity-100 sm:group-focus-within/folder:opacity-100"
               onClick={() => {
                 if (mobile) {
-                  onOpenFolderActions(
-                    folder,
-                    isVirtualRoot ? null : folder.id,
-                  );
+                  onOpenFolderActions(folder, isVirtualRoot ? null : folder.id);
                   return;
                 }
 
                 toggleFolderMenu();
               }}
             >
-              <Plus className="h-4 w-4" strokeWidth={1.8} />
+              <Plus className="h-5 w-5" strokeWidth={1.8} />
             </button>
           ) : null}
         </div>
         {folderMenuRendered ? (
           <div
             role="menu"
-            aria-label={`${folder.name} actions`}
+            aria-label={t("rootActions", { folderName: folderLabel })}
             data-dnd-ignore="true"
             className={`${folderMenuClosing ? "workspace-menu-popover-exit" : "workspace-menu-popover-enter"} absolute right-1 top-[calc(100%-0.25rem)] z-50 w-48 rounded-xl border border-border bg-background p-1.5 shadow-xl`}
           >
@@ -736,7 +741,7 @@ function FolderNode({
               }}
             >
               <FilePlus2 className="h-3.5 w-3.5 text-muted-foreground" />
-              New file
+              {t("newNote")}
             </button>
             <button
               type="button"
@@ -748,7 +753,7 @@ function FolderNode({
               }}
             >
               <FolderPlus className="h-3.5 w-3.5 text-muted-foreground" />
-              New folder
+              {t("newFolder")}
             </button>
             <button
               type="button"
@@ -761,7 +766,7 @@ function FolderNode({
               }}
             >
               <ClipboardPaste className="h-3.5 w-3.5 text-muted-foreground" />
-              Paste here
+              {t("pasteHere")}
             </button>
             {!isVirtualRoot ? (
               <button
@@ -774,7 +779,7 @@ function FolderNode({
                 }}
               >
                 <Copy className="h-3.5 w-3.5 text-muted-foreground" />
-                Copy
+                {t("copy")}
               </button>
             ) : null}
             {depth > 0 ? (
@@ -790,7 +795,7 @@ function FolderNode({
                   }}
                 >
                   <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
-                  Edit folder
+                  {t("editFolder")}
                 </button>
                 <button
                   type="button"
@@ -802,7 +807,7 @@ function FolderNode({
                   }}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
-                  Delete
+                  {t("delete")}
                 </button>
               </>
             ) : null}
@@ -815,6 +820,12 @@ function FolderNode({
             cloudUnauthenticated={cloudUnauthenticated}
             isDropTarget={rootDropActive}
             source={source}
+            onCreateDocument={
+              isVirtualRoot ? () => onCreateDocument(null) : undefined
+            }
+            onCreateFolder={
+              isVirtualRoot ? () => onCreateFolder(null) : undefined
+            }
           />
         ) : (
           <div className="relative">
@@ -829,12 +840,12 @@ function FolderNode({
                 documentId={document.id}
                 displayTitle={document.name}
                 favorite={document.favorite === true}
-                 selected={document.id === selectedId}
-                 onSelect={() => onSelect(document.id)}
-                 onRename={(title) => onRename(document.id, title)}
-                 onDelete={() => onDelete(document.id)}
-                 onCopy={() => onCopy(document.id)}
-                 onMove={(folderId) => onMove(document.id, folderId)}
+                selected={document.id === selectedId}
+                onSelect={() => onSelect(document.id)}
+                onRename={(title) => onRename(document.id, title)}
+                onDelete={() => onDelete(document.id)}
+                onCopy={() => onCopy(document.id)}
+                onMove={(folderId) => onMove(document.id, folderId)}
                 onToggleFavorite={() => onToggleFavorite(document.id)}
                 folderId={isVirtualRoot ? null : folder.id}
                 folderOptions={folderOptions}

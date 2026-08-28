@@ -1,4 +1,5 @@
 import { Copy, FolderInput, Pencil, Star, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { ModalShell } from "@/shared/components/ModalShell";
 
@@ -23,13 +24,15 @@ export function DocumentActionsDialog({
   onMove: () => void;
   onDelete: () => void;
 }) {
+  const t = useTranslations("Dashboard.documentActions");
+
   return (
     <ModalShell
       open={open}
       onClose={onClose}
       title={displayTitle}
-      description="Choose an action for this markdown file."
-      closeLabel="Close file actions"
+      description={t("description")}
+      closeLabel={t("closeDialog")}
       maxWidth="max-w-sm"
     >
       <div className="space-y-1">
@@ -42,7 +45,7 @@ export function DocumentActionsDialog({
             className={`h-4 w-4 ${favorite ? "fill-current text-primary" : "text-muted-foreground"}`}
             strokeWidth={1.7}
           />
-          {favorite ? "Remove from Favorites" : "Add to Favorites"}
+          {favorite ? t("removeFavorite") : t("addFavorite")}
         </button>
         <button
           type="button"
@@ -50,7 +53,7 @@ export function DocumentActionsDialog({
           onClick={onRename}
         >
           <Pencil className="h-4 w-4 text-muted-foreground" strokeWidth={1.7} />
-          Rename
+          {t("rename")}
         </button>
         <button
           type="button"
@@ -58,7 +61,7 @@ export function DocumentActionsDialog({
           onClick={onCopy}
         >
           <Copy className="h-4 w-4 text-muted-foreground" strokeWidth={1.7} />
-          Copy
+          {t("copy")}
         </button>
         <button
           type="button"
@@ -69,7 +72,7 @@ export function DocumentActionsDialog({
             className="h-4 w-4 text-muted-foreground"
             strokeWidth={1.7}
           />
-          Move to
+          {t("moveTo")}
         </button>
         <div className="my-2 border-t border-border/70" />
         <button
@@ -78,7 +81,7 @@ export function DocumentActionsDialog({
           onClick={onDelete}
         >
           <Trash2 className="h-4 w-4" strokeWidth={1.7} />
-          Delete
+          {t("delete")}
         </button>
       </div>
     </ModalShell>

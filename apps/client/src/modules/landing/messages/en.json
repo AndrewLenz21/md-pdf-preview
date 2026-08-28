@@ -1,11 +1,13 @@
 {
   "hero": {
+    "productName": "Markdown PDF Preview",
     "badge": "Markdown workspace — local-first",
     "title1": "Write once.",
     "title2": "Preview every page.",
     "description": "A calm place to shape your Markdown documents and see exactly how they will read when they leave the screen — with a pagination engine that predicts real page breaks before you print.",
     "primaryCta": "Open the app",
     "secondaryCta": "View on GitHub",
+    "tourCta": "See what it can do",
     "footnote": "No account required. Your documents stay in your browser."
   },
   "features": {
@@ -51,7 +53,7 @@
       },
       "themes": {
         "title": "Themes",
-        "description": "Dark and light with smooth transitions."
+        "description": "Light, dark, and more themes with smooth transitions."
       },
       "responsive": {
         "title": "Responsive",
@@ -75,8 +77,8 @@
       },
       "organize": {
         "title": "Organize files and folders",
-        "description": "Move files and folders inside the local Session workspace with drag and drop.",
-        "alt": "Moving files and folders inside the Session workspace"
+        "description": "Move files and folders inside the on-device workspace with drag and drop.",
+        "alt": "Moving files and folders inside the on-device workspace"
       },
       "cloud": {
         "title": "Move folders and files between Local and Cloud",
@@ -91,7 +93,7 @@
       "mobile": {
         "title": "Mobile workspace",
         "description": "The responsive layout switches to focused file and preview sections with bottom navigation.",
-        "alt": "Mobile dashboard with Session and Cloud workspace navigation"
+        "alt": "Mobile dashboard with on-device and cloud-synced workspace navigation"
       },
       "pageBreak": {
         "title": "Page-aware preview",
@@ -120,7 +122,7 @@
   "footer": {
     "tagline": "Write once. Preview every page.",
     "description": "A calm place to shape your Markdown documents — pagination engine included.",
-    "github": "View the source on GitHub",
+    "github": "GitHub",
     "terms": "Terms",
     "privacy": "Privacy",
     "cookies": "Cookies",

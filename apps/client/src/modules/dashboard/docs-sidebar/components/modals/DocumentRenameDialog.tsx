@@ -1,3 +1,5 @@
+import { useTranslations } from "next-intl";
+
 import { ModalShell } from "@/shared/components/ModalShell";
 import { DialogFormFooter } from "@/shared/components/DialogFormFooter";
 import { DialogTextField } from "@/shared/components/DialogTextField";
@@ -17,13 +19,15 @@ export function DocumentRenameDialog({
   onClose: () => void;
   onSubmit: () => void;
 }) {
+  const t = useTranslations("Dashboard.renameDocument");
+
   return (
     <ModalShell
       open={open}
       onClose={onClose}
-      title="Rename file"
-      description={`Rename ${displayTitle}.`}
-      closeLabel="Close rename dialog"
+      title={t("title")}
+      description={t("description", { title: displayTitle })}
+      closeLabel={t("closeDialog")}
     >
       <form
         className="space-y-5"
@@ -33,15 +37,16 @@ export function DocumentRenameDialog({
         }}
       >
         <DialogTextField
-          label="File name"
+          label={t("fileName")}
           value={draftTitle}
           maxLength={500}
           onChange={onDraftTitleChange}
           autoFocus
         />
         <DialogFormFooter
-          submitLabel="Save name"
+          submitLabel={t("save")}
           disabled={!draftTitle.trim()}
+          cancelLabel={t("cancel")}
           onCancel={onClose}
         />
       </form>

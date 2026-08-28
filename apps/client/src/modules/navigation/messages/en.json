@@ -71,6 +71,7 @@
       "sky": "Sky",
       "ocean": "Ocean",
       "pink": "Pink",
+      "pressroom": "Pressroom",
       "system": "System"
     },
     "descriptions": {
@@ -80,6 +81,7 @@
       "sky": "A soft, airy blue workspace",
       "ocean": "A calm cyan workspace",
       "pink": "A warm blush workspace",
+      "pressroom": "A tactile print studio",
       "system": "Follow your device preference"
     }
   }

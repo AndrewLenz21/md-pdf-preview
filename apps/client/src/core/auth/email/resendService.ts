@@ -3,6 +3,7 @@ import { Resend } from "resend";
 import { requiredEnvironmentVariable } from "../pool";
 import {
   buildAccountDeletionEmailContent,
+  buildPasswordResetEmailContent,
   buildVerificationEmailContent,
   type EmailLocale,
 } from "./emailContent";
@@ -109,6 +110,23 @@ export async function sendVerificationEmail(input: {
   idempotencyKey: string;
 }): Promise<{ providerMessageId: string }> {
   const { subject, html } = buildVerificationEmailContent(input);
+
+  return sendEmail({
+    to: input.to,
+    subject,
+    html,
+    idempotencyKey: input.idempotencyKey,
+  });
+}
+
+export async function sendPasswordResetEmail(input: {
+  to: string;
+  name: string;
+  locale: EmailLocale;
+  resetUrl: string;
+  idempotencyKey: string;
+}): Promise<{ providerMessageId: string }> {
+  const { subject, html } = buildPasswordResetEmailContent(input);
 
   return sendEmail({
     to: input.to,

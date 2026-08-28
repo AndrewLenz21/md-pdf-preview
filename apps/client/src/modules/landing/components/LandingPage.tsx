@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import {
   Accessibility,
+  ArrowDown,
   ArrowRight,
   Cloud,
   Columns2,
@@ -15,6 +16,7 @@ import {
   Ruler,
   ScanLine,
   Smartphone,
+  Star,
 } from "lucide-react";
 import type { ComponentType, CSSProperties } from "react";
 
@@ -172,17 +174,31 @@ export function LandingPage() {
         </div>
 
         <div className="mx-auto max-w-3xl text-center">
+          <div
+            className="landing-reveal mb-6 flex items-center justify-center gap-2.5"
+            style={{ "--landing-delay": "0ms" } as CSSProperties}
+          >
+            <span
+              aria-hidden="true"
+              className="hidden h-9 w-9 items-center justify-center rounded-lg border border-border bg-card shadow-sm sm:flex"
+            >
+              <Logo className="h-7 w-7" />
+            </span>
+            <span className="landing-typewriter text-lg font-semibold tracking-[-0.01em] text-foreground sm:text-xl">
+              {t("hero.productName")}
+            </span>
+          </div>
           <span
             className="landing-reveal inline-flex items-center gap-2 rounded-full border border-border bg-card/70 px-3.5 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur-sm"
-            style={{ "--landing-delay": "0ms" } as CSSProperties}
+            style={{ "--landing-delay": "80ms" } as CSSProperties}
           >
             <span className="h-1.5 w-1.5 rounded-full bg-[var(--source-doc)]" />
             {t("hero.badge")}
           </span>
 
           <h1
-            className="landing-reveal mt-7 text-4xl font-semibold leading-[1.08] tracking-[-0.04em] text-foreground sm:text-6xl"
-            style={{ "--landing-delay": "80ms" } as CSSProperties}
+            className="landing-reveal mt-7 text-4xl font-semibold leading-[1.08] tracking-[-0.04em] text-foreground sm:text-5xl"
+            style={{ "--landing-delay": "160ms" } as CSSProperties}
           >
             {t("hero.title1")}{" "}
             <span className="bg-gradient-to-r from-[var(--source-doc)] to-[var(--source-media)] bg-clip-text text-transparent">
@@ -192,39 +208,72 @@ export function LandingPage() {
 
           <p
             className="landing-reveal mx-auto mt-6 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg"
-            style={{ "--landing-delay": "150ms" } as CSSProperties}
+            style={{ "--landing-delay": "230ms" } as CSSProperties}
           >
             {t("hero.description")}
           </p>
 
           <div
-            className="landing-reveal mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row"
-            style={{ "--landing-delay": "220ms" } as CSSProperties}
+            className="landing-reveal mt-10 flex flex-col items-center gap-3"
+            style={{ "--landing-delay": "300ms" } as CSSProperties}
           >
-            <Link
-              href="/dashboard"
-              className="group inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:-translate-y-px hover:bg-primary/90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:w-auto"
+            <div className="flex w-full flex-col items-center justify-center gap-3 sm:w-auto sm:flex-row">
+              <Link
+                href="/dashboard"
+                className="group inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:-translate-y-px hover:bg-primary/90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:w-auto"
+              >
+                {t("hero.primaryCta")}
+                <ArrowRight
+                  className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
+                  strokeWidth={1.8}
+                />
+              </Link>
+              <a
+                href={GITHUB_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-border bg-card px-6 text-sm font-medium text-foreground shadow-sm transition-all hover:-translate-y-px hover:bg-accent hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:w-auto"
+              >
+                <GitHubIcon className="h-4 w-4" />
+                {t("hero.secondaryCta")}
+              </a>
+            </div>
+            <a
+              href="#tour"
+              onClick={(event) => {
+                const tourSection = document.getElementById("tour");
+
+                if (
+                  !tourSection ||
+                  typeof tourSection.scrollIntoView !== "function"
+                ) {
+                  return;
+                }
+
+                event.preventDefault();
+                tourSection.scrollIntoView({
+                  behavior: window.matchMedia(
+                    "(prefers-reduced-motion: reduce)",
+                  ).matches
+                    ? "auto"
+                    : "smooth",
+                  block: "start",
+                });
+                window.history.pushState(null, "", "#tour");
+              }}
+              className="group inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-dashed border-[var(--source-doc)]/40 px-5 text-sm font-medium text-muted-foreground transition-all hover:-translate-y-px hover:border-[var(--source-doc)] hover:bg-[var(--source-doc)]/5 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
-              {t("hero.primaryCta")}
-              <ArrowRight
-                className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
+              {t("hero.tourCta")}
+              <ArrowDown
+                className="h-4 w-4 transition-transform group-hover:translate-y-0.5"
                 strokeWidth={1.8}
               />
-            </Link>
-            <a
-              href={GITHUB_URL}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-border bg-card px-6 text-sm font-medium text-foreground shadow-sm transition-all hover:-translate-y-px hover:bg-accent hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:w-auto"
-            >
-              <GitHubIcon className="h-4 w-4" />
-              {t("hero.secondaryCta")}
             </a>
           </div>
 
           <p
             className="landing-reveal mt-6 text-sm text-muted-foreground/80"
-            style={{ "--landing-delay": "290ms" } as CSSProperties}
+            style={{ "--landing-delay": "370ms" } as CSSProperties}
           >
             {t("hero.footnote")}
           </p>
@@ -232,7 +281,7 @@ export function LandingPage() {
 
         <div
           className="landing-reveal relative mx-auto mt-16 max-w-5xl lg:mt-20"
-          style={{ "--landing-delay": "380ms" } as CSSProperties}
+          style={{ "--landing-delay": "460ms" } as CSSProperties}
         >
           <MediaFrame
             src="/presentation/Dashboard-desktop.png"
@@ -242,7 +291,10 @@ export function LandingPage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+      <section
+        id="tour"
+        className="scroll-mt-20 mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8"
+      >
         <div
           className="landing-reveal"
           style={{ "--landing-delay": "500ms" } as CSSProperties}
@@ -430,6 +482,11 @@ export function LandingPage() {
             >
               <GitHubIcon className="h-4 w-4" />
               {t("footer.github")}
+              <Star
+                aria-hidden="true"
+                className="h-3.5 w-3.5 fill-current"
+                strokeWidth={1.7}
+              />
             </a>
             <span
               aria-hidden="true"

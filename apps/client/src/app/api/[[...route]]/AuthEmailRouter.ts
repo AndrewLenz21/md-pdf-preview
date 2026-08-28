@@ -1,9 +1,9 @@
 /*=============================================================================
  * ✉️ AUTH EMAIL ROUTER
  *=============================================================================
- * Handles email-based authentication workflows (user registration & email
- * verification resends). Enforces daily quota limits, request cooldowns,
- * and maintains email delivery reservation tracking.
+ * Handles email-based authentication workflows (user registration, password
+ * resets, and email verification resends). Enforces daily quota limits,
+ * request cooldowns, and maintains email delivery reservation tracking.
  *=============================================================================*/
 
 /*===== 📦 IMPORTS =====*/
@@ -18,6 +18,7 @@ import {
   EMAIL_DELIVERY_STATUS,
   EMAIL_PURPOSE,
   EMAIL_PROVIDER,
+  type EmailAttemptKind,
 } from "@/core/auth/email/emailDeliveries";
 import * as emailDeliveryRepository from "@/core/auth/email/emailDeliveryRepository";
 import {
@@ -56,6 +57,7 @@ async function attachRequestAuth(context: Context<AuthEmailEnv>, next: Next) {
 
 // Apply authentication middleware to email auth routes
 authEmailRouter.use("/sign-up/email", attachRequestAuth);
+authEmailRouter.use("/request-password-reset", attachRequestAuth);
 authEmailRouter.use("/send-verification-email", attachRequestAuth);
 
 /*===== 🛠️ HELPER FUNCTIONS & QUOTA MANAGEMENT =====*/
@@ -84,12 +86,16 @@ async function reserveAttempt(
   authPool: Pool,
   email: string,
   cooldownMs?: number,
+  purpose: (typeof EMAIL_PURPOSE)[keyof typeof EMAIL_PURPOSE] = EMAIL_PURPOSE.EMAIL_VERIFICATION,
+  cooldownCode = "VERIFICATION_EMAIL_COOLDOWN",
+  cooldownMessage = "We just sent you a verification email. Please wait a few minutes before requesting another one.",
+  hideCooldown = false,
 ) {
   try {
     const reservation = await reserveEmailDelivery({
       authPool,
       email,
-      purpose: EMAIL_PURPOSE.EMAIL_VERIFICATION,
+      purpose,
       provider: EMAIL_PROVIDER.RESEND,
       cooldownMs,
     });
@@ -101,13 +107,20 @@ async function reserveAttempt(
     }
 
     if (error instanceof CooldownActiveError) {
+      if (hideCooldown) {
+        // Password reset responses must not reveal whether an account exists.
+        return {
+          ok: false as const,
+          response: context.json({ status: true }),
+        };
+      }
+
       return {
         ok: false as const,
         response: context.json(
           {
-            code: "VERIFICATION_EMAIL_COOLDOWN",
-            message:
-              "We just sent you a verification email. Please wait a few minutes before requesting another one.",
+            code: cooldownCode,
+            message: cooldownMessage,
           },
           429,
           { "Retry-After": String(error.retryAfterSeconds) },
@@ -125,7 +138,7 @@ async function reserveAttempt(
 function withAttemptHeaders(
   context: Context,
   reservation: { id: string },
-  kind: "sign-up" | "resend",
+  kind: EmailAttemptKind,
 ) {
   const headers = new Headers(context.req.raw.headers);
   headers.set(EMAIL_ATTEMPT_ID_HEADER, reservation.id);
@@ -220,6 +233,97 @@ authEmailRouter.post("/sign-up/email", async (context) => {
 });
 
 /**
+ * 🔑 POST /request-password-reset
+ * Requests a password reset email without revealing whether the address exists.
+ */
+authEmailRouter.post("/request-password-reset", async (context) => {
+  const auth = context.get("auth");
+  const authPool = context.get("authPool");
+  const body = await readJSONBody<Record<string, unknown>>(
+    context,
+    "AuthEmailRouter",
+  );
+  if (!body.ok) {
+    return body.response;
+  }
+
+  const email =
+    typeof body.value.email === "string" ? body.value.email.trim() : "";
+
+  if (!email || !email.includes("@")) {
+    return context.json(
+      { code: "INVALID_REQUEST_BODY", message: "Email is required." },
+      400,
+    );
+  }
+
+  const reservation = await reserveAttempt(
+    context,
+    authPool,
+    email,
+    RESEND_COOLDOWN_MS,
+    EMAIL_PURPOSE.PASSWORD_RESET,
+    "PASSWORD_RESET_COOLDOWN",
+    "A password reset email was sent recently. Please wait a few minutes before trying again.",
+    true,
+  );
+  if (!reservation.ok) {
+    return reservation.response;
+  }
+
+  let response: Response;
+
+  try {
+    response = await auth.api.requestPasswordReset({
+      body: { ...body.value, email } as never,
+      headers: withAttemptHeaders(
+        context,
+        reservation.reservation,
+        "password-reset",
+      ),
+      asResponse: true,
+    });
+  } catch (error) {
+    console.error("[AuthEmailRouter] password reset dispatch failed:", error);
+    await emailDeliveryRepository.cancelIfReserved(
+      authPool,
+      reservation.reservation.id,
+    );
+    return context.json(
+      {
+        code: "PASSWORD_RESET_UNAVAILABLE",
+        message: "Password reset is temporarily unavailable.",
+      },
+      503,
+    );
+  }
+
+  if (!response.ok) {
+    await emailDeliveryRepository.cancelIfReserved(
+      authPool,
+      reservation.reservation.id,
+    );
+    return response;
+  }
+
+  const status = await emailDeliveryRepository.getDeliveryStatus(
+    authPool,
+    reservation.reservation.id,
+  );
+
+  if (status === EMAIL_DELIVERY_STATUS.RESERVED) {
+    // Better Auth returns the same response for unknown addresses without
+    // invoking the email callback. Release the unused quota reservation.
+    await emailDeliveryRepository.cancelIfReserved(
+      authPool,
+      reservation.reservation.id,
+    );
+  }
+
+  return response;
+});
+
+/**
  * 🔄 POST /send-verification-email
  * Resends a verification email to an unverified user account.
  * Enforces cooldown timers and checks email delivery statuses.
@@ -311,4 +415,3 @@ authEmailRouter.post("/send-verification-email", async (context) => {
 
 /*===== 📤 ROUTER EXPORT =====*/
 export default authEmailRouter;
-

@@ -49,18 +49,18 @@ Create a Markdown file and see the same content in **Document** mode and **Previ
 
 ### Organize files and folders
 
-Move files and folders inside the local **Session** workspace with drag and drop.
+Move files and folders inside the on-device workspace with drag and drop.
 
 <p align="center">
-  <img src="apps/client/public/presentation/1-moving-files-folders.gif" alt="Moving files and folders inside the Session workspace" width="820" />
+  <img src="apps/client/public/presentation/1-moving-files-folders.gif" alt="Moving files and folders inside the on-device workspace" width="820" />
 </p>
 
 ### Move folders to Cloud
 
-Authenticated users can move workspace folders between **Session** and **Cloud**.
+Authenticated users can move workspace folders between the on-device and cloud-synced workspaces.
 
 <p align="center">
-  <img src="apps/client/public/presentation/1-moving-folder-cloud.gif" alt="Moving a folder between Session and Cloud workspaces" width="820" />
+  <img src="apps/client/public/presentation/1-moving-folder-cloud.gif" alt="Moving a folder between the on-device and cloud-synced workspaces" width="820" />
 </p>
 
 ### Desktop workspace
@@ -76,7 +76,7 @@ The desktop layout keeps the file tree, editor, and paper preview visible togeth
 The responsive layout switches to focused file and preview sections with bottom navigation.
 
 <p align="center">
-  <img src="apps/client/public/presentation/Dashboard-mobile-version.png" alt="Mobile dashboard with Session and Cloud workspace navigation" width="430" />
+  <img src="apps/client/public/presentation/Dashboard-mobile-version.png" alt="Mobile dashboard with on-device and cloud-synced workspace navigation" width="430" />
 </p>
 
 ### Page-aware preview

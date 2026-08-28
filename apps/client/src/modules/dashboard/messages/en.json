@@ -1,0 +1,130 @@
+{
+  "emptyDocument": {
+    "title": "Select or create a file to start",
+    "description": "Choose a file from your workspace or create a new one to begin.",
+    "createFile": "Create file"
+  },
+  "newNote": {
+    "title": "New Note",
+    "description": "Create a note in {parentName}.",
+    "closeDialog": "Close new note dialog",
+    "fileName": "File name",
+    "placeholder": "Untitled",
+    "creating": "Creating...",
+    "create": "Create file",
+    "cancel": "Cancel"
+  },
+  "folderActions": {
+    "description": "Choose an action for this folder.",
+    "closeDialog": "Close folder actions",
+    "newFolder": "New folder",
+    "newNote": "New note",
+    "pasteHere": "Paste here",
+    "copy": "Copy",
+    "rename": "Change name",
+    "delete": "Delete"
+  },
+  "documentActions": {
+    "description": "Choose an action for this note.",
+    "closeDialog": "Close note actions",
+    "actionsLabel": "{title} actions",
+    "moreOptions": "More options for {title}",
+    "renameInput": "Rename {title}",
+    "addFavorite": "Add to Favorites",
+    "removeFavorite": "Remove from Favorites",
+    "rename": "Rename",
+    "copy": "Copy",
+    "moveTo": "Move to",
+    "backToActions": "Back to actions",
+    "delete": "Delete"
+  },
+  "moveDocument": {
+    "title": "Move note",
+    "description": "Choose a destination for {title}.",
+    "closeDialog": "Close move dialog"
+  },
+  "renameDocument": {
+    "title": "Rename note",
+    "description": "Rename {title}.",
+    "closeDialog": "Close rename dialog",
+    "fileName": "File name",
+    "save": "Save name",
+    "cancel": "Cancel"
+  },
+  "delete": {
+    "file": "note",
+    "folder": "folder",
+    "title": "Delete {itemType}?",
+    "folderDescription": "Delete {itemName} and everything inside it?",
+    "fileDescription": "Delete {itemName}? This action cannot be undone.",
+    "closeDialog": "Close delete {itemType} dialog",
+    "folderWarning": "All notes and subfolders in this folder will be removed.",
+    "fileWarning": "You will not be able to recover this note.",
+    "cancel": "Cancel",
+    "confirm": "Delete {itemType}"
+  },
+  "folderEditor": {
+    "newTitle": "New folder",
+    "editTitle": "Edit folder",
+    "description": "Choose a name, icon, and color for this folder.",
+    "closeDialog": "Close folder dialog",
+    "nameLabel": "Folder name",
+    "placeholder": "New folder",
+    "color": "Color",
+    "useColor": "Use {color} folder color",
+    "saving": "Saving...",
+    "save": "Save folder",
+    "cancel": "Cancel",
+    "colors": {
+      "primary": "primary",
+      "blue": "blue",
+      "violet": "violet",
+      "amber": "amber",
+      "rose": "rose",
+      "emerald": "emerald"
+    }
+  },
+  "sidebar": {
+    "workspace": "Workspace",
+    "descriptor": "Markdown Preview",
+    "backHome": "Back to Markdown Preview landing page",
+    "createDocument": "Create new document",
+    "collapse": "Collapse sidebar",
+    "transferring": "Transferring workspace items",
+    "loadingCloud": "Loading cloud files...",
+    "savingCloud": "Saving cloud changes...",
+    "retry": "Retry",
+    "newNote": "New note",
+    "newFolder": "New folder",
+    "pasteHere": "Paste here",
+    "copy": "Copy",
+    "editFolder": "Edit folder",
+    "delete": "Delete",
+    "moveToFolder": "Move to {folderName}",
+    "createIn": "Create in {folderName}",
+    "rootActions": "Folder actions for {folderName}",
+    "root": "Workspace",
+    "folder": "Folder",
+    "document": "Document",
+    "dropCloud": "Drop to save your first Cloud item",
+    "dropItem": "Drop to add your first item",
+    "syncWorkspace": "Sync your workspace",
+    "emptyWorkspace": "Your workspace is empty",
+    "releaseItem": "Release the file or folder here to continue.",
+    "signInDescription": "Sign in to sync your Markdown files across devices.",
+    "createFirst": "Create your first folder or Markdown file to get started.",
+    "signIn": "Sign In",
+    "signUp": "Sign Up"
+  },
+  "storage": {
+    "toggleLabel": "Switch file storage",
+    "device": "Local",
+    "cloud": "Cloud",
+    "deviceTooltip": "Files saved in this browser",
+    "cloudTooltip": "Files synced to your account",
+    "deviceFiles": "This Device",
+    "cloudFiles": "Cloud-Synced",
+    "deviceWorkspace": "Device workspace",
+    "cloudWorkspace": "Cloud workspace"
+  }
+}

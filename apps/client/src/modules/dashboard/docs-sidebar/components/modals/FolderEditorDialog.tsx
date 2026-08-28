@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 import { ModalShell } from "@/shared/components/ModalShell";
 import { DialogFormFooter } from "@/shared/components/DialogFormFooter";
@@ -41,6 +42,7 @@ export function FolderEditorDialog({
   onClose: () => void;
   onSubmit: () => void;
 }) {
+  const t = useTranslations("Dashboard.folderEditor");
   const [iconPickerOpen, setIconPickerOpen] = useState(false);
 
   return (
@@ -48,8 +50,8 @@ export function FolderEditorDialog({
       open={open}
       onClose={submitting ? () => undefined : onClose}
       title={title}
-      description="Choose a name, icon, and color for this folder."
-      closeLabel="Close folder dialog"
+      description={t("description")}
+      closeLabel={t("closeDialog")}
       closeOnEscape={!iconPickerOpen && !submitting}
     >
       <form
@@ -69,12 +71,12 @@ export function FolderEditorDialog({
           />
           <div className="min-w-0 flex-1">
             <DialogTextField
-              label="Folder name"
+              label={t("nameLabel")}
               value={name}
               maxLength={200}
               disabled={submitting}
               onChange={onNameChange}
-              placeholder="New folder"
+              placeholder={t("placeholder")}
               autoFocus
             />
           </div>
@@ -82,7 +84,7 @@ export function FolderEditorDialog({
 
         <fieldset className="space-y-2">
           <legend className="text-xs font-semibold text-foreground">
-            Color
+            {t("color")}
           </legend>
           <div className="flex flex-wrap gap-2">
             {FOLDER_COLOR_OPTIONS.map((option) => {
@@ -92,7 +94,9 @@ export function FolderEditorDialog({
                 <button
                   key={option}
                   type="button"
-                  aria-label={`Use ${option} folder color`}
+                  aria-label={t("useColor", {
+                    color: t(`colors.${option}`),
+                  })}
                   aria-pressed={selected}
                   className={`flex h-9 w-9 items-center justify-center rounded-full border transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${selected ? "border-foreground/60 bg-accent" : "border-border bg-background"}`}
                   onClick={() => onColorChange(option)}
@@ -108,9 +112,10 @@ export function FolderEditorDialog({
         </fieldset>
 
         <DialogFormFooter
-          submitLabel={submitting ? "Saving..." : "Save folder"}
+          submitLabel={submitting ? t("saving") : t("save")}
           disabled={!name.trim()}
           busy={submitting}
+          cancelLabel={t("cancel")}
           onCancel={onClose}
         />
       </form>

@@ -14,6 +14,8 @@ export function DialogTextField({
   placeholder,
   autoFocus = false,
   disabled = false,
+  labelTrailing,
+  onPasteText,
 }: {
   label: string;
   value: string;
@@ -22,19 +24,30 @@ export function DialogTextField({
   placeholder?: string;
   autoFocus?: boolean;
   disabled?: boolean;
+  labelTrailing?: React.ReactNode;
+  onPasteText?: (text: string) => boolean;
 }) {
   const inputId = useId();
 
   return (
     <label htmlFor={inputId} className="block space-y-2">
-      <span className="text-xs font-semibold text-foreground">{label}</span>
+      <span className="flex items-center justify-between gap-3 text-xs font-semibold text-foreground">
+        {label}
+        {labelTrailing}
+      </span>
       <input
         id={inputId}
+        aria-label={label}
         autoFocus={autoFocus}
         disabled={disabled}
         value={value}
         maxLength={maxLength}
         onChange={(event) => onChange(event.target.value)}
+        onPaste={(event) => {
+          if (onPasteText?.(event.clipboardData.getData("text"))) {
+            event.preventDefault();
+          }
+        }}
         className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
         placeholder={placeholder}
       />

@@ -23,6 +23,36 @@
     "existingAccount": "¿Ya tienes una cuenta?",
     "existingAccountLink": "Inicia sesión"
   },
+  "forgotPassword": {
+    "title": "¿Olvidaste tu contraseña?",
+    "description": "Introduce tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.",
+    "email": "Correo electrónico",
+    "submit": "Enviar enlace de recuperación",
+    "loading": "Enviando...",
+    "error": "No se pudo enviar el correo de recuperación.",
+    "dailyLimit": "Alcanzamos el límite diario de correos. Inténtalo de nuevo mañana.",
+    "cooldown": "Ya se envió un correo de recuperación. Espera unos minutos antes de intentarlo de nuevo.",
+    "successTitle": "Revisa tu bandeja de entrada",
+    "successMessage": "Si existe una cuenta para {email}, enviaremos un enlace para restablecer la contraseña en breve.",
+    "backToSignIn": "Volver a iniciar sesión"
+  },
+  "resetPassword": {
+    "title": "Establece una nueva contraseña",
+    "description": "Elige una nueva contraseña para tu cuenta.",
+    "newPassword": "Nueva contraseña",
+    "confirmPassword": "Confirmar contraseña",
+    "submit": "Restablecer contraseña",
+    "loading": "Restableciendo contraseña...",
+    "error": "No se pudo restablecer la contraseña.",
+    "passwordMismatch": "Las contraseñas no coinciden.",
+    "passwordTooShort": "La contraseña debe tener al menos 8 caracteres.",
+    "passwordTooLong": "La contraseña debe tener 128 caracteres o menos.",
+    "invalidToken": "Este enlace de recuperación no es válido o ha caducado. Solicita uno nuevo.",
+    "requestNewLink": "Solicitar un nuevo enlace de recuperación",
+    "successTitle": "Contraseña restablecida",
+    "successDescription": "Tu contraseña se ha actualizado. Ya puedes iniciar sesión.",
+    "signIn": "Ir a iniciar sesión"
+  },
   "signIn": {
     "title": "Iniciar sesión",
     "email": "Correo electrónico",
@@ -44,7 +74,8 @@
     "dailyLimit": "Alcanzamos el límite de registros de hoy. Vuelve a intentarlo mañana.",
     "cooldown": "Te acabamos de enviar un correo de verificación. Espera unos minutos antes de pedir otro.",
     "newAccount": "¿No tienes una cuenta?",
-    "newAccountLink": "Regístrate"
+    "newAccountLink": "Regístrate",
+    "forgotPassword": "¿Olvidaste tu contraseña?"
   },
   "navigation": {
     "backHome": "Volver a MarkDown Preview"

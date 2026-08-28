@@ -1,11 +1,13 @@
 {
   "hero": {
+    "productName": "Markdown PDF Preview",
     "badge": "Espacio de trabajo Markdown — local-first",
     "title1": "Escribe una vez.",
     "title2": "Previsualiza cada página.",
     "description": "Un lugar tranquilo para dar forma a tus documentos Markdown y ver exactamente cómo se leerán cuando salgan de la pantalla — con un motor de paginación que predice los saltos de página reales antes de imprimir.",
     "primaryCta": "Abrir la aplicación",
     "secondaryCta": "Ver en GitHub",
+    "tourCta": "Mira lo que puedo hacer",
     "footnote": "Sin necesidad de cuenta. Tus documentos se quedan en tu navegador."
   },
   "features": {
@@ -51,7 +53,7 @@
       },
       "themes": {
         "title": "Temas",
-        "description": "Claro y oscuro con transiciones suaves."
+        "description": "Claro, oscuro y más temas, todos con transiciones suaves."
       },
       "responsive": {
         "title": "Responsive",
@@ -75,8 +77,8 @@
       },
       "organize": {
         "title": "Organiza archivos y carpetas",
-        "description": "Mueve archivos y carpetas dentro del espacio de trabajo local Sesión con arrastrar y soltar.",
-        "alt": "Moviendo archivos y carpetas dentro del espacio de trabajo Sesión"
+        "description": "Mueve archivos y carpetas dentro del espacio de trabajo del dispositivo con arrastrar y soltar.",
+        "alt": "Moviendo archivos y carpetas dentro del espacio de trabajo del dispositivo"
       },
       "cloud": {
         "title": "Mueve carpetas y archivos entre Local y la Nube",
@@ -91,7 +93,7 @@
       "mobile": {
         "title": "Espacio de trabajo móvil",
         "description": "El diseño responsivo alterna secciones de archivos y previsualización con navegación inferior.",
-        "alt": "Panel móvil con navegación entre los espacios Sesión y Nube"
+        "alt": "Panel móvil con navegación entre el espacio del dispositivo y el espacio sincronizado en la nube"
       },
       "pageBreak": {
         "title": "Previsualización consciente de página",
@@ -120,7 +122,7 @@
   "footer": {
     "tagline": "Escribe una vez. Previsualiza cada página.",
     "description": "Un lugar tranquilo para dar forma a tus documentos Markdown — con motor de paginación incluido.",
-    "github": "Ver el código en GitHub",
+    "github": "GitHub",
     "terms": "Términos",
     "privacy": "Privacidad",
     "cookies": "Cookies",

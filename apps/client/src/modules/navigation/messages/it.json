@@ -71,6 +71,7 @@
       "sky": "Cielo",
       "ocean": "Oceano",
       "pink": "Rosa",
+      "pressroom": "Tipografia",
       "system": "Sistema"
     },
     "descriptions": {
@@ -80,6 +81,7 @@
       "sky": "Uno spazio blu morbido e arioso",
       "ocean": "Uno spazio ciano e rilassante",
       "pink": "Uno spazio caldo e rosato",
+      "pressroom": "Uno studio tipografico materico",
       "system": "Segui la preferenza del dispositivo"
     }
   }

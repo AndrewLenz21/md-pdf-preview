@@ -49,3 +49,5 @@ yarn-error.log*
 *.tsbuildinfo
 cloudflare-env.d.ts
 next-env.d.ts
+
+next.config.ts

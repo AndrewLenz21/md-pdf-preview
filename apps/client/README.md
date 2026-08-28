@@ -142,9 +142,9 @@ trustedOrigins: [
 This preserves Better Auth's origin and redirect URL validation. Do not add
 placeholder production domains to the live configuration.
 
-## 📧 Resend — verification emails
+## 📧 Resend — verification and password reset emails
 
-Resend sends the email-verification links for new accounts. The whole flow
+Resend sends email-verification and password-reset links. The whole flow
 lives in `src/core/auth/email/` (repository, quota service, Resend service,
 localized templates) plus `AuthEmailRouter` and `ResendWebhookRouter` in
 `src/app/api/[[...route]]/`.
@@ -155,7 +155,7 @@ localized templates) plus `AuthEmailRouter` and `ResendWebhookRouter` in
 | -------- | ----------- |
 | `RESEND_API_KEY` | Resend API key (server-only, never `NEXT_PUBLIC_*`) |
 | `RESEND_EMAIL_FROM` | Sender address, must be verified in Resend (e.g. `no-reply@yourdomain.com`) |
-| `RESEND_DAILY_SEND_LIMIT` | Max verification emails per UTC day (default `100`) |
+ | `RESEND_DAILY_SEND_LIMIT` | Max verification and password-reset emails per UTC day (default `100`) |
 | `RESEND_WEBHOOK_SECRET` | Webhook signing secret from the Resend console (`whsec_...`). Without it the webhook endpoint answers `503` |
 
 ### Daily quota

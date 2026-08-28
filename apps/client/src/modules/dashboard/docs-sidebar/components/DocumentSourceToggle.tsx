@@ -1,4 +1,5 @@
 import { Cloud, HardDrive, Lock } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import type { DocumentSource } from "@/modules/dashboard/document/model/document.types";
 import { useDocumentDndStore } from "@/modules/dashboard/stores";
@@ -16,12 +17,13 @@ export function DocumentSourceToggle({
   cloudBlocked?: boolean;
   disabled?: boolean;
 }) {
+  const t = useTranslations("Dashboard.storage");
   const isDragging = useDocumentDndStore((state) => state.isDragging);
 
   return (
     <button
       type="button"
-      aria-label="Switch document source"
+      aria-label={t("toggleLabel")}
       aria-pressed={source === "cloud"}
       disabled={disabled}
       className="relative grid min-h-9 shrink-0 grid-cols-2 gap-0.5 overflow-hidden rounded-lg border border-border/80 bg-background/50 p-0.5 text-[11px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
@@ -41,14 +43,16 @@ export function DocumentSourceToggle({
       />
       <span
         data-dnd-source-target="local"
+        title={t("deviceTooltip")}
         className={`relative z-10 flex items-center justify-center gap-1.5 rounded-md px-2 ${source === "local" ? "text-accent-foreground" : "text-muted-foreground"}`}
       >
         <HardDrive className="h-3.5 w-3.5" strokeWidth={1.7} />
-        Session
+        {t("device")}
       </span>
       <span
         data-dnd-source-target="cloud"
         data-dnd-source-blocked={cloudBlocked ? "true" : undefined}
+        title={t("cloudTooltip")}
         className={`relative z-10 flex items-center justify-center gap-1.5 rounded-md px-2 ${source === "cloud" ? "text-accent-foreground" : cloudBlocked ? "text-destructive" : "text-muted-foreground"}`}
       >
         {cloudBlocked ? (
@@ -56,7 +60,7 @@ export function DocumentSourceToggle({
         ) : (
           <Cloud className="h-3.5 w-3.5" strokeWidth={1.7} />
         )}
-        Cloud
+        {t("cloud")}
       </span>
     </button>
   );

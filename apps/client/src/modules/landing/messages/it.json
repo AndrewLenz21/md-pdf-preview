@@ -1,11 +1,13 @@
 {
   "hero": {
+    "productName": "Markdown PDF Preview",
     "badge": "Workspace Markdown — local-first",
     "title1": "Scrivi una volta.",
     "title2": "Anteprima di ogni pagina.",
     "description": "Un luogo tranquillo per dare forma ai tuoi documenti Markdown e vedere esattamente come si leggeranno quando lasceranno lo schermo — con un motore di impaginazione che prevede le interruzioni di pagina reali prima di stampare.",
     "primaryCta": "Apri l'app",
     "secondaryCta": "Vedi su GitHub",
+    "tourCta": "Scopri cosa posso fare",
     "footnote": "Nessun account richiesto. I tuoi documenti restano nel browser."
   },
   "features": {
@@ -51,7 +53,7 @@
       },
       "themes": {
         "title": "Temi",
-        "description": "Scuro e chiaro con transizioni fluide."
+        "description": "Chiaro, scuro e altri temi, tutti con transizioni fluide."
       },
       "responsive": {
         "title": "Responsive",
@@ -75,8 +77,8 @@
       },
       "organize": {
         "title": "Organizza file e cartelle",
-        "description": "Sposta file e cartelle nel workspace locale Session con il trascinamento.",
-        "alt": "Spostamento di file e cartelle nel workspace Session"
+        "description": "Sposta file e cartelle nello spazio di lavoro del dispositivo con il trascinamento.",
+        "alt": "Spostamento di file e cartelle nello spazio di lavoro del dispositivo"
       },
       "cloud": {
         "title": "Sposta cartelle e file tra Locale e Cloud",
@@ -91,7 +93,7 @@
       "mobile": {
         "title": "Workspace mobile",
         "description": "Il layout responsive passa a sezioni file e anteprima con navigazione inferiore.",
-        "alt": "Dashboard mobile con navigazione tra workspace Session e Cloud"
+        "alt": "Dashboard mobile con navigazione tra lo spazio del dispositivo e lo spazio sincronizzato nel cloud"
       },
       "pageBreak": {
         "title": "Anteprima consapevole della pagina",
@@ -120,7 +122,7 @@
   "footer": {
     "tagline": "Scrivi una volta. Anteprima di ogni pagina.",
     "description": "Un luogo tranquillo per dare forma ai tuoi documenti Markdown — motore di impaginazione incluso.",
-    "github": "Vedi il codice sorgente su GitHub",
+    "github": "GitHub",
     "terms": "Termini",
     "privacy": "Privacy",
     "cookies": "Cookie",

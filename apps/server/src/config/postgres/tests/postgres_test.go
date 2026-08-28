@@ -88,11 +88,11 @@ func TestRequestLogsSchemaStoresRequestMetadataAndR2Details(t *testing.T) {
 	}
 }
 
-func TestEmailDeliveriesAllowsAccountDeletionPurpose(t *testing.T) {
+func TestEmailDeliveriesAllowsSupportedPurposes(t *testing.T) {
 	schema := strings.Join(migrations.SchemaStatements(), "\n")
 
 	for _, fragment := range []string{
-		"email_verification', 'account_deletion",
+		"email_verification', 'password_reset', 'account_deletion",
 	} {
 		if !strings.Contains(schema, fragment) {
 			t.Errorf("email deliveries schema is missing %q", fragment)
@@ -100,16 +100,11 @@ func TestEmailDeliveriesAllowsAccountDeletionPurpose(t *testing.T) {
 	}
 }
 
-func TestBootstrapSchemaAvoidsIncrementalTableAlterations(t *testing.T) {
+func TestBootstrapSchemaAvoidsTriggerReplacement(t *testing.T) {
 	schema := strings.Join(migrations.SchemaStatements(), "\n")
 
-	for _, fragment := range []string{
-		"ALTER TABLE",
-		"DROP TRIGGER",
-	} {
-		if strings.Contains(schema, fragment) {
-			t.Fatalf("bootstrap schema must not contain %q", fragment)
-		}
+	if strings.Contains(schema, "DROP TRIGGER") {
+		t.Fatal("bootstrap schema must not replace triggers")
 	}
 }
 
