@@ -101,6 +101,33 @@ by Better Auth and the PostgreSQL client. The Worker name can be changed in
 
 ## Deploying the server
 
+### Dokploy (Docker)
+
+Deploy the Go server as a separate Dokploy application. This configuration builds
+only `apps/server`; it does not build or host the Next.js client on the VM.
+
+| Dokploy field       | Production value |
+| ------------------- | ---------------- |
+| Build Path          | `/apps/server`   |
+| Branch              | `main`           |
+| Trigger Type        | `On Push`        |
+| Build Type          | `Dockerfile`     |
+| Docker File         | `Dockerfile`     |
+| Docker context path | `/apps/server`   |
+
+The Dockerfile is relative to the build context. It compiles the Go binary and
+runs it as a non-root user. Its `.dockerignore` excludes `.env` files, so set
+the server variables in Dokploy's environment and secrets UI instead of copying
+an environment file into the image.
+
+For the `main` branch, set `APP_ENV=prod`. Configure Dokploy's domain to forward
+to container port `8080`, then use that HTTPS URL as the client's `BACKEND_URL`.
+`INTERNAL_API_KEY` must match the value configured for the Cloudflare Worker.
+
+`GET /health` is protected by the server's `X-Api-Key` middleware. Do not use it
+as an unauthenticated Dokploy HTTP health check unless the check can send that
+header.
+
 ### From source
 
 ```powershell
@@ -114,7 +141,10 @@ Run the generated `apps/server/build/server.exe` from PowerShell after configuri
 
 ### Configuration
 
-The server reads a `.env` file from its working directory (see `apps/server/.env.example`). Create the PostgreSQL schema by running the migrations in `apps/server/src/config/postgres/migrations/` (they run automatically at startup).
+For local development, the server reads a `.env` file from its working directory
+(see `apps/server/.env.example`). Create the PostgreSQL schema by running the
+migrations in `apps/server/src/config/postgres/migrations/` (they run
+automatically at startup).
 
 ## Database & storage
 
