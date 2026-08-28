@@ -1,3 +1,4 @@
+import path from "node:path";
 import type { NextConfig } from "next";
 
 import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
@@ -5,13 +6,12 @@ import createNextIntlPlugin from "next-intl/plugin";
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
-
   allowedDevOrigins: ["md-pdf-preview.andrew-lenz.com"],
-
+  outputFileTracingRoot: path.resolve(__dirname, "../.."),
   outputFileTracingIncludes: {
     "**/*": [
-      "./node_modules/pg-cloudflare/dist/**",
-      "./node_modules/pg-cloudflare/esm/**",
+      "../../node_modules/pg-cloudflare/dist/**",
+      "../../node_modules/pg-cloudflare/esm/**",
     ],
   },
 };
