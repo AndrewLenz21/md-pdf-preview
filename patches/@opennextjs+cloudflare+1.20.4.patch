@@ -1,0 +1,17 @@
+diff --git a/node_modules/@opennextjs/cloudflare/dist/cli/build/open-next/bundle-node-middleware.js b/node_modules/@opennextjs/cloudflare/dist/cli/build/open-next/bundle-node-middleware.js
+index 6cc1cb1..b27d6d1 100644
+--- a/node_modules/@opennextjs/cloudflare/dist/cli/build/open-next/bundle-node-middleware.js
++++ b/node_modules/@opennextjs/cloudflare/dist/cli/build/open-next/bundle-node-middleware.js
+@@ -190,6 +190,12 @@ export async function bundleNodeMiddleware(options) {
+             "process.env.NODE_ENV": '"production"',
+         },
+         alias: {
++            // Prevent unused @vercel/og from being bundled into the middleware.
++            "next/dist/compiled/@vercel/og/index.edge.js": path.join(
++                outputDir,
++                "cloudflare-templates/shims/throw.js"
++            ),
++
+             // See `hasOpentelemetry` above.
+             ...(hasOpentelemetry ? {} : { "@opentelemetry/api": "next/dist/compiled/@opentelemetry/api" }),
+         },
