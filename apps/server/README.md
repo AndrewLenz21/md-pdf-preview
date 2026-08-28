@@ -51,9 +51,32 @@ npm run build --filter=server
 .\apps\server\build\server.exe
 ```
 
-Health check: `curl.exe http://localhost:8080/health`
+Health endpoint: `curl.exe -H "X-Api-Key: <INTERNAL_API_KEY>" http://localhost:8080/health`
 
 > **Note:** Migrations in `src/config/postgres/migrations/` run automatically at startup. The HTTP server and application routes start only after the PostgreSQL pool and schema are ready.
+
+### Deploy with Dokploy
+
+Deploy the Go server as its own Dokploy application. The Docker build does not
+build or serve the client.
+
+| Dokploy field       | Production value |
+| ------------------- | ---------------- |
+| Build Path          | `/apps/server`   |
+| Branch              | `main`           |
+| Trigger Type        | `On Push`        |
+| Build Type          | `Dockerfile`     |
+| Docker File         | `Dockerfile`     |
+| Docker context path | `/apps/server`   |
+
+Configure the variables listed below in Dokploy; do not copy the local `.env`
+file into the image. For `main`, set `APP_ENV=prod`, expose container port
+`8080` through the Dokploy domain, and configure that HTTPS URL as the client's
+`BACKEND_URL`. `INTERNAL_API_KEY` must be identical in Dokploy and Cloudflare.
+
+`GET /health` requires a valid `X-Api-Key`, so it is not suitable for an
+unauthenticated Dokploy HTTP health check. See the
+[deployment guide](../../docs/DEPLOYMENT.md#deploying-the-server) for details.
 
 ### PostgreSQL operational retention
 

@@ -1,14 +1,20 @@
 {
   "$schema": "../../node_modules/wrangler/config-schema.json",
   "name": "md-pdf-preview",
-  "main": "./worker/index.ts",
+  "main": ".open-next/worker.js",
   "compatibility_date": "2026-08-23",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "workers_dev": true,
   "assets": {
     "binding": "ASSETS",
-    "not_found_handling": "none",
+    "directory": ".open-next/assets",
   },
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "md-pdf-preview",
+    },
+  ],
   "observability": {
     "enabled": true,
   },
