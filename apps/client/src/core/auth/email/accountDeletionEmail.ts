@@ -1,4 +1,4 @@
-import { authPool } from "../pool";
+import type { Pool } from "pg";
 import { EMAIL_PROVIDER, EMAIL_PURPOSE } from "./emailDeliveries";
 import { resolveEmailLocale } from "./emailContent";
 import * as emailDeliveryRepository from "./emailDeliveryRepository";
@@ -20,16 +20,19 @@ function describeSendError(error: unknown) {
 
   return {
     code: null,
-    message: error instanceof Error ? error.message : "Unknown email send error.",
+    message:
+      error instanceof Error ? error.message : "Unknown email send error.",
   };
 }
 
 export async function sendAccountDeletionConfirmationEmail(
+  authPool: Pool,
   user: DeletedUser,
   deletionReference: string,
   request?: Request,
 ): Promise<void> {
   const reservation = await reserveEmailDelivery({
+    authPool,
     email: user.email,
     purpose: EMAIL_PURPOSE.ACCOUNT_DELETION,
     provider: EMAIL_PROVIDER.RESEND,

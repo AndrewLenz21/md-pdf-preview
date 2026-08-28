@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
+import type { Pool } from "pg";
 
-import { authPool } from "../pool";
 import {
   EMAIL_PROVIDER,
   EMAIL_PURPOSE,
@@ -62,12 +62,14 @@ export interface EmailDeliveryReservation {
  * already consumed a slot within the cooldown window.
  */
 export async function reserveEmailDelivery({
+  authPool,
   email,
   purpose = EMAIL_PURPOSE.EMAIL_VERIFICATION,
   provider = EMAIL_PROVIDER.RESEND,
   cooldownMs,
   now = new Date(),
 }: {
+  authPool: Pick<Pool, "connect">;
   email: string;
   purpose?: string;
   provider?: string;

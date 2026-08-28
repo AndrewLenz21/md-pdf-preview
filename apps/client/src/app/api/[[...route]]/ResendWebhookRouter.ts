@@ -3,7 +3,7 @@ import { Webhook } from "svix";
 
 import { WEBHOOK_EVENT_STATUS } from "@/core/auth/email/emailDeliveries";
 import * as emailDeliveryRepository from "@/core/auth/email/emailDeliveryRepository";
-import { authPool } from "@/core/auth/pool";
+import { createAuthPool } from "@/core/auth/pool";
 
 const resendWebhookRouter = new Hono();
 
@@ -39,13 +39,18 @@ resendWebhookRouter.post("/", async (context) => {
       error,
     );
     return context.json(
-      { code: "INVALID_WEBHOOK_SIGNATURE", message: "Invalid webhook signature." },
+      {
+        code: "INVALID_WEBHOOK_SIGNATURE",
+        message: "Invalid webhook signature.",
+      },
       400,
     );
   }
 
   const status =
-    typeof event.type === "string" ? WEBHOOK_EVENT_STATUS[event.type] : undefined;
+    typeof event.type === "string"
+      ? WEBHOOK_EVENT_STATUS[event.type]
+      : undefined;
   const providerMessageId = (event.data as { id?: unknown } | undefined)?.id;
 
   if (!status || typeof providerMessageId !== "string") {
@@ -55,22 +60,27 @@ resendWebhookRouter.post("/", async (context) => {
     );
   }
 
-  const deliveredAt =
-    event.type === "email.delivered" ? new Date() : undefined;
+  const deliveredAt = event.type === "email.delivered" ? new Date() : undefined;
 
-  const result = await emailDeliveryRepository.applyWebhookStatus(authPool, {
-    providerMessageId,
-    status,
-    deliveredAt,
-  });
+  const authPool = createAuthPool();
 
-  if (result === "missing") {
-    console.warn(
-      `[ResendWebhookRouter] no delivery row for provider message id: ${providerMessageId}`,
-    );
+  try {
+    const result = await emailDeliveryRepository.applyWebhookStatus(authPool, {
+      providerMessageId,
+      status,
+      deliveredAt,
+    });
+
+    if (result === "missing") {
+      console.warn(
+        `[ResendWebhookRouter] no delivery row for provider message id: ${providerMessageId}`,
+      );
+    }
+
+    return context.json({ received: true }, 200);
+  } finally {
+    await authPool.end();
   }
-
-  return context.json({ received: true }, 200);
 });
 
 export default resendWebhookRouter;

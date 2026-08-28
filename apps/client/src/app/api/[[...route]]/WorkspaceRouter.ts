@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import type { Context } from "hono";
 
-import { auth } from "@/core/auth";
+import { createAuth } from "@/core/auth/auth";
 import appServer from "@/lib/backend/server";
 
 type WorkspaceEnv = {
@@ -15,40 +15,51 @@ type WorkspaceContext = Context<WorkspaceEnv>;
 const workspaceRouter = new Hono<WorkspaceEnv>();
 
 workspaceRouter.use("*", async (context, next) => {
-  let session;
+  const { auth, authPool } = createAuth();
 
   try {
-    session = await auth.api.getSession({
-      headers: context.req.raw.headers,
-    });
-  } catch (error) {
-    console.error("[WorkspaceRouter] Better Auth session lookup failed:", error);
-    return context.json(
-      {
-        code: "AUTH_SESSION_UNAVAILABLE",
-        message: "Authentication service is unavailable.",
-      },
-      503,
-    );
-  }
+    let session;
 
-  if (!session?.user?.id) {
-    return context.json(
-      {
-        code: "AUTHENTICATION_REQUIRED",
-        message: "Authentication is required.",
-      },
-      401,
-    );
-  }
+    try {
+      session = await auth.api.getSession({
+        headers: context.req.raw.headers,
+      });
+    } catch (error) {
+      console.error(
+        "[WorkspaceRouter] Better Auth session lookup failed:",
+        error,
+      );
+      return context.json(
+        {
+          code: "AUTH_SESSION_UNAVAILABLE",
+          message: "Authentication service is unavailable.",
+        },
+        503,
+      );
+    }
 
-  context.set("userID", session.user.id);
-  return next();
+    if (!session?.user?.id) {
+      return context.json(
+        {
+          code: "AUTHENTICATION_REQUIRED",
+          message: "Authentication is required.",
+        },
+        401,
+      );
+    }
+
+    context.set("userID", session.user.id);
+    return await next();
+  } finally {
+    await authPool.end();
+  }
 });
 
 workspaceRouter.get("/items", (context) =>
   proxyBackend(context, "GET /workspace/items", () =>
-    appServer.withUser(context.get("userID")).get(`workspace/items${new URL(context.req.url).search}`),
+    appServer
+      .withUser(context.get("userID"))
+      .get(`workspace/items${new URL(context.req.url).search}`),
   ),
 );
 
@@ -59,13 +70,17 @@ workspaceRouter.post("/items", async (context) => {
   }
 
   return proxyBackend(context, "POST /workspace/items", () =>
-    appServer.withUser(context.get("userID")).post("workspace/items", body.value),
+    appServer
+      .withUser(context.get("userID"))
+      .post("workspace/items", body.value),
   );
 });
 
 workspaceRouter.get("/items/:itemID", (context) =>
   proxyBackend(context, "GET /workspace/items/:itemID", () =>
-    appServer.withUser(context.get("userID")).get(`workspace/items/${context.req.param("itemID")}`),
+    appServer
+      .withUser(context.get("userID"))
+      .get(`workspace/items/${context.req.param("itemID")}`),
   ),
 );
 
@@ -84,7 +99,9 @@ workspaceRouter.patch("/items/:itemID", async (context) => {
 
 workspaceRouter.delete("/items/:itemID", (context) =>
   proxyBackend(context, "DELETE /workspace/items/:itemID", () =>
-    appServer.withUser(context.get("userID")).delete(`workspace/items/${context.req.param("itemID")}`),
+    appServer
+      .withUser(context.get("userID"))
+      .delete(`workspace/items/${context.req.param("itemID")}`),
   ),
 );
 
@@ -94,31 +111,51 @@ workspaceRouter.post("/documents/:documentID/upload-url", async (context) => {
     return body.response;
   }
 
-  return proxyBackend(context, "POST /workspace/documents/:documentID/upload-url", () =>
-    appServer
-      .withUser(context.get("userID"))
-      .post(`workspace/documents/${context.req.param("documentID")}/upload-url`, body.value),
+  return proxyBackend(
+    context,
+    "POST /workspace/documents/:documentID/upload-url",
+    () =>
+      appServer
+        .withUser(context.get("userID"))
+        .post(
+          `workspace/documents/${context.req.param("documentID")}/upload-url`,
+          body.value,
+        ),
   );
 });
 
-workspaceRouter.post("/documents/:documentID/upload-complete", async (context) => {
-  const body = await readJSONBody(context);
-  if (!body.ok) {
-    return body.response;
-  }
+workspaceRouter.post(
+  "/documents/:documentID/upload-complete",
+  async (context) => {
+    const body = await readJSONBody(context);
+    if (!body.ok) {
+      return body.response;
+    }
 
-  return proxyBackend(context, "POST /workspace/documents/:documentID/upload-complete", () =>
-    appServer
-      .withUser(context.get("userID"))
-      .post(`workspace/documents/${context.req.param("documentID")}/upload-complete`, body.value),
-  );
-});
+    return proxyBackend(
+      context,
+      "POST /workspace/documents/:documentID/upload-complete",
+      () =>
+        appServer
+          .withUser(context.get("userID"))
+          .post(
+            `workspace/documents/${context.req.param("documentID")}/upload-complete`,
+            body.value,
+          ),
+    );
+  },
+);
 
 workspaceRouter.get("/documents/:documentID/download-url", (context) =>
-  proxyBackend(context, "GET /workspace/documents/:documentID/download-url", () =>
-    appServer
-      .withUser(context.get("userID"))
-      .get(`workspace/documents/${context.req.param("documentID")}/download-url`),
+  proxyBackend(
+    context,
+    "GET /workspace/documents/:documentID/download-url",
+    () =>
+      appServer
+        .withUser(context.get("userID"))
+        .get(
+          `workspace/documents/${context.req.param("documentID")}/download-url`,
+        ),
   ),
 );
 
@@ -149,7 +186,9 @@ async function proxyBackend(
     const response = await request();
 
     if (response.status >= 500) {
-      console.error(`[WorkspaceRouter] ${operation} returned ${response.status}`);
+      console.error(
+        `[WorkspaceRouter] ${operation} returned ${response.status}`,
+      );
     }
 
     return new Response(response.body, {
@@ -157,7 +196,10 @@ async function proxyBackend(
       headers: forwardResponseHeaders(response.headers),
     });
   } catch (error) {
-    console.error(`[WorkspaceRouter] ${operation} backend request failed:`, error);
+    console.error(
+      `[WorkspaceRouter] ${operation} backend request failed:`,
+      error,
+    );
     return context.json(
       {
         code: "BACKEND_UNAVAILABLE",
@@ -171,7 +213,11 @@ async function proxyBackend(
 function forwardResponseHeaders(source: Headers) {
   const target = new Headers();
 
-  for (const header of ["content-type", "content-disposition", "x-request-id"]) {
+  for (const header of [
+    "content-type",
+    "content-disposition",
+    "x-request-id",
+  ]) {
     const value = source.get(header);
     if (value) {
       target.set(header, value);
