@@ -3,10 +3,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const queryMock = vi.fn();
 const connectMock = vi.fn();
 
-vi.mock("../pool", () => ({
-  authPool: { connect: connectMock },
-}));
-
 vi.mock("./emailDeliveryRepository", () => ({
   countQuotaSlots: vi.fn(),
   findRecentDelivery: vi.fn(),
@@ -21,6 +17,7 @@ describe("emailQuota", () => {
     query: queryMock,
     release: vi.fn(),
   };
+  const authPool = { connect: connectMock };
 
   beforeEach(async () => {
     vi.resetModules();
@@ -65,12 +62,12 @@ describe("emailQuota", () => {
 
   describe("secondsUntilQuotaReset", () => {
     it("returns seconds until the next UTC midnight", () => {
-      expect(quota.secondsUntilQuotaReset(new Date("2026-08-23T00:00:00Z"))).toBe(
-        24 * 3600,
-      );
-      expect(quota.secondsUntilQuotaReset(new Date("2026-08-23T23:59:59Z"))).toBe(
-        1,
-      );
+      expect(
+        quota.secondsUntilQuotaReset(new Date("2026-08-23T00:00:00Z")),
+      ).toBe(24 * 3600);
+      expect(
+        quota.secondsUntilQuotaReset(new Date("2026-08-23T23:59:59Z")),
+      ).toBe(1);
     });
   });
 
@@ -96,7 +93,7 @@ describe("emailQuota", () => {
       vi.mocked(repository.countQuotaSlots).mockResolvedValue(100);
 
       await expect(
-        quota.reserveEmailDelivery({ email: "user@example.com" }),
+        quota.reserveEmailDelivery({ authPool, email: "user@example.com" }),
       ).rejects.toBeInstanceOf(quota.QuotaExceededError);
 
       expect(repository.insertReservedDelivery).not.toHaveBeenCalled();
@@ -108,6 +105,7 @@ describe("emailQuota", () => {
       vi.mocked(repository.countQuotaSlots).mockResolvedValue(99);
 
       const reservation = await quota.reserveEmailDelivery({
+        authPool,
         email: "user@example.com",
       });
 
@@ -115,9 +113,7 @@ describe("emailQuota", () => {
       expect(reservation.idempotencyKey).toBe(
         `email_verification:${reservation.id}`,
       );
-      expect(reservation.quotaDate).toBe(
-        quota.getQuotaDate(new Date()),
-      );
+      expect(reservation.quotaDate).toBe(quota.getQuotaDate(new Date()));
 
       expect(repository.insertReservedDelivery).toHaveBeenCalledWith(
         fakeClient,
@@ -135,7 +131,7 @@ describe("emailQuota", () => {
     it("serializes reservations with an advisory lock", async () => {
       vi.mocked(repository.countQuotaSlots).mockResolvedValue(0);
 
-      await quota.reserveEmailDelivery({ email: "user@example.com" });
+      await quota.reserveEmailDelivery({ authPool, email: "user@example.com" });
 
       expect(queryMock).toHaveBeenCalledWith(
         "SELECT pg_advisory_xact_lock(hashtext($1))",
@@ -154,6 +150,7 @@ describe("emailQuota", () => {
 
       await expect(
         quota.reserveEmailDelivery({
+          authPool,
           email: "user@example.com",
           cooldownMs: 5 * 60 * 1000,
         }),

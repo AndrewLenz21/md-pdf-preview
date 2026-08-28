@@ -1,6 +1,6 @@
 import { APIError } from "better-auth";
+import type { Pool } from "pg";
 
-import { authPool } from "../pool";
 import {
   EMAIL_ATTEMPT_ID_HEADER,
   EMAIL_ATTEMPT_KIND_HEADER,
@@ -12,10 +12,7 @@ import {
 } from "./emailDeliveries";
 import { resolveEmailLocale } from "./emailContent";
 import * as emailDeliveryRepository from "./emailDeliveryRepository";
-import {
-  QuotaExceededError,
-  reserveEmailDelivery,
-} from "./emailQuota";
+import { QuotaExceededError, reserveEmailDelivery } from "./emailQuota";
 import {
   ResendSendError,
   sendVerificationEmail as resendSend,
@@ -23,7 +20,8 @@ import {
 
 const DAILY_LIMIT_ERROR_BODY = {
   code: "DAILY_REGISTRATION_LIMIT_REACHED",
-  message: "We've reached today's registration limit. Please try again tomorrow.",
+  message:
+    "We've reached today's registration limit. Please try again tomorrow.",
 };
 
 const RESEND_COOLDOWN_MS = 5 * 60 * 1000;
@@ -38,6 +36,12 @@ interface AttemptContext {
   id: string | null;
   kind: EmailAttemptKind;
 }
+
+type VerificationEmailSender = (input: {
+  body: { email: string; callbackURL: string };
+  headers: Headers;
+  asResponse: true;
+}) => Promise<Response>;
 
 function readAttempt(request?: Request): AttemptContext {
   return {
@@ -56,7 +60,8 @@ function describeSendError(error: unknown) {
 
   return {
     code: null,
-    message: error instanceof Error ? error.message : "Unknown email send error.",
+    message:
+      error instanceof Error ? error.message : "Unknown email send error.",
   };
 }
 
@@ -66,6 +71,7 @@ function describeSendError(error: unknown) {
  * header; other paths (e.g. expired verification links) reserve here.
  */
 async function resolveDeliverySlot(
+  authPool: Pool,
   attempt: AttemptContext,
   email: string,
 ): Promise<{ id: string; idempotencyKey: string }> {
@@ -87,6 +93,7 @@ async function resolveDeliverySlot(
 
   try {
     const reservation = await reserveEmailDelivery({
+      authPool,
       email,
       purpose: EMAIL_PURPOSE.EMAIL_VERIFICATION,
       provider: EMAIL_PROVIDER.RESEND,
@@ -108,11 +115,12 @@ async function resolveDeliverySlot(
  * persists when its verification email actually reached the provider.
  */
 export async function sendVerificationEmail(
+  authPool: Pool,
   data: { user: VerificationUser; url: string; token: string },
   request?: Request,
 ): Promise<void> {
   const attempt = readAttempt(request);
-  const slot = await resolveDeliverySlot(attempt, data.user.email);
+  const slot = await resolveDeliverySlot(authPool, attempt, data.user.email);
 
   try {
     const { providerMessageId } = await resendSend({
@@ -157,6 +165,8 @@ export async function sendVerificationEmail(
  * consumed by the send; when the cooldown blocks it the slot is freed.
  */
 export async function resendVerificationEmailToExistingUser(
+  authPool: Pool,
+  sendVerificationEmail: VerificationEmailSender,
   data: { user: VerificationUser },
   request?: Request,
 ): Promise<void> {
@@ -193,18 +203,13 @@ export async function resendVerificationEmailToExistingUser(
   try {
     // Reuse Better Auth's own resend endpoint so it mints a fresh
     // verification token; the slot is consumed by the callback above.
-    const { auth } = await import("../auth");
-
-    await auth.api.sendVerificationEmail({
+    await sendVerificationEmail({
       body: { email: data.user.email, callbackURL: "/" },
       headers,
       asResponse: true,
     });
   } catch (error) {
-    console.error(
-      "[verificationEmail] resend to existing user failed:",
-      error,
-    );
+    console.error("[verificationEmail] resend to existing user failed:", error);
   }
 
   const status = await emailDeliveryRepository.getDeliveryStatus(

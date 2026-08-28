@@ -1,7 +1,9 @@
 import { Hono } from "hono";
 import type { Context } from "hono";
+import type { Next } from "hono";
+import type { Pool } from "pg";
 
-import { auth } from "@/core/auth";
+import { createAuth } from "@/core/auth/auth";
 import {
   EMAIL_ATTEMPT_ID_HEADER,
   EMAIL_ATTEMPT_KIND_HEADER,
@@ -16,11 +18,32 @@ import {
   reserveEmailDelivery,
   secondsUntilQuotaReset,
 } from "@/core/auth/email/emailQuota";
-import { authPool } from "@/core/auth/pool";
 
 const RESEND_COOLDOWN_MS = 5 * 60 * 1000;
 
-const authEmailRouter = new Hono();
+type AuthEmailEnv = {
+  Variables: {
+    auth: ReturnType<typeof createAuth>["auth"];
+    authPool: Pool;
+  };
+};
+
+const authEmailRouter = new Hono<AuthEmailEnv>();
+
+async function withRequestAuth(context: Context<AuthEmailEnv>, next: Next) {
+  const { auth, authPool } = createAuth();
+  context.set("auth", auth);
+  context.set("authPool", authPool);
+
+  try {
+    return await next();
+  } finally {
+    await authPool.end();
+  }
+}
+
+authEmailRouter.use("/sign-up/email", withRequestAuth);
+authEmailRouter.use("/send-verification-email", withRequestAuth);
 
 function dailyLimitResponse(context: Context) {
   return context.json(
@@ -57,11 +80,13 @@ async function readJSONBody(context: Context) {
 
 async function reserveAttempt(
   context: Context,
+  authPool: Pool,
   email: string,
   cooldownMs?: number,
 ) {
   try {
     const reservation = await reserveEmailDelivery({
+      authPool,
       email,
       purpose: EMAIL_PURPOSE.EMAIL_VERIFICATION,
       provider: EMAIL_PROVIDER.RESEND,
@@ -105,6 +130,8 @@ function withAttemptHeaders(
 }
 
 authEmailRouter.post("/sign-up/email", async (context) => {
+  const auth = context.get("auth");
+  const authPool = context.get("authPool");
   const body = await readJSONBody(context);
   if (!body.ok) {
     return body.response;
@@ -112,7 +139,7 @@ authEmailRouter.post("/sign-up/email", async (context) => {
 
   const email = typeof body.value.email === "string" ? body.value.email : "";
 
-  const reservation = await reserveAttempt(context, email);
+  const reservation = await reserveAttempt(context, authPool, email);
   if (!reservation.ok) {
     return reservation.response;
   }
@@ -178,6 +205,8 @@ authEmailRouter.post("/sign-up/email", async (context) => {
 });
 
 authEmailRouter.post("/send-verification-email", async (context) => {
+  const auth = context.get("auth");
+  const authPool = context.get("authPool");
   const body = await readJSONBody(context);
   if (!body.ok) {
     return body.response;
@@ -192,7 +221,12 @@ authEmailRouter.post("/send-verification-email", async (context) => {
     );
   }
 
-  const reservation = await reserveAttempt(context, email, RESEND_COOLDOWN_MS);
+  const reservation = await reserveAttempt(
+    context,
+    authPool,
+    email,
+    RESEND_COOLDOWN_MS,
+  );
   if (!reservation.ok) {
     return reservation.response;
   }

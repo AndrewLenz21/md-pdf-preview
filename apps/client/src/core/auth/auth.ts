@@ -54,14 +54,24 @@ function createAuthWithPool(authPool: Pool) {
 
   new URL(authUrl);
 
-  return betterAuth({
+  const resendVerificationEmail: Parameters<
+    typeof resendVerificationEmailToExistingUser
+  >[1] = (input) => auth.api.sendVerificationEmail(input);
+
+  const auth = betterAuth({
     database: authPool,
     secret: authSecret,
     baseURL: authUrl,
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: true,
-      onExistingUserSignUp: resendVerificationEmailToExistingUser,
+      onExistingUserSignUp: (data, request) =>
+        resendVerificationEmailToExistingUser(
+          authPool,
+          resendVerificationEmail,
+          data,
+          request,
+        ),
     },
     socialProviders: {
       google: {
@@ -74,7 +84,8 @@ function createAuthWithPool(authPool: Pool) {
       },
     },
     emailVerification: {
-      sendVerificationEmail,
+      sendVerificationEmail: (data, request) =>
+        sendVerificationEmail(authPool, data, request),
       sendOnSignUp: true,
       sendOnSignIn: false,
       autoSignInAfterVerification: true,
@@ -137,6 +148,7 @@ function createAuthWithPool(authPool: Pool) {
 
           try {
             await sendAccountDeletionConfirmationEmail(
+              authPool,
               user,
               deletionReference,
               request,
@@ -173,6 +185,8 @@ function createAuthWithPool(authPool: Pool) {
       },
     },
   });
+
+  return auth;
 }
 
 export function createAuth() {
